@@ -7,7 +7,7 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { StyleSelector } from '@/components/StyleSelector';
 import { GeneratorControls } from '@/components/GeneratorControls';
 import { Character, StylePack, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage } from '@/types';
-import { AlertTriangle, Sparkles, Key, Settings, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Sparkles, Key, Settings, CheckCircle2, LogIn } from 'lucide-react';
 
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
 const INPUTS_STORAGE_KEY = 'raindrop_ai_studio_last_inputs_v1';
@@ -113,10 +113,32 @@ export default function Home() {
   const [raindropStatus, setRaindropStatus] = useState<'success' | 'partial' | 'error' | 'idle'>('idle');
   const [raindropMessage, setRaindropMessage] = useState<string | null>(null);
 
-  // Modals
+  // Modals & OAuth States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [syncTestMessage, setSyncTestMessage] = useState<string | null>(null);
   const [isTestingSync, setIsTestingSync] = useState(false);
+  const [isLoggingInOAuth, setIsLoggingInOAuth] = useState(false);
+
+  const handleOAuthLogin = async () => {
+    setIsLoggingInOAuth(true);
+    setRaindropMessage(null);
+    try {
+      const res = await fetch('/api/auth/login');
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        setRaindropStatus('error');
+        setRaindropMessage(data.message || 'Failed to start Raindrop OAuth login.');
+        setIsLoggingInOAuth(false);
+      }
+    } catch (err: any) {
+      setRaindropStatus('error');
+      setRaindropMessage(`OAuth login error: ${formatErrorMessage(err)}`);
+      setIsLoggingInOAuth(false);
+    }
+  };
+
 
   // Save settings helper
   const handleSaveSettings = (newSettings: AppSettings) => {
@@ -685,14 +707,34 @@ export default function Home() {
                   Please configure your Raindrop API Bearer Token in Settings to load characters and style packs.
                 </p>
 
-                <button
-                  id="placeholder-configure-token-btn"
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="btn btn-primary gap-2 shadow-lg shadow-primary/30"
-                >
-                  <Settings className="w-4 h-4" />
-                  Configure Token Now
-                </button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md mb-8">
+                  <button
+                    id="oauth-login-main-btn"
+                    onClick={handleOAuthLogin}
+                    disabled={isLoggingInOAuth}
+                    className="btn btn-primary gap-2 shadow-lg shadow-primary/30 w-full sm:w-auto"
+                  >
+                    {isLoggingInOAuth ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs"></span>
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4" />
+                        Login with Raindrop (OAuth2)
+                      </>
+                    )}
+                  </button>
+                  <button
+                    id="placeholder-configure-token-btn"
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="btn btn-outline border-base-300 gap-2 w-full sm:w-auto"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Manual Token
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-10 pt-8 border-t border-base-200 text-left w-full">
                   <div className="p-3.5 bg-base-200/50 rounded-xl border border-base-300">

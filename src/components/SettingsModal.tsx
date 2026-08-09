@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Key, Database, ExternalLink, ShieldCheck, Check } from 'lucide-react';
+import { X, Key, Database, ExternalLink, ShieldCheck, Check, LogIn, Sparkles } from 'lucide-react';
 import { AppSettings } from '../types';
 
 interface SettingsModalProps {
@@ -26,6 +26,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [raindropToken, setRaindropToken] = useState(settings.raindropToken);
   const [mounted, setMounted] = useState(false);
+  const [oauthConfigured, setOauthConfigured] = useState<boolean | null>(null);
+  const [isLoggingInOAuth, setIsLoggingInOAuth] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -34,10 +37,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setRaindropToken(settings.raindropToken);
+      setOauthError(null);
+
+      // Check if OAuth is configured on server
+      fetch('/api/auth/config')
+        ? fetch('/api/auth/config')
+            .then((res) => res.json())
+            .then((data) => setOauthConfigured(Boolean(data.oauthConfigured)))
+            .catch(() => setOauthConfigured(false))
+        : setOauthConfigured(false);
     }
   }, [isOpen, settings]);
 
   if (!isOpen || !mounted) return null;
+
+  const handleOAuthLogin = async () => {
+    setIsLoggingInOAuth(true);
+    setOauthError(null);
+    try {
+      const res = await fetch('/api/auth/login');
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        setOauthError(data.message || 'Failed to start OAuth login.');
+        setIsLoggingInOAuth(false);
+      }
+    } catch (err: any) {
+      setOauthError(`Network error: ${err.message}`);
+      setIsLoggingInOAuth(false);
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +94,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Key className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-base-content">API Credentials &amp; Configuration</h2>
-              <p className="text-xs text-base-content/60">Configure Raindrop API Bearer Token</p>
+              <h2 className="text-base font-bold text-base-content">Raindrop Authentication</h2>
+              <p className="text-xs text-base-content/60">Connect via OAuth2 Login or manual Bearer Token</p>
             </div>
           </div>
           <button
@@ -79,7 +109,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSave} className="p-6 space-y-5">
+        <form onSubmit={handleSave} className="p-6 space-y-6">
+          {/* OAuth2 Login Section */}
+          <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-xs text-base-content">
+                  Raindrop OAuth2 Quick Login
+                </span>
+              </div>
+              {oauthConfigured === true && (
+                <span className="badge badge-success badge-sm text-[10px]">OAuth Ready</span>
+              )}
+            </div>
+
+            <p className="text-[11px] text-base-content/70">
+              Sign in directly with your Raindrop.io account to authorize access without manually generating tokens.
+            </p>
+
+            {oauthError && (
+              <p className="text-xs text-error font-medium">{oauthError}</p>
+            )}
+
+            <button
+              type="button"
+              id="oauth-login-btn"
+              onClick={handleOAuthLogin}
+              disabled={isLoggingInOAuth}
+              className="btn btn-primary btn-sm w-full gap-2 shadow-sm"
+            >
+              {isLoggingInOAuth ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  Connecting to Raindrop...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  Login with Raindrop.io (OAuth2)
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="divider text-xs text-base-content/40 my-1">OR MANUAL TOKEN</div>
+
           {/* Raindrop Token Field */}
           <div className="form-control w-full">
             <div className="flex items-center justify-between mb-1.5">
