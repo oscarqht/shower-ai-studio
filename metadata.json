@@ -1,0 +1,6 @@
+{
+  "name": "Shower",
+  "description": "Generate AI images using characters and style packs fetched from Raindrop collections",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
