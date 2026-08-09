@@ -80,6 +80,8 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 
 export interface AppSettings {
   raindropToken: string;
+  raindropRefreshToken?: string;
+  raindropExpiresAt?: number;
   imageAppUrl?: string;
   imageApiKey?: string;
   imageWorkflowId?: string;

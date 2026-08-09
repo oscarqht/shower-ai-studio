@@ -49,14 +49,19 @@ function AuthCallbackContent() {
 
         if (res.ok && data.status === 'success' && data.access_token) {
           const accessToken = data.access_token;
+          const refreshToken = data.refresh_token || '';
+          const expiresIn = data.expires_in || 1209600;
+          const expiresAt = Date.now() + expiresIn * 1000;
 
-          // Save token to localStorage settings
+          // Save tokens to localStorage settings
           try {
             const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
             const currentSettings = saved ? JSON.parse(saved) : {};
             const updatedSettings = {
               ...currentSettings,
               raindropToken: accessToken,
+              ...(refreshToken ? { raindropRefreshToken: refreshToken } : {}),
+              raindropExpiresAt: expiresAt,
             };
             localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
             // Clear old cache so home page refetches fresh data

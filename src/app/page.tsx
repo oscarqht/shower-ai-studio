@@ -156,9 +156,47 @@ export default function Home() {
     }
   };
 
+  // Refresh Token Function
+  const refreshRaindropToken = useCallback(async (): Promise<string | null> => {
+    if (!settings.raindropRefreshToken) return null;
+    try {
+      const res = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: settings.raindropRefreshToken }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success' && data.access_token) {
+        const newAccessToken = data.access_token;
+        const newRefreshToken = data.refresh_token || settings.raindropRefreshToken;
+        const newExpiresAt = data.expires_at || (Date.now() + 14 * 86400 * 1000);
+
+        setSettings((prev) => {
+          const updated = {
+            ...prev,
+            raindropToken: newAccessToken,
+            raindropRefreshToken: newRefreshToken,
+            raindropExpiresAt: newExpiresAt,
+          };
+          try {
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated));
+          } catch (e) {
+            console.error('Failed to save refreshed token settings:', e);
+          }
+          return updated;
+        });
+
+        return newAccessToken;
+      }
+    } catch (e) {
+      console.error('Error refreshing Raindrop token:', e);
+    }
+    return null;
+  }, [settings.raindropRefreshToken]);
+
   // Raindrop Fetch Function
   const fetchRaindropData = useCallback(
-    async (tokenToUse?: string) => {
+    async (tokenToUse?: string, isRetry = false) => {
       const activeToken = tokenToUse !== undefined ? tokenToUse : settings.raindropToken;
       setIsFetchingRaindrop(true);
       setRaindropMessage(null);
@@ -178,6 +216,13 @@ export default function Home() {
           },
           body: JSON.stringify({ token: activeToken }),
         });
+
+        if (res.status === 401 && !isRetry && settings.raindropRefreshToken) {
+          const refreshedToken = await refreshRaindropToken();
+          if (refreshedToken) {
+            return await fetchRaindropData(refreshedToken, true);
+          }
+        }
 
         const data = await res.json();
 
@@ -229,7 +274,7 @@ export default function Home() {
         setIsFetchingRaindrop(false);
       }
     },
-    [settings.raindropToken]
+    [settings.raindropToken, settings.raindropRefreshToken, refreshRaindropToken]
   );
 
   useEffect(() => {
