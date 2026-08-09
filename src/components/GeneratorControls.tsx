@@ -174,7 +174,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       instruction: compositionPrompt,
     };
 
-    const jsonString = JSON.stringify(promptData);
+    const jsonString = JSON.stringify(promptData, null, 2);
 
     const newTab = window.open('about:blank', '_blank');
     setIsOpeningApp(true);
