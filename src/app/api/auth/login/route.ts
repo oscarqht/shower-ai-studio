@@ -20,11 +20,24 @@ export async function GET(req: NextRequest) {
   }
   baseUrl = baseUrl.replace(/\/+$/, '');
 
-  const redirectUri = `${baseUrl}/auth/callback`;
+  // For Vercel preview environments, we must use the primary domain for the redirect URI
+  // because the OAuth provider only allows specific pre-registered redirect URIs.
+  // We will pass the actual preview URL in the `state` parameter to bounce back later.
+  let redirectUri = `${baseUrl}/auth/callback`;
+  let state = '';
+  const mainDomain = 'https://shower-app.vercel.app';
+  if (baseUrl !== mainDomain && !baseUrl.includes('localhost')) {
+    redirectUri = `${mainDomain}/auth/callback`;
+    state = baseUrl;
+  }
+
   const authorizeUrl = new URL('https://raindrop.io/oauth/authorize');
   authorizeUrl.searchParams.set('response_type', 'code');
   authorizeUrl.searchParams.set('client_id', clientId);
   authorizeUrl.searchParams.set('redirect_uri', redirectUri);
+  if (state) {
+    authorizeUrl.searchParams.set('state', state);
+  }
 
   const shouldRedirect = req.nextUrl.searchParams.get('redirect') === 'true';
   if (shouldRedirect) {
