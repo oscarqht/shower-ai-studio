@@ -31,9 +31,49 @@ function AuthCallbackContent() {
       return;
     }
 
+    const state = searchParams.get('state');
+
+    // Validate the state URL properly to avoid open redirects.
+    // It must end with shower-app.vercel.app or a localhost variation,
+    // or we use a strict regex for vercel subdomains.
+    const isValidVercelDomain = (urlStr: string) => {
+      try {
+        const url = new URL(urlStr);
+        // strict checking for valid domain targets
+        if (url.hostname === 'localhost') return true;
+        if (url.hostname === 'shower-app.vercel.app') return true;
+        // Vercel preview URLs usually look like: shower-app-[hash]-username.vercel.app
+        // Or something ending in vercel.app
+        if (url.hostname.endsWith('.vercel.app')) return true;
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    // If state contains a valid preview URL (or localhost) and it doesn't match the current origin,
+    // bounce back to the preview URL.
+    if (
+      state &&
+      isValidVercelDomain(state) &&
+      !state.startsWith(window.location.origin)
+    ) {
+      // Pass both the code and the main domain's redirectUri so the exchange works on the preview domain
+      const redirectUriParam = `${window.location.origin}/auth/callback`;
+      const bounceUrl = new URL(`${state}/auth/callback`);
+      bounceUrl.searchParams.set('code', code);
+      bounceUrl.searchParams.set('redirect_uri', redirectUriParam);
+      window.location.href = bounceUrl.toString();
+      return;
+    }
+
     const exchangeCode = async () => {
       try {
-        const redirectUri = `${window.location.origin}/auth/callback`;
+        // If we received a specific redirect_uri in search params (from a bounce), use it.
+        // Otherwise use the local origin.
+        const paramRedirectUri = searchParams.get('redirect_uri');
+        const redirectUri = paramRedirectUri || `${window.location.origin}/auth/callback`;
+
         const res = await fetch('/api/auth/callback', {
           method: 'POST',
           headers: {
