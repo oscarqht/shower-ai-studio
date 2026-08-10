@@ -482,6 +482,40 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
         </div>
       )}
 
+      {/* Tags Section */}
+      {tagItems.length > 0 && characters.length > 0 && !isLoading && (
+        <div className="pt-4 border-t border-base-300 mt-4">
+          <h3 className="text-xs font-bold text-base-content mb-3 flex items-center gap-2">
+            <Tag className="w-4 h-4 text-primary" />
+            Filter by Tags
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {tagItems.map((tag) => {
+              const isSelected = tag.characterIds.every(id => selectedCharacterIds.includes(id)) && tag.characterIds.length > 0;
+              return (
+                <button
+                  key={tag.key}
+                  type="button"
+                  onClick={() => {
+                    if (onSelectMultipleCharacters) {
+                      if (isSelected) {
+                        onSelectMultipleCharacters(tag.characterIds, 'remove');
+                      } else {
+                        onSelectMultipleCharacters(tag.characterIds, 'add');
+                      }
+                    }
+                  }}
+                  className={`badge cursor-pointer hover:scale-105 transition-transform ${
+                    isSelected ? 'badge-primary' : 'badge-outline bg-base-200 text-base-content/70'
+                  }`}
+                >
+                  {tag.name} <span className="opacity-60 ml-1 text-[10px]">({tag.count})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
 
       {/* Add Character Modal */}
