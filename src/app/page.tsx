@@ -659,33 +659,33 @@ export default function Home() {
       />
 
       {/* Main Content Workspace */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 flex flex-col justify-center">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-5 lg:px-10 py-8 flex flex-col justify-center">
         {!isMounted ? (
           /* State 1: Loading screen while determining token presence */
           <div className="my-auto py-16 flex flex-col items-center justify-center text-center">
-            <div className="card bg-base-100 border border-base-300 rounded-3xl p-8 sm:p-10 shadow-xl max-w-md w-full flex flex-col items-center justify-center gap-4">
+            <div className="card bg-base-100 border border-base-300 rounded-3xl p-10 sm:p-12 shadow-sm max-w-md w-full flex flex-col items-center justify-center gap-5">
               <span className="loading loading-spinner loading-lg text-primary"></span>
               <div>
-                <h3 className="text-sm font-bold text-base-content">Initializing Shower Studio...</h3>
-                <p className="text-xs text-base-content/60 mt-1">Reading token &amp; loading cached collections</p>
+                <h3 className="text-base font-bold text-base-content">Initializing Shower Studio…</h3>
+                <p className="text-sm text-base-content/60 mt-1.5">Reading token &amp; loading cached collections</p>
               </div>
             </div>
           </div>
         ) : settings.raindropToken?.trim() ? (
           /* State 2: Has token -> Show main UI */
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Status Notification Banner */}
             {raindropMessage && (
               <div
                 className={`alert ${
                   raindropStatus === 'success' ? 'alert-success' : 'alert-error'
-                } rounded-2xl p-4 text-xs shadow-sm flex items-center justify-between gap-3`}
+                } rounded-2xl px-5 py-3.5 text-sm shadow-sm flex items-center justify-between gap-3`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   {raindropStatus === 'success' ? (
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
                   ) : (
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <AlertTriangle className="w-5 h-5 shrink-0" />
                   )}
                   <span>{raindropMessage}</span>
                 </div>
@@ -693,7 +693,7 @@ export default function Home() {
                 {raindropStatus !== 'success' && (
                   <button
                     onClick={() => setIsSettingsOpen(true)}
-                    className="btn btn-xs btn-outline"
+                    className="btn btn-sm btn-outline"
                   >
                     Configure Settings
                   </button>
@@ -702,7 +702,7 @@ export default function Home() {
             )}
 
             {/* Panels in Single Column Stack */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-8">
               {/* Section 1: Characters Selection */}
               <CharacterSelector
                 characters={characters}
@@ -738,26 +738,26 @@ export default function Home() {
         ) : (
           /* State 3: Otherwise (No token) -> Show "Raindrop API Bearer Token Required" UI */
           <div className="my-auto py-8 flex flex-col items-center justify-center text-center">
-            <div className="card bg-base-100 border border-base-300 rounded-3xl p-8 sm:p-12 shadow-xl w-full max-w-2xl text-center relative overflow-hidden">
+            <div className="card bg-base-100 border border-base-300 rounded-3xl p-10 sm:p-14 shadow-sm w-full max-w-2xl text-center relative overflow-hidden">
               <div className="relative z-10 flex flex-col items-center">
-                <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-5 border border-primary/20 shadow-inner">
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 border border-primary/20">
                   <Key className="w-8 h-8" />
                 </div>
 
-                <h2 className="text-xl sm:text-2xl font-bold text-base-content mb-2.5">
-                  Raindrop API Bearer Token Required
+                <h2 className="text-2xl sm:text-3xl font-bold text-base-content mb-3">
+                  Connect Your Raindrop Account
                 </h2>
 
-                <p className="text-xs sm:text-sm text-base-content/70 max-w-md mb-8 leading-relaxed">
-                  Please configure your Raindrop API Bearer Token in Settings to load characters and style packs.
+                <p className="text-sm sm:text-base text-base-content/70 max-w-md mb-9 leading-relaxed">
+                  Configure your Raindrop API Bearer Token in Settings to load your characters and style packs.
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md mb-8">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md mb-10">
                   <button
                     id="oauth-login-main-btn"
                     onClick={handleOAuthLogin}
                     disabled={isLoggingInOAuth}
-                    className="btn btn-primary gap-2 shadow-lg shadow-primary/30 w-full sm:w-auto"
+                    className="btn btn-primary gap-2 shadow-sm w-full sm:w-auto"
                   >
                     {isLoggingInOAuth ? (
                       <>
@@ -781,33 +781,33 @@ export default function Home() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-10 pt-8 border-t border-base-200 text-left w-full">
-                  <div className="p-3.5 bg-base-200/50 rounded-xl border border-base-300">
-                    <div className="text-xs font-semibold text-base-content flex items-center gap-1.5 mb-1">
-                      <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-9 border-t border-base-200 text-left w-full">
+                  <div className="p-4 bg-base-200/50 rounded-xl border border-base-300">
+                    <div className="text-sm font-semibold text-base-content flex items-center gap-2 mb-1.5">
+                      <Sparkles className="w-4 h-4 text-primary" />
                       1. Characters
                     </div>
-                    <p className="text-[11px] text-base-content/60">
+                    <p className="text-xs text-base-content/60 leading-relaxed">
                       Import reference characters &amp; tags from Raindrop Shower.
                     </p>
                   </div>
 
-                  <div className="p-3.5 bg-base-200/50 rounded-xl border border-base-300">
-                    <div className="text-xs font-semibold text-base-content flex items-center gap-1.5 mb-1">
-                      <Sparkles className="w-3.5 h-3.5 text-secondary" />
+                  <div className="p-4 bg-base-200/50 rounded-xl border border-base-300">
+                    <div className="text-sm font-semibold text-base-content flex items-center gap-2 mb-1.5">
+                      <Sparkles className="w-4 h-4 text-secondary" />
                       2. Style Packs
                     </div>
-                    <p className="text-[11px] text-base-content/60">
+                    <p className="text-xs text-base-content/60 leading-relaxed">
                       Sync aesthetic prompts &amp; style collections instantly.
                     </p>
                   </div>
 
-                  <div className="p-3.5 bg-base-200/50 rounded-xl border border-base-300">
-                    <div className="text-xs font-semibold text-base-content flex items-center gap-1.5 mb-1">
-                      <Sparkles className="w-3.5 h-3.5 text-accent" />
+                  <div className="p-4 bg-base-200/50 rounded-xl border border-base-300">
+                    <div className="text-sm font-semibold text-base-content flex items-center gap-2 mb-1.5">
+                      <Sparkles className="w-4 h-4 text-accent" />
                       3. Payload
                     </div>
-                    <p className="text-[11px] text-base-content/60">
+                    <p className="text-xs text-base-content/60 leading-relaxed">
                       Inspect structured generation parameters &amp; payload JSON.
                     </p>
                   </div>
@@ -819,8 +819,8 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-base-300 bg-base-100 py-4 px-4 text-center text-xs text-base-content/60 transition-colors">
-        <p>Raindrop Shower Studio • Next.js + TailwindCSS + daisyUI Migration</p>
+      <footer className="border-t border-base-300 bg-base-100 py-5 px-4 text-center text-xs text-base-content/50">
+        <p>Shower Studio — AI image composition from your Raindrop collections</p>
       </footer>
 
       {/* Settings Modal */}

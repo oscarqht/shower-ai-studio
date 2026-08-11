@@ -31,15 +31,15 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
   }, [styles]);
 
   return (
-    <div className="bg-base-100 border border-base-300 rounded-2xl p-4 sm:p-5 backdrop-blur-sm space-y-4 shadow-sm">
+    <div className="bg-base-100 border border-base-300 rounded-2xl p-6 sm:p-7 space-y-6 shadow-sm">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-base-300">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-secondary/10 text-secondary rounded-xl border border-secondary/20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-base-300">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-secondary/10 text-secondary rounded-xl border border-secondary/20">
             <Palette className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-base-content flex items-center gap-2">
+            <h2 className="text-base font-bold text-base-content flex items-center gap-2">
               2. Choose Style Pack
             </h2>
           </div>
@@ -50,7 +50,7 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
           {selectedStyleId !== null && (
             <button
               onClick={() => onSelectStyle(null)}
-              className="btn btn-sm btn-ghost border border-base-300 gap-1 text-xs"
+              className="btn btn-sm btn-ghost border border-base-300 gap-1.5"
             >
               <X className="w-3.5 h-3.5" />
               Clear Style
@@ -61,23 +61,23 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
 
       {/* Styles Loading state */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-pulse">
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="h-44 bg-base-300/50 rounded-xl border border-base-300" />
+            <div key={n} className="h-52 bg-base-300/50 rounded-xl border border-base-300" />
           ))}
         </div>
       ) : styles.length === 0 ? (
         /* Empty State */
-        <div className="text-center py-8 border border-dashed border-base-300 rounded-xl bg-base-200/30 px-4">
-          <Palette className="w-8 h-8 text-base-content/40 mx-auto mb-2" />
-          <p className="text-xs font-medium text-base-content">No Style Packs Loaded</p>
-          <p className="text-[11px] text-base-content/60 max-w-sm mx-auto mt-1">
+        <div className="text-center py-10 border border-dashed border-base-300 rounded-xl bg-base-200/30 px-6">
+          <Palette className="w-9 h-9 text-base-content/40 mx-auto mb-3" />
+          <p className="text-sm font-medium text-base-content">No Style Packs Loaded</p>
+          <p className="text-sm text-base-content/60 max-w-sm mx-auto mt-1.5 leading-relaxed">
             Configure your Raindrop token in <strong className="text-base-content">Settings</strong> to load style collections under <code className="text-secondary">Shower &gt; Styles</code>.
           </p>
         </div>
       ) : (
         /* Style Grid Cards */
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {reversedStyles.map((style) => {
             const isSelected = selectedStyleId === style.id;
 
@@ -85,7 +85,7 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
               <div
                 key={style.id}
                 onClick={() => onSelectStyle(isSelected ? null : style.id)}
-                className={`group relative rounded-xl border overflow-hidden cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                className={`group relative rounded-2xl border overflow-hidden cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                   isSelected
                     ? 'bg-secondary/10 border-secondary shadow-md ring-2 ring-secondary/40'
                     : 'bg-base-200/50 border-base-300 hover:border-secondary/50 hover:bg-base-200'
@@ -105,14 +105,14 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-base-content/40 bg-base-200">
-                      <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
-                      <span className="text-[10px]">No Style Preview</span>
+                      <ImageIcon className="w-8 h-8 mb-1.5 opacity-50" />
+                      <span className="text-xs">No Style Preview</span>
                     </div>
                   )}
 
                   {/* Selection Radio Badge Top Right */}
                   <div
-                    className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition ${
+                    className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center transition ${
                       isSelected
                         ? 'bg-secondary text-secondary-content shadow-md'
                         : 'bg-black/60 text-transparent border border-white/40'
@@ -122,7 +122,7 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                   </div>
 
                   {/* Info button top left */}
-                  <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -138,17 +138,17 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                 </div>
 
                 {/* Style Details Bottom */}
-                <div className="p-3 bg-base-100 border-t border-base-300 space-y-1">
-                  <h3 className="text-xs font-bold text-base-content truncate" title={style.title}>
+                <div className="p-3.5 bg-base-100 border-t border-base-300 space-y-1.5">
+                  <h3 className="text-sm font-bold text-base-content truncate" title={style.title}>
                     {style.title}
                   </h3>
                   {style.style_prompt && (
-                    <p className="text-[11px] text-base-content/70 line-clamp-2 leading-tight">
+                    <p className="text-xs text-base-content/70 line-clamp-2 leading-relaxed">
                       {style.style_prompt}
                     </p>
                   )}
                   {style.extra_style_instruction && (
-                    <p className="text-[10px] text-secondary truncate font-mono pt-0.5">
+                    <p className="text-xs text-secondary truncate font-mono pt-0.5">
                       Note: {style.extra_style_instruction}
                     </p>
                   )}
@@ -166,18 +166,18 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
           onClick={() => setInspectStyle(null)}
         >
           <div
-            className="modal-box max-w-lg p-5 bg-base-100 border border-base-300 shadow-2xl rounded-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+            className="modal-box max-w-lg p-6 bg-base-100 border border-base-300 shadow-2xl rounded-2xl space-y-5 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-base-300 pb-3">
-              <h3 className="text-sm font-bold text-base-content flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-base-300 pb-4">
+              <h3 className="text-base font-bold text-base-content flex items-center gap-2">
                 <Palette className="w-4 h-4 text-secondary" />
                 {inspectStyle.title}
               </h3>
               <button
                 type="button"
                 onClick={() => setInspectStyle(null)}
-                className="btn btn-xs btn-ghost btn-circle"
+                className="btn btn-sm btn-ghost btn-circle"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -197,8 +197,8 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
 
             {/* Style Prompt */}
             <div>
-              <h4 className="text-xs font-semibold text-base-content/70 mb-1">Style Prompt (preview.jpg excerpt):</h4>
-              <p className="text-xs text-base-content bg-base-200 p-3 rounded-xl border border-base-300 font-mono whitespace-pre-wrap">
+              <h4 className="text-xs font-semibold text-base-content/70 mb-1.5">Style Prompt (preview.jpg excerpt):</h4>
+              <p className="text-sm text-base-content bg-base-200 p-3.5 rounded-xl border border-base-300 font-mono whitespace-pre-wrap leading-relaxed">
                 {inspectStyle.style_prompt || 'No style prompt excerpt defined.'}
               </p>
             </div>
@@ -206,8 +206,8 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
             {/* Extra Style Instruction */}
             {inspectStyle.extra_style_instruction && (
               <div>
-                <h4 className="text-xs font-semibold text-base-content/70 mb-1">Extra Style Instruction (preview.jpg note):</h4>
-                <p className="text-xs text-secondary bg-base-200 p-2.5 rounded-xl border border-base-300 font-mono">
+                <h4 className="text-xs font-semibold text-base-content/70 mb-1.5">Extra Style Instruction (preview.jpg note):</h4>
+                <p className="text-sm text-secondary bg-base-200 p-3 rounded-xl border border-base-300 font-mono">
                   {inspectStyle.extra_style_instruction}
                 </p>
               </div>
@@ -216,11 +216,11 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
             {/* Reference Images List */}
             {inspectStyle.style_reference_links && inspectStyle.style_reference_links.length > 0 && (
               <div>
-                <h4 className="text-xs font-semibold text-base-content/70 mb-2 flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold text-base-content/70 mb-2.5 flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-secondary" />
                   Style Reference Images ({inspectStyle.style_reference_links.length}):
                 </h4>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2.5">
                   {inspectStyle.style_reference_links.map((link, idx) => (
                     <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-base-300 bg-base-200">
                       <img
@@ -239,7 +239,7 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
               <button
                 type="button"
                 onClick={() => setInspectStyle(null)}
-                className="btn btn-sm btn-ghost"
+                className="btn btn-ghost"
               >
                 Close
               </button>

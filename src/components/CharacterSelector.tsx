@@ -332,31 +332,34 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   };
 
   return (
-    <div className="bg-base-100 border border-base-300 rounded-2xl p-4 sm:p-5 backdrop-blur-sm space-y-4 shadow-sm">
+    <div className="bg-base-100 border border-base-300 rounded-2xl p-6 sm:p-7 space-y-6 shadow-sm">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-base-300">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-base-300">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
             <User className="w-5 h-5" />
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-base-content flex items-center gap-2">
-              1. Choose Character (Multi-select)
-              <span className="badge badge-primary badge-sm font-mono font-semibold">
-                {selectedCharacterIds.length} Selected
-              </span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-base font-bold text-base-content">
+              1. Choose Character
             </h2>
+            <span className="text-xs font-medium text-base-content/50">Multi-select</span>
+            {selectedCharacterIds.length > 0 && (
+              <span className="badge badge-primary font-semibold">
+                {selectedCharacterIds.length} selected
+              </span>
+            )}
           </div>
         </div>
 
         {/* Header Action Tools */}
-        <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+        <div className="flex items-center gap-2.5 self-end sm:self-auto flex-wrap">
           {/* Add Character Button */}
           {hasRaindropToken && onAddCharacter && (
             <button
               id="open-add-character-modal-btn"
               onClick={() => setIsAddModalOpen(true)}
-              className="btn btn-sm btn-primary gap-1"
+              className="btn btn-sm btn-primary gap-1.5"
               title="Add a new character item to Raindrop"
             >
               <Plus className="w-4 h-4" />
@@ -368,7 +371,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
           {selectedCharacterIds.length > 0 && (
             <button
               onClick={onClearSelection}
-              className="btn btn-sm btn-ghost border border-base-300 gap-1"
+              className="btn btn-sm btn-ghost border border-base-300 gap-1.5"
             >
               <X className="w-3.5 h-3.5" />
               Clear Selection
@@ -379,23 +382,23 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
 
       {/* Characters Loading state */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 animate-pulse">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((n) => (
-            <div key={n} className="h-40 bg-base-300/50 rounded-xl" />
+            <div key={n} className="h-48 bg-base-300/50 rounded-xl" />
           ))}
         </div>
       ) : characters.length === 0 ? (
         /* Empty State */
-        <div className="text-center py-8 border border-dashed border-base-300 rounded-xl bg-base-200/30 px-4">
-          <User className="w-8 h-8 text-base-content/40 mx-auto mb-2" />
-          <p className="text-xs font-medium text-base-content">No Characters Loaded</p>
-          <p className="text-[11px] text-base-content/60 max-w-sm mx-auto mt-1">
+        <div className="text-center py-10 border border-dashed border-base-300 rounded-xl bg-base-200/30 px-6">
+          <User className="w-9 h-9 text-base-content/40 mx-auto mb-3" />
+          <p className="text-sm font-medium text-base-content">No Characters Loaded</p>
+          <p className="text-sm text-base-content/60 max-w-sm mx-auto mt-1.5 leading-relaxed">
             Configure your Raindrop token in <strong className="text-base-content">Settings</strong> to sync items from your <code className="text-primary">Shower &gt; Characters</code> collection.
           </p>
           {hasRaindropToken && onAddCharacter && (
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="btn btn-sm btn-primary mt-3 gap-1.5"
+              className="btn btn-sm btn-primary mt-4 gap-1.5"
             >
               <Plus className="w-4 h-4" />
               Add Your First Character
@@ -404,7 +407,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
         </div>
       ) : (
         /* Character Grid Cards */
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {sortedCharacters.map((char) => {
             const isSelected = selectedCharacterIds.includes(char.id);
 
@@ -412,7 +415,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               <div
                 key={char.id}
                 onClick={() => onToggleCharacter(char.id)}
-                className={`group relative rounded-xl border overflow-hidden cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                className={`group relative rounded-2xl border overflow-hidden cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                   isSelected
                     ? 'bg-primary/10 border-primary shadow-md ring-2 ring-primary/40'
                     : 'bg-base-200/50 border-base-300 hover:border-primary/50 hover:bg-base-200'
@@ -437,9 +440,9 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                   )}
 
                   {/* Top Badges (Selection indicator + Action Buttons) */}
-                  <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 pointer-events-none">
                     <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-white transition-transform ${
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-white transition-transform ${
                         isSelected
                           ? 'bg-primary scale-100 shadow-sm'
                           : 'bg-black/40 backdrop-blur-xs scale-90 opacity-70 group-hover:opacity-100'
@@ -456,22 +459,22 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                           e.stopPropagation();
                           handleOpenEditModal(char);
                         }}
-                        className="w-6 h-6 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition shadow-xs"
+                        className="w-7 h-7 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition"
                         title="Edit character"
                       >
-                        <Info className="w-3 h-3" />
+                        <Info className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Character Meta Info Footer */}
-                <div className="p-2.5 space-y-1">
-                  <h3 className="text-xs font-bold text-base-content line-clamp-1 group-hover:text-primary transition-colors">
+                <div className="p-3 space-y-1">
+                  <h3 className="text-sm font-bold text-base-content line-clamp-1 group-hover:text-primary transition-colors">
                     {char.title}
                   </h3>
                   {char.excerpt && (
-                    <p className="text-[11px] text-base-content/60 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-base-content/60 line-clamp-2 leading-relaxed">
                       {char.excerpt}
                     </p>
                   )}
@@ -484,8 +487,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
 
       {/* Tags Section */}
       {tagItems.length > 0 && characters.length > 0 && !isLoading && (
-        <div className="pt-4 border-t border-base-300 mt-4">
-          <h3 className="text-xs font-bold text-base-content mb-3 flex items-center gap-2">
+        <div className="pt-5 border-t border-base-300">
+          <h3 className="text-sm font-bold text-base-content mb-3.5 flex items-center gap-2">
             <Tag className="w-4 h-4 text-primary" />
             Filter by Tags
           </h3>
@@ -505,11 +508,11 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                       }
                     }
                   }}
-                  className={`badge cursor-pointer hover:scale-105 transition-transform ${
+                  className={`badge badge-lg cursor-pointer hover:scale-105 transition-transform font-medium ${
                     isSelected ? 'badge-primary' : 'badge-outline bg-base-200 text-base-content/70'
                   }`}
                 >
-                  {tag.name} <span className="opacity-60 ml-1 text-[10px]">({tag.count})</span>
+                  {tag.name} <span className="opacity-60 ml-1.5">({tag.count})</span>
                 </button>
               );
             })}
@@ -528,22 +531,22 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
             className="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300 shadow-2xl rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-base-300 bg-base-200/50">
-              <h3 className="font-bold text-sm text-base-content flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-base-300 bg-base-200/50">
+              <h3 className="font-bold text-base text-base-content flex items-center gap-2">
                 <Plus className="w-4 h-4 text-primary" />
                 Add New Character to Raindrop
               </h3>
               <button
                 onClick={handleResetAddForm}
-                className="btn btn-xs btn-ghost btn-circle"
+                className="btn btn-sm btn-ghost btn-circle"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCharacter} className="p-5 space-y-4">
+            <form onSubmit={handleSaveCharacter} className="p-6 space-y-5">
               {addError && (
-                <div className="alert alert-error text-xs py-2 px-3 rounded-xl flex items-center gap-2">
+                <div className="alert alert-error text-sm py-2.5 px-4 rounded-xl flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{addError}</span>
                 </div>
@@ -551,33 +554,33 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
 
               {/* Title */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Character Title *</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Character Title *</span>
                 </label>
                 <input
                   type="text"
                   value={addTitle}
                   onChange={(e) => setAddTitle(e.target.value)}
                   placeholder="e.g. Cyberpunk Detective"
-                  className="input input-bordered input-sm w-full text-xs focus:input-primary"
+                  className="input input-bordered w-full text-sm focus:input-primary"
                   required
                 />
               </div>
 
               {/* Image File Selection */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Character Cover Image</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Character Cover Image</span>
                 </label>
                 <input
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   accept="image/*"
-                  className="file-input file-input-bordered file-input-primary file-input-xs w-full"
+                  className="file-input file-input-bordered file-input-primary w-full"
                 />
                 {previewUrl && (
-                  <div className="mt-2 relative aspect-video w-full rounded-xl overflow-hidden border border-base-300 bg-base-200">
+                  <div className="mt-3 relative aspect-video w-full rounded-xl overflow-hidden border border-base-300 bg-base-200">
                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
@@ -585,21 +588,21 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
 
               {/* Excerpt / Prompt */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Prompt Excerpt</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Prompt Excerpt</span>
                 </label>
                 <textarea
                   value={addExcerpt}
                   onChange={(e) => setAddExcerpt(e.target.value)}
                   placeholder="Character prompt description, clothing, appearance features..."
-                  className="textarea textarea-bordered text-xs w-full h-24 focus:textarea-primary"
+                  className="textarea textarea-bordered text-sm w-full h-24 focus:textarea-primary"
                 />
               </div>
 
               {/* Tags Input */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Tags (Comma-separated)</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Tags (Comma-separated)</span>
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -613,21 +616,21 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                       }
                     }}
                     placeholder="Add tag and press enter..."
-                    className="input input-bordered input-sm flex-1 text-xs focus:input-primary"
+                    className="input input-bordered flex-1 text-sm focus:input-primary"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddTag()}
-                    className="btn btn-sm btn-ghost border border-base-300 text-xs"
+                    className="btn btn-ghost border border-base-300 text-sm"
                   >
                     Add Tag
                   </button>
                 </div>
 
                 {addTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-3">
                     {addTags.map((tag, idx) => (
-                      <span key={idx} className="badge badge-primary badge-outline text-xs gap-1">
+                      <span key={idx} className="badge badge-primary badge-outline gap-1.5 py-3">
                         {tag}
                         <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-error">
                           <X className="w-3 h-3" />
@@ -639,18 +642,18 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               </div>
 
               {/* Actions */}
-              <div className="modal-action pt-3 border-t border-base-200">
+              <div className="modal-action pt-4 border-t border-base-200">
                 <button
                   type="button"
                   onClick={handleResetAddForm}
-                  className="btn btn-sm btn-ghost"
+                  className="btn btn-ghost"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="btn btn-sm btn-primary gap-1.5"
+                  className="btn btn-primary gap-1.5"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   Save to Raindrop
@@ -672,22 +675,22 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
             className="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300 shadow-2xl rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-base-300 bg-base-200/50">
-              <h3 className="font-bold text-sm text-base-content flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-base-300 bg-base-200/50">
+              <h3 className="font-bold text-base text-base-content flex items-center gap-2">
                 <Pencil className="w-4 h-4 text-primary" />
                 Edit Character
               </h3>
               <button
                 onClick={handleCloseEditModal}
-                className="btn btn-xs btn-ghost btn-circle"
+                className="btn btn-sm btn-ghost btn-circle"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditCharacter} className="p-5 space-y-4">
+            <form onSubmit={handleSaveEditCharacter} className="p-6 space-y-5">
               {editError && (
-                <div className="alert alert-error text-xs py-2 px-3 rounded-xl flex items-center gap-2">
+                <div className="alert alert-error text-sm py-2.5 px-4 rounded-xl flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{editError}</span>
                 </div>
@@ -695,32 +698,32 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
 
               {/* Edit Title */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Character Title *</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Character Title *</span>
                 </label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="input input-bordered input-sm w-full text-xs focus:input-primary"
+                  className="input input-bordered w-full text-sm focus:input-primary"
                   required
                 />
               </div>
 
               {/* Replace Cover Image */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Replace Cover Image</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Replace Cover Image</span>
                 </label>
                 <input
                   type="file"
                   ref={editFileInputRef}
                   onChange={handleEditFileSelect}
                   accept="image/*"
-                  className="file-input file-input-bordered file-input-primary file-input-xs w-full"
+                  className="file-input file-input-bordered file-input-primary w-full"
                 />
                 {editPreviewUrl && (
-                  <div className="mt-2 relative aspect-video w-full rounded-xl overflow-hidden border border-base-300 bg-base-200">
+                  <div className="mt-3 relative aspect-video w-full rounded-xl overflow-hidden border border-base-300 bg-base-200">
                     <img src={editPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
@@ -728,20 +731,20 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
 
               {/* Edit Excerpt */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Prompt Excerpt</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Prompt Excerpt</span>
                 </label>
                 <textarea
                   value={editExcerpt}
                   onChange={(e) => setEditExcerpt(e.target.value)}
-                  className="textarea textarea-bordered text-xs w-full h-24 focus:textarea-primary"
+                  className="textarea textarea-bordered text-sm w-full h-24 focus:textarea-primary"
                 />
               </div>
 
               {/* Edit Tags */}
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-semibold text-base-content">Tags</span>
+                <label className="label py-1.5">
+                  <span className="label-text text-sm font-semibold text-base-content">Tags</span>
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -755,21 +758,21 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                       }
                     }}
                     placeholder="Add tag and press enter..."
-                    className="input input-bordered input-sm flex-1 text-xs focus:input-primary"
+                    className="input input-bordered flex-1 text-sm focus:input-primary"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddEditTag()}
-                    className="btn btn-sm btn-ghost border border-base-300 text-xs"
+                    className="btn btn-ghost border border-base-300 text-sm"
                   >
                     Add Tag
                   </button>
                 </div>
 
                 {editTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-3">
                     {editTags.map((tag, idx) => (
-                      <span key={idx} className="badge badge-primary badge-outline text-xs gap-1">
+                      <span key={idx} className="badge badge-primary badge-outline gap-1.5 py-3">
                         {tag}
                         <button type="button" onClick={() => handleRemoveEditTag(tag)} className="hover:text-error">
                           <X className="w-3 h-3" />
@@ -781,7 +784,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               </div>
 
               {/* Actions */}
-              <div className="modal-action pt-3 border-t border-base-200 flex items-center justify-between">
+              <div className="modal-action pt-4 border-t border-base-200 flex items-center justify-between">
                 {hasRaindropToken && onDeleteCharacter && (
                   <button
                     type="button"
@@ -792,24 +795,24 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                         setConfirmDeleteChar(charToDelete);
                       }
                     }}
-                    className="btn btn-sm btn-error text-white gap-1.5"
+                    className="btn btn-error text-white gap-1.5"
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete Character
                   </button>
                 )}
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-2.5 ml-auto">
                   <button
                     type="button"
                     onClick={handleCloseEditModal}
-                    className="btn btn-sm btn-ghost"
+                    className="btn btn-ghost"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isUpdating}
-                    className="btn btn-sm btn-primary gap-1.5"
+                    className="btn btn-primary gap-1.5"
                   >
                     {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                     Update Character
@@ -829,26 +832,26 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
           onClick={() => setConfirmDeleteChar(null)}
         >
           <div
-            className="modal-box max-w-sm p-5 bg-base-100 border border-base-300 shadow-2xl rounded-2xl space-y-4"
+            className="modal-box max-w-sm p-6 bg-base-100 border border-base-300 shadow-2xl rounded-2xl space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-bold text-base text-base-content flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-error" />
               Delete Character?
             </h3>
-            <p className="text-xs text-base-content/70">
+            <p className="text-sm text-base-content/70 leading-relaxed">
               Are you sure you want to delete <strong className="text-base-content">{confirmDeleteChar.title}</strong> from your Raindrop collection? This action cannot be undone.
             </p>
             {deleteError && (
-              <div className="alert alert-error text-xs py-2 px-3 rounded-xl">
+              <div className="alert alert-error text-sm py-2.5 px-4 rounded-xl">
                 {deleteError}
               </div>
             )}
-            <div className="modal-action pt-2 flex items-center justify-end gap-2">
+            <div className="modal-action pt-2 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setConfirmDeleteChar(null)}
-                className="btn btn-sm btn-ghost"
+                className="btn btn-ghost"
               >
                 Cancel
               </button>
@@ -856,7 +859,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 type="button"
                 onClick={handleDeleteConfirm}
                 disabled={isDeleting}
-                className="btn btn-sm btn-error text-white gap-1.5"
+                className="btn btn-error text-white gap-1.5"
               >
                 {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 Delete

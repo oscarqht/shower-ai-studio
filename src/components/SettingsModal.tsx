@@ -88,14 +88,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-base-300 bg-base-200/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 text-primary rounded-lg">
+        <div className="flex items-center justify-between px-7 py-5 border-b border-base-300 bg-base-200/50">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
               <Key className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-base-content">Raindrop Authentication</h2>
-              <p className="text-xs text-base-content/60">Connect via OAuth2 Login or manual Bearer Token</p>
+              <h2 className="text-lg font-bold text-base-content">Raindrop Authentication</h2>
+              <p className="text-sm text-base-content/60 mt-0.5">Connect via OAuth2 Login or manual Bearer Token</p>
             </div>
           </div>
           <button
@@ -109,27 +109,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSave} className="p-6 space-y-6">
+        <form onSubmit={handleSave} className="p-7 space-y-7">
           {/* OAuth2 Login Section */}
-          <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 space-y-3">
+          <div className="p-5 bg-primary/5 rounded-2xl border border-primary/20 space-y-3.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span className="font-semibold text-xs text-base-content">
+                <span className="font-semibold text-sm text-base-content">
                   Raindrop OAuth2 Quick Login
                 </span>
               </div>
               {oauthConfigured === true && (
-                <span className="badge badge-success badge-sm text-[10px]">OAuth Ready</span>
+                <span className="badge badge-success badge-sm">OAuth Ready</span>
               )}
             </div>
 
-            <p className="text-[11px] text-base-content/70">
+            <p className="text-sm text-base-content/70 leading-relaxed">
               Sign in directly with your Raindrop.io account to authorize access without manually generating tokens.
             </p>
 
             {oauthError && (
-              <p className="text-xs text-error font-medium">{oauthError}</p>
+              <p className="text-sm text-error font-medium">{oauthError}</p>
             )}
 
             <button
@@ -137,7 +137,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               id="oauth-login-btn"
               onClick={handleOAuthLogin}
               disabled={isLoggingInOAuth}
-              className="btn btn-primary btn-sm w-full gap-2 shadow-sm"
+              className="btn btn-primary w-full gap-2 shadow-sm"
             >
               {isLoggingInOAuth ? (
                 <>
@@ -153,12 +153,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
 
-          <div className="divider text-xs text-base-content/40 my-1">OR MANUAL TOKEN</div>
+          <div className="divider text-xs text-base-content/40 my-0">OR MANUAL TOKEN</div>
 
           {/* Raindrop Token Field */}
           <div className="form-control w-full">
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="raindrop-token-input" className="label-text font-semibold text-xs text-base-content flex items-center gap-1.5">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <label htmlFor="raindrop-token-input" className="label-text font-semibold text-sm text-base-content flex items-center gap-2">
                 <Database className="w-4 h-4 text-primary" />
                 Raindrop API Bearer Token
               </label>
@@ -166,7 +166,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 href="https://app.raindrop.io/settings/integrations"
                 target="_blank"
                 rel="noreferrer"
-                className="link link-primary text-[11px] flex items-center gap-1 hover:underline"
+                className="link link-primary text-xs flex items-center gap-1 hover:underline shrink-0"
               >
                 Get Test Token <ExternalLink className="w-3 h-3" />
               </a>
@@ -179,18 +179,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               placeholder="Paste your Raindrop Test Token or OAuth Token..."
               className="input input-bordered w-full font-mono text-sm focus:input-primary"
             />
-            <p className="text-[11px] text-base-content/60 mt-1">
+            <p className="text-xs text-base-content/60 mt-1.5 leading-relaxed">
               Required to fetch Shower characters and styles from your Raindrop collections.
             </p>
 
             {/* Test Raindrop Connection Button */}
-            <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
               <button
                 type="button"
                 id="test-raindrop-token-btn"
                 onClick={() => onTestRaindropSync(raindropToken)}
                 disabled={isTestingSync || !raindropToken.trim()}
-                className="btn btn-xs btn-outline btn-primary"
+                className="btn btn-sm btn-outline btn-primary"
               >
                 {isTestingSync ? (
                   <>
@@ -210,24 +210,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Security Note */}
-          <div className="alert alert-info py-2.5 px-3 rounded-xl text-xs flex items-center gap-2">
+          <div className="alert alert-info py-3 px-4 rounded-xl text-sm flex items-center gap-2.5">
             <ShieldCheck className="w-4 h-4 shrink-0" />
             <span>Credentials are kept in secure local state &amp; server environment proxies.</span>
           </div>
 
           {/* Submit Actions */}
-          <div className="modal-action mt-6 pt-2 border-t border-base-200 flex items-center justify-end gap-3">
+          <div className="modal-action mt-2 pt-2 border-t border-base-200 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-sm btn-ghost"
+              className="btn btn-ghost"
             >
               Cancel
             </button>
             <button
               type="submit"
               id="save-settings-btn"
-              className="btn btn-sm btn-primary gap-1.5"
+              className="btn btn-primary gap-1.5"
             >
               <Check className="w-4 h-4" />
               Save Configuration
