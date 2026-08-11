@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Palette, Check, Info, X, Image as ImageIcon, Layers } from 'lucide-react';
+import { Check, X, Image as ImageIcon } from 'lucide-react';
 import { StylePack } from '../types';
 
 interface StyleSelectorProps {
@@ -30,54 +30,44 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
     return [...styles].reverse();
   }, [styles]);
 
+  const styleChosen = selectedStyleId !== null;
+  const styleCountLabel = styleChosen ? '1 selected' : `${styles.length} packs`;
+
+  const scrollToCompose = () => {
+    const section = document.getElementById('composition-section');
+    if (section) {
+      const headerOffset = 80;
+      const targetPosition = section.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="bg-base-100 border border-base-300 rounded-2xl p-6 sm:p-7 space-y-6 shadow-sm">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-base-300">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-secondary/10 text-secondary rounded-xl border border-secondary/20">
-            <Palette className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-base-content flex items-center gap-2">
-              2. Choose Style Pack
-            </h2>
-          </div>
-        </div>
-
-        {/* Selected Style Indicator & Deselect Button */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          {selectedStyleId !== null && (
-            <button
-              onClick={() => onSelectStyle(null)}
-              className="btn btn-sm btn-ghost border border-base-300 gap-1.5"
-            >
-              <X className="w-3.5 h-3.5" />
-              Clear Style
-            </button>
-          )}
-        </div>
+    <section>
+      <div className="flex items-baseline gap-3.5 flex-wrap mb-1.5">
+        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E]">STEP 02</span>
+        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">What should it look like?</h2>
+        <span className="font-mono text-[12.5px] text-[#8A7E73]">{styleCountLabel}</span>
       </div>
+      <p className="mb-[18px] text-[#8A7E73] text-[15px]">
+        One style pack at a time. Peek at the details before you commit.
+      </p>
 
-      {/* Styles Loading state */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px] animate-pulse">
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="h-52 bg-base-300/50 rounded-xl border border-base-300" />
+            <div key={n} className="aspect-[16/10] bg-[#EFE6DA]/60 rounded-[20px]" />
           ))}
         </div>
       ) : styles.length === 0 ? (
-        /* Empty State */
-        <div className="text-center py-10 border border-dashed border-base-300 rounded-xl bg-base-200/30 px-6">
-          <Palette className="w-9 h-9 text-base-content/40 mx-auto mb-3" />
-          <p className="text-sm font-medium text-base-content">No Style Packs Loaded</p>
-          <p className="text-sm text-base-content/60 max-w-sm mx-auto mt-1.5 leading-relaxed">
-            Configure your Raindrop token in <strong className="text-base-content">Settings</strong> to load style collections under <code className="text-secondary">Shower &gt; Styles</code>.
+        <div className="border border-dashed border-[#DCCFBF] rounded-[22px] px-6 py-10 text-center">
+          <div className="font-serif text-[24px] text-[#2E2A26]">No style packs yet</div>
+          <p className="mx-auto mt-2 max-w-[44ch] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+            Save style packs to your Raindrop collection and re-sync to see them here.
           </p>
         </div>
       ) : (
-        /* Style Grid Cards */
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px]">
           {reversedStyles.map((style) => {
             const isSelected = selectedStyleId === style.id;
 
@@ -85,72 +75,57 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
               <div
                 key={style.id}
                 onClick={() => onSelectStyle(isSelected ? null : style.id)}
-                className={`group relative rounded-2xl border overflow-hidden cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                className={`rounded-[20px] p-2 cursor-pointer transition-transform hover:-translate-y-0.5 ${
                   isSelected
-                    ? 'bg-secondary/10 border-secondary shadow-md ring-2 ring-secondary/40'
-                    : 'bg-base-200/50 border-base-300 hover:border-secondary/50 hover:bg-base-200'
+                    ? 'bg-[#FFF3EA] border-[1.5px] border-[#C4633E] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)]'
+                    : 'bg-[#FFFDFA] border-[1.5px] border-[#EFE6DA]'
                 }`}
               >
-                {/* Preview Image Container */}
-                <div className="relative aspect-video w-full bg-base-300 overflow-hidden">
+                <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#EFE6DA]">
                   {style.preview_cover ? (
                     <img
                       src={style.preview_cover}
                       alt={style.title}
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = 'none';
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-base-content/40 bg-base-200">
-                      <ImageIcon className="w-8 h-8 mb-1.5 opacity-50" />
-                      <span className="text-xs">No Style Preview</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center text-[#A08F80]">
+                      <ImageIcon className="w-7 h-7 mb-1.5 opacity-50" />
+                      <span className="text-xs">No preview</span>
                     </div>
                   )}
 
-                  {/* Selection Radio Badge Top Right */}
                   <div
-                    className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center transition ${
-                      isSelected
-                        ? 'bg-secondary text-secondary-content shadow-md'
-                        : 'bg-black/60 text-transparent border border-white/40'
+                    className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium ${
+                      isSelected ? 'bg-[#C4633E] text-[#FFF7F1]' : 'bg-[rgba(255,253,250,0.9)] text-[#6E6459]'
                     }`}
                   >
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    {isSelected ? 'Selected' : 'Style pack'}
                   </div>
 
-                  {/* Info button top left */}
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInspectStyle(style);
-                      }}
-                      className="p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition backdrop-blur-xs"
-                      title="Inspect style details & reference images"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInspectStyle(style);
+                    }}
+                    title="View style details"
+                    className="absolute bottom-2 right-2 px-3 py-1.5 rounded-full border border-[#E3D8CA] bg-[rgba(255,253,250,0.92)] text-[#6E6459] text-[12.5px]"
+                  >
+                    View details
+                  </button>
                 </div>
 
-                {/* Style Details Bottom */}
-                <div className="p-3.5 bg-base-100 border-t border-base-300 space-y-1.5">
-                  <h3 className="text-sm font-bold text-base-content truncate" title={style.title}>
+                <div className="px-1.5 pt-2.5 pb-1.5 flex flex-col gap-1.5">
+                  <div className="text-[16px] font-medium text-[#2E2A26] truncate" title={style.title}>
                     {style.title}
-                  </h3>
+                  </div>
                   {style.style_prompt && (
-                    <p className="text-xs text-base-content/70 line-clamp-2 leading-relaxed">
-                      {style.style_prompt}
-                    </p>
-                  )}
-                  {style.extra_style_instruction && (
-                    <p className="text-xs text-secondary truncate font-mono pt-0.5">
-                      Note: {style.extra_style_instruction}
-                    </p>
+                    <p className="text-[13px] text-[#8A7E73] leading-[1.5] line-clamp-2">{style.style_prompt}</p>
                   )}
                 </div>
               </div>
@@ -159,95 +134,124 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
         </div>
       )}
 
-      {/* Style Inspection Modal */}
-      {inspectStyle && mounted && createPortal(
-        <div
-          className="modal modal-open bg-black/60 backdrop-blur-sm fixed inset-0 z-[999] flex items-center justify-center p-4"
-          onClick={() => setInspectStyle(null)}
-        >
-          <div
-            className="modal-box max-w-lg p-6 bg-base-100 border border-base-300 shadow-2xl rounded-2xl space-y-5 max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+      <div className="flex items-center gap-3 mt-4 flex-wrap">
+        {selectedStyleId !== null && (
+          <button
+            onClick={() => onSelectStyle(null)}
+            className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[13.5px]"
           >
-            <div className="flex items-center justify-between border-b border-base-300 pb-4">
-              <h3 className="text-base font-bold text-base-content flex items-center gap-2">
-                <Palette className="w-4 h-4 text-secondary" />
-                {inspectStyle.title}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setInspectStyle(null)}
-                className="btn btn-sm btn-ghost btn-circle"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Preview Cover */}
-            {inspectStyle.preview_cover && (
-              <div className="rounded-xl overflow-hidden max-h-56 bg-base-200 border border-base-300">
-                <img
-                  src={inspectStyle.preview_cover}
-                  alt={inspectStyle.title}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            {/* Style Prompt */}
-            <div>
-              <h4 className="text-xs font-semibold text-base-content/70 mb-1.5">Style Prompt (preview.jpg excerpt):</h4>
-              <p className="text-sm text-base-content bg-base-200 p-3.5 rounded-xl border border-base-300 font-mono whitespace-pre-wrap leading-relaxed">
-                {inspectStyle.style_prompt || 'No style prompt excerpt defined.'}
-              </p>
-            </div>
-
-            {/* Extra Style Instruction */}
-            {inspectStyle.extra_style_instruction && (
-              <div>
-                <h4 className="text-xs font-semibold text-base-content/70 mb-1.5">Extra Style Instruction (preview.jpg note):</h4>
-                <p className="text-sm text-secondary bg-base-200 p-3 rounded-xl border border-base-300 font-mono">
-                  {inspectStyle.extra_style_instruction}
-                </p>
-              </div>
-            )}
-
-            {/* Reference Images List */}
-            {inspectStyle.style_reference_links && inspectStyle.style_reference_links.length > 0 && (
-              <div>
-                <h4 className="text-xs font-semibold text-base-content/70 mb-2.5 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-secondary" />
-                  Style Reference Images ({inspectStyle.style_reference_links.length}):
-                </h4>
-                <div className="grid grid-cols-3 gap-2.5">
-                  {inspectStyle.style_reference_links.map((link, idx) => (
-                    <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-base-300 bg-base-200">
-                      <img
-                        src={link}
-                        alt={`Reference ${idx + 1}`}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="modal-action pt-2">
-              <button
-                type="button"
-                onClick={() => setInspectStyle(null)}
-                className="btn btn-ghost"
-              >
-                Close
-              </button>
-            </div>
+            Clear style
+          </button>
+        )}
+        {styleChosen && (
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EDF1E6] text-[#5C6B50] text-[13.5px] animate-rise">
+            <span>Style locked in — step 3 is ready</span>
+            <button
+              onClick={scrollToCompose}
+              className="border-none bg-transparent text-[#3F6B2F] font-medium underline underline-offset-2"
+            >
+              Compose ↓
+            </button>
           </div>
-        </div>,
-        document.body
-      )}
-    </div>
+        )}
+      </div>
+
+      {/* Style Inspection Modal */}
+      {inspectStyle && mounted &&
+        createPortal(
+          <div
+            onClick={() => setInspectStyle(null)}
+            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#FFFDFA] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
+            >
+              <div className="flex items-start gap-3.5 mb-1.5">
+                <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">{inspectStyle.title}</h3>
+                <button
+                  onClick={() => setInspectStyle(null)}
+                  className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+                Browsing here never changes your current selection.
+              </p>
+
+              <div className="flex flex-col gap-4">
+                {inspectStyle.preview_cover && (
+                  <div className="rounded-2xl overflow-hidden bg-[#EFE6DA] max-h-56">
+                    <img
+                      src={inspectStyle.preview_cover}
+                      alt={inspectStyle.title}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
+                  <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                    Style prompt
+                  </div>
+                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] whitespace-pre-wrap">
+                    {inspectStyle.style_prompt || 'No style prompt defined.'}
+                  </div>
+                </div>
+
+                {inspectStyle.extra_style_instruction && (
+                  <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
+                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                      Extra instructions
+                    </div>
+                    <div className="text-[14.5px] leading-[1.6] text-[#4F4740]">
+                      {inspectStyle.extra_style_instruction}
+                    </div>
+                  </div>
+                )}
+
+                {inspectStyle.style_reference_links && inspectStyle.style_reference_links.length > 0 && (
+                  <div>
+                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                      Reference images
+                    </div>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {inspectStyle.style_reference_links.map((link, idx) => (
+                        <div key={idx} className="aspect-square rounded-xl overflow-hidden bg-[#EFE6DA]">
+                          <img
+                            src={link}
+                            alt={`Reference ${idx + 1}`}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => {
+                    onSelectStyle(inspectStyle.id);
+                    setInspectStyle(null);
+                  }}
+                  className="self-start flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer"
+                >
+                  {selectedStyleId === inspectStyle.id ? (
+                    <>
+                      <Check className="w-4 h-4" /> Already selected
+                    </>
+                  ) : (
+                    'Use this style'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </section>
   );
 };

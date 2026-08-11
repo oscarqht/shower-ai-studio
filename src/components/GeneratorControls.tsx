@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Frame, Globe, User, Palette, X, History, Cpu, RotateCcw, Copy, Check, ExternalLink } from 'lucide-react';
-import { Character, StylePack, ImageGenerationParams } from '../types';
+import { X, History, Check, Copy, ExternalLink } from 'lucide-react';
+import { Character, StylePack } from '../types';
 
 interface GeneratorControlsProps {
   selectedCharacters: Character[];
@@ -68,6 +68,9 @@ const getSavedPromptHistory = (): string[] => {
   return [];
 };
 
+const selectClasses =
+  'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] bg-[#FCFAF6] text-[14.5px] text-[#2E2A26] cursor-pointer outline-none focus:border-[#C4633E]';
+
 export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   selectedCharacters,
   selectedStyle,
@@ -119,6 +122,21 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     }
   };
 
+  const savePromptToHistory = (promptToSave: string) => {
+    if (!promptToSave || !promptToSave.trim()) return;
+    const trimmed = promptToSave.trim();
+    setPromptHistory((prev) => {
+      const filtered = prev.filter((p) => p !== trimmed);
+      const updated = [trimmed, ...filtered].slice(0, 10);
+      try {
+        localStorage.setItem(PROMPT_HISTORY_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save prompt history:', e);
+      }
+      return updated;
+    });
+  };
+
   const handleCopyPrompt = async () => {
     savePromptToHistory(compositionPrompt);
 
@@ -154,7 +172,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setAppError(null);
 
     if (!raindropToken || !raindropToken.trim()) {
-      setAppError('Raindrop API Token is missing. Please enter your token in Settings to open the app.');
+      setAppError('No valid connection — add a token to continue.');
       return;
     }
 
@@ -201,7 +219,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       } else {
         if (newTab) newTab.close();
         setAppError(
-          data?.message || 'Could not resolve Image Generation App URL from Raindrop in runtime ("Shower > Apps > Image generation app").'
+          data?.message || 'Could not resolve Image Generation App URL from Raindrop ("Shower > Apps > Image generation app").'
         );
       }
     } catch (e: any) {
@@ -222,30 +240,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     }
   };
 
-  const savePromptToHistory = (promptToSave: string) => {
-    if (!promptToSave || !promptToSave.trim()) return;
-    const trimmed = promptToSave.trim();
-    setPromptHistory((prev) => {
-      const filtered = prev.filter((p) => p !== trimmed);
-      const updated = [trimmed, ...filtered].slice(0, 10);
-      try {
-        localStorage.setItem(PROMPT_HISTORY_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to save prompt history:', e);
-      }
-      return updated;
-    });
-  };
-
-  const handleClearPromptHistory = () => {
-    setPromptHistory([]);
-    try {
-      localStorage.removeItem(PROMPT_HISTORY_STORAGE_KEY);
-    } catch (e) {
-      console.error('Failed to clear prompt history:', e);
-    }
-  };
-
   const handleDeletePromptFromHistory = (promptToDelete: string) => {
     setPromptHistory((prev) => {
       const updated = prev.filter((p) => p !== promptToDelete);
@@ -262,134 +256,81 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     });
   };
 
+  const castSummary = selectedCharacters.length
+    ? selectedCharacters.map((c) => c.title).join(' · ')
+    : 'No characters selected yet';
+  const styleSummary = selectedStyle ? selectedStyle.title : 'No style selected yet';
+
   return (
-    <div id="composition-section" className="scroll-mt-20 bg-base-100 border border-base-300 rounded-2xl p-6 sm:p-7 space-y-6 shadow-sm">
-      {/* Title */}
-      <div className="flex items-center justify-between pb-5 border-b border-base-300">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-accent/10 text-accent rounded-xl border border-accent/20">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-base-content">3. Composition &amp; Parameters</h2>
-          </div>
-        </div>
+    <section
+      id="composition-section"
+      className="scroll-mt-20 rounded-[26px] p-5 sm:p-7 bg-[#FFFDFA] border border-[#EAE0D4] shadow-[0_20px_50px_-34px_rgba(88,66,48,0.55)]"
+    >
+      <div className="flex items-baseline gap-3.5 flex-wrap">
+        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E]">STEP 03</span>
+        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">Compose &amp; hand off</h2>
       </div>
 
-      {/* Selected Items Summary Chips */}
-      <div className="bg-base-200/60 rounded-xl p-4 border border-base-300 space-y-3">
-        <h3 className="text-xs font-semibold text-base-content/60 uppercase tracking-wider">Active Shower Selection</h3>
-        <div className="flex flex-wrap gap-2.5">
-          {/* Selected Characters */}
-          {selectedCharacters.length === 0 ? (
-            <span className="badge badge-ghost">
-              No Characters Selected
-            </span>
-          ) : (
-            selectedCharacters.map((char) => (
-              <span
-                key={char.id}
-                className="badge badge-primary gap-1.5 py-3.5 px-3.5"
-              >
-                {char.cover && (
-                  <img
-                    src={char.cover}
-                    alt={char.title}
-                    referrerPolicy="no-referrer"
-                    className="w-4 h-4 rounded-full object-cover"
-                  />
-                )}
-                <User className="w-3 h-3" />
-                <span className="font-medium">{char.title}</span>
-              </span>
-            ))
-          )}
-
-          {/* Selected Style */}
-          {selectedStyle ? (
-            <span className="badge badge-secondary gap-1.5 py-3.5 px-3.5">
-              {selectedStyle.preview_cover && (
-                <img
-                  src={selectedStyle.preview_cover}
-                  alt={selectedStyle.title}
-                  referrerPolicy="no-referrer"
-                  className="w-4 h-4 rounded-full object-cover"
-                />
-              )}
-              <Palette className="w-3 h-3" />
-              <span className="font-medium">{selectedStyle.title}</span>
-            </span>
-          ) : (
-            <span className="badge badge-ghost">
-              No Style Selected
-            </span>
-          )}
+      {/* Selected Items Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-[18px] mb-[22px]">
+        <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
+          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">Cast</div>
+          <div className={`text-[14.5px] leading-[1.5] ${selectedCharacters.length ? 'text-[#4F4740]' : 'text-[#A79C92]'}`}>
+            {castSummary}
+          </div>
+        </div>
+        <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
+          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">Style</div>
+          <div className={`text-[14.5px] leading-[1.5] ${selectedStyle ? 'text-[#4F4740]' : 'text-[#A79C92]'}`}>
+            {styleSummary}
+          </div>
         </div>
       </div>
 
       {/* Composition Prompt Entry */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <label htmlFor="composition-prompt-textarea" className="label-text font-semibold text-sm text-base-content flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-accent" />
-            Composition Prompt
-          </label>
-          <div className="flex items-center gap-3">
-            {compositionPrompt && (
-              <button
-                type="button"
-                id="clear-composition-prompt-btn"
-                onClick={() => setCompositionPrompt('')}
-                className="btn btn-xs btn-ghost text-error gap-1"
-                title="Clear composition prompt content"
-              >
-                <X className="w-3 h-3" />
-                <span>Clear Prompt</span>
-              </button>
-            )}
-            <span className="text-xs text-base-content/60 flex items-center gap-2">
-              <span className="hidden sm:inline">Describe the scene action or framing</span>
-              <kbd className="kbd kbd-sm">⌘+Enter</kbd>
-            </span>
-          </div>
-        </div>
-        <div className="relative">
-          <textarea
-            id="composition-prompt-textarea"
-            value={compositionPrompt}
-            onChange={(e) => setCompositionPrompt(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={5}
-            placeholder="Describe how the characters interact, environment, camera angle, action, or mood..."
-            className="textarea textarea-bordered w-full text-sm leading-relaxed focus:textarea-accent min-h-[140px]"
-          />
-          {compositionPrompt && (
-            <button
-              type="button"
-              onClick={() => setCompositionPrompt('')}
-              className="absolute top-3 right-3 btn btn-xs btn-ghost btn-circle"
-              title="Clear prompt content"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+      <label htmlFor="composition-prompt-textarea" className="block text-sm font-medium text-[#2E2A26] mb-2">
+        Composition
+      </label>
+      <textarea
+        id="composition-prompt-textarea"
+        value={compositionPrompt}
+        onChange={(e) => setCompositionPrompt(e.target.value)}
+        onKeyDown={handleKeyDown}
+        rows={4}
+        placeholder="Golden hour on a rooftop, the two of them mid-laugh, shot from below…"
+        className="w-full resize-vertical px-4 py-3.5 rounded-2xl border border-[#E3D8CA] bg-[#FCFAF6] text-[15px] leading-[1.55] text-[#2E2A26] outline-none focus:border-[#C4633E]"
+      />
 
-        {/* Prompt History Pills */}
-        {promptHistory.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-base-content/60 flex items-center gap-1.5">
-              <History className="w-3.5 h-3.5 text-accent" /> History:
-            </span>
+      <div className="flex flex-wrap gap-2.5 items-center mt-2.5">
+        {compositionPrompt && (
+          <button
+            type="button"
+            id="clear-composition-prompt-btn"
+            onClick={() => setCompositionPrompt('')}
+            className="px-3 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[12.5px]"
+          >
+            Clear text
+          </button>
+        )}
+        <span className="font-mono text-[11.5px] text-[#A08F80]">⌘↵ opens the app</span>
+      </div>
+
+      {/* Prompt History Pills */}
+      {promptHistory.length > 0 && (
+        <div className="mt-4">
+          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2 flex items-center gap-1.5">
+            <History className="w-3.5 h-3.5" /> Recent prompts
+          </div>
+          <div className="flex flex-wrap gap-2">
             {promptHistory.map((histPrompt, idx) => (
               <div
                 key={idx}
-                className="badge badge-outline gap-1.5 py-3 px-3 text-xs max-w-[240px]"
+                className="flex items-center gap-1.5 pl-3.5 pr-2 py-1.5 rounded-full bg-[#F6F0E7] border border-[#EBE1D4] max-w-full"
               >
                 <button
                   type="button"
                   onClick={() => setCompositionPrompt(histPrompt)}
-                  className="truncate font-medium text-left"
+                  className="text-[13px] text-[#6E6459] truncate max-w-[34ch]"
                   title={histPrompt}
                 >
                   {histPrompt}
@@ -400,62 +341,37 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
                     e.stopPropagation();
                     handleDeletePromptFromHistory(histPrompt);
                   }}
-                  className="hover:text-error shrink-0"
-                  title="Delete prompt from history"
+                  className="text-[#B0A396] hover:text-[#A0433A] shrink-0"
+                  title="Remove"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={handleClearPromptHistory}
-              className="text-xs text-base-content/60 hover:text-error transition ml-1 underline"
-              title="Clear all prompt history"
-            >
-              Clear
-            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Select Controls: Model, Aspect Ratio & Text Language */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
-        {/* Model Select */}
-        <div className="form-control">
-          <label htmlFor="model-select" className="label py-1.5">
-            <span className="label-text text-sm font-semibold text-base-content flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-accent" />
-              AI Model
-            </span>
-          </label>
-          <select
-            id="model-select"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="select select-bordered w-full text-sm focus:select-accent"
-          >
+      {/* Select Controls */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-[22px]">
+        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
+          Model
+          <select id="model-select" value={model} onChange={(e) => setModel(e.target.value)} className={selectClasses}>
             {MODEL_OPTIONS.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
               </option>
             ))}
           </select>
-        </div>
+        </label>
 
-        {/* Aspect Ratio Select */}
-        <div className="form-control">
-          <label htmlFor="aspect-ratio-select" className="label py-1.5">
-            <span className="label-text text-sm font-semibold text-base-content flex items-center gap-2">
-              <Frame className="w-4 h-4 text-primary" />
-              Aspect Ratio
-            </span>
-          </label>
+        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
+          Aspect ratio
           <select
             id="aspect-ratio-select"
             value={aspectRatio}
             onChange={(e) => setAspectRatio(e.target.value)}
-            className="select select-bordered w-full text-sm focus:select-primary"
+            className={selectClasses}
           >
             {ASPECT_RATIOS.map((ar) => (
               <option key={ar.value} value={ar.value}>
@@ -463,21 +379,15 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
               </option>
             ))}
           </select>
-        </div>
+        </label>
 
-        {/* Text Language Select */}
-        <div className="form-control">
-          <label htmlFor="text-language-select" className="label py-1.5">
-            <span className="label-text text-sm font-semibold text-base-content flex items-center gap-2">
-              <Globe className="w-4 h-4 text-secondary" />
-              Text Language
-            </span>
-          </label>
+        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
+          Text language
           <select
             id="text-language-select"
             value={textLanguage}
             onChange={(e) => setTextLanguage(e.target.value)}
-            className="select select-bordered w-full text-sm focus:select-secondary"
+            className={selectClasses}
           >
             {TEXT_LANGUAGES.map((lang) => (
               <option key={lang.value} value={lang.value}>
@@ -485,67 +395,63 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
               </option>
             ))}
           </select>
-        </div>
+        </label>
       </div>
 
       {/* Actions */}
-      <div className="pt-5 border-t border-base-300 flex items-center justify-end gap-3 flex-wrap sm:flex-nowrap">
-        <button
-          type="button"
-          onClick={handleReset}
-          className="btn btn-ghost border border-base-300 hover:btn-error gap-1.5"
-          title="Reset all inputs"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset All</span>
-        </button>
-
-        <button
-          type="button"
-          id="copy-prompt-btn"
-          onClick={handleCopyPrompt}
-          className="btn btn-outline gap-2"
-        >
-          {isCopied ? (
-            <>
-              <Check className="w-4 h-4 text-success" />
-              <span>Copied!</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4" />
-              <span>Copy prompt</span>
-            </>
-          )}
-        </button>
-
+      <div className="flex flex-wrap gap-3 items-center mt-6 pt-5 border-t border-[#F0E7DA]">
         <button
           type="button"
           id="open-app-btn"
           onClick={handleOpenApp}
           disabled={isOpeningApp}
           title="Open Image Generation App with prompt parameters"
-          className="btn btn-primary gap-2"
+          className="flex items-center justify-center gap-2 px-[22px] py-3.5 rounded-2xl border-none bg-[#C4633E] text-[#FFF7F1] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer shadow-[0_12px_24px_-14px_rgba(196,99,62,0.95)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
         >
           {isOpeningApp ? (
+            <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          ) : (
+            <ExternalLink className="w-4 h-4" />
+          )}
+          <span>{isOpeningApp ? 'Opening…' : 'Open image app ↗'}</span>
+        </button>
+
+        <button
+          type="button"
+          id="copy-prompt-btn"
+          onClick={handleCopyPrompt}
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer"
+        >
+          {isCopied ? (
             <>
-              <span className="loading loading-spinner loading-xs"></span>
-              <span>Opening...</span>
+              <Check className="w-4 h-4" />
+              <span>Copied ✓</span>
             </>
           ) : (
             <>
-              <ExternalLink className="w-4 h-4" />
-              <span>Open App</span>
+              <Copy className="w-4 h-4" />
+              <span>Copy payload</span>
             </>
           )}
+        </button>
+
+        <div className="flex-1 min-w-2" />
+
+        <button
+          type="button"
+          onClick={handleReset}
+          title="Reset all inputs"
+          className="px-4 py-3 rounded-2xl border-none bg-transparent text-[#A0776A] text-[14px] whitespace-nowrap shrink-0 cursor-pointer underline underline-offset-[3px]"
+        >
+          Reset everything
         </button>
       </div>
 
       {appError && (
-        <div className="alert alert-error text-sm py-2.5 px-4 rounded-xl">
-          <span>{appError}</span>
+        <div className="mt-4 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+          {appError}
         </div>
       )}
-    </div>
+    </section>
   );
 };

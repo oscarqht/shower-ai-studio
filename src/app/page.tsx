@@ -7,7 +7,7 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { StyleSelector } from '@/components/StyleSelector';
 import { GeneratorControls } from '@/components/GeneratorControls';
 import { Character, StylePack, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage } from '@/types';
-import { AlertTriangle, Sparkles, Key, Settings, CheckCircle2, LogIn } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
 
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
 const INPUTS_STORAGE_KEY = 'raindrop_ai_studio_last_inputs_v1';
@@ -647,180 +647,202 @@ export default function Home() {
   const selectedCharacters = characters.filter((c) => selectedCharacterIds.includes(c.id));
   const selectedStyle = styles.find((s) => s.id === selectedStyleId) || null;
 
+  const hasToken = isMounted && Boolean(settings.raindropToken && settings.raindropToken.trim());
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header
+          onOpenSettings={() => {}}
+          onRefreshRaindrop={() => {}}
+          isFetchingRaindrop={false}
+          raindropStatus="idle"
+          hasRaindropToken={false}
+        />
+        <main className="flex-1 w-full max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10 pb-24 flex items-center justify-center">
+          <div className="min-h-[56vh] flex flex-col items-center justify-center gap-[22px] text-center">
+            <div className="flex gap-2.5">
+              <span className="w-3.5 h-3.5 rounded-full bg-[#C4633E] animate-breathe" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#D9A06B] animate-breathe [animation-delay:180ms]" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#7C8F6F] animate-breathe [animation-delay:360ms]" />
+            </div>
+            <div>
+              <div className="font-serif text-[28px] text-[#2E2A26]">Warming up the studio</div>
+              <p className="mt-2 text-[#8A7E73] text-[15px]">Reading your token and cached collections…</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-base-300 text-base-content font-sans flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Top Header */}
       <Header
         onOpenSettings={() => setIsSettingsOpen(true)}
         onRefreshRaindrop={() => fetchRaindropData()}
         isFetchingRaindrop={isFetchingRaindrop}
         raindropStatus={raindropStatus}
-        hasRaindropToken={Boolean(settings.raindropToken && settings.raindropToken.trim())}
+        hasRaindropToken={hasToken}
       />
 
       {/* Main Content Workspace */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-5 lg:px-10 py-8 flex flex-col justify-center">
-        {!isMounted ? (
-          /* State 1: Loading screen while determining token presence */
-          <div className="my-auto py-16 flex flex-col items-center justify-center text-center">
-            <div className="card bg-base-100 border border-base-300 rounded-3xl p-10 sm:p-12 shadow-sm max-w-md w-full flex flex-col items-center justify-center gap-5">
-              <span className="loading loading-spinner loading-lg text-primary"></span>
-              <div>
-                <h3 className="text-base font-bold text-base-content">Initializing Shower Studio…</h3>
-                <p className="text-sm text-base-content/60 mt-1.5">Reading token &amp; loading cached collections</p>
+      <main className="flex-1 w-full max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10 pb-24">
+        {!hasToken ? (
+          /* NOT CONNECTED */
+          <div className="max-w-3xl mx-auto mt-3 sm:mt-10 animate-rise">
+            <span className="inline-block font-mono text-[11px] tracking-[0.16em] uppercase text-[#C4633E] bg-[#F7E7DC] px-3 py-1.5 rounded-full">
+              Not connected
+            </span>
+            <h1 className="font-serif font-normal text-[34px] sm:text-[46px] lg:text-[54px] leading-[1.08] mt-4 -tracking-[0.5px] text-[#2E2A26]">
+              Bring your cast and your
+              <br />
+              <em className="text-[#C4633E]">style packs</em> into one place.
+            </h1>
+            <p className="mt-4 text-[17px] leading-[1.6] text-[#6E6459] max-w-[56ch]">
+              Connect Raindrop and Shower Studio imports every character and style pack you&apos;ve saved.
+              Pick who&apos;s in the shot, pick the look, describe the scene — and hand a clean,
+              structured payload to your image app.
+            </p>
+
+            <div className="flex flex-wrap gap-2.5 mt-5 mb-7">
+              {['Characters, synced', 'Style packs, previewed', 'One-tap handoff'].map((chip) => (
+                <span
+                  key={chip}
+                  className="px-3.5 py-1.5 rounded-full bg-[#FFFDFA] border border-[#EAE0D4] text-[13.5px] text-[#6E6459]"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+
+            {raindropMessage && raindropStatus === 'error' && (
+              <div className="mb-4 rounded-xl border border-[#F1D3C9] bg-[#FBEAE5] text-[#96402F] text-sm px-4 py-3">
+                {raindropMessage}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+              <div className="bg-[#FFFDFA] border border-[#EAE0D4] rounded-[22px] p-6 shadow-[0_14px_34px_-22px_rgba(88,66,48,0.4)] flex flex-col">
+                <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80]">
+                  Recommended
+                </div>
+                <div className="font-serif text-[25px] mt-2 mb-1.5 text-[#2E2A26]">
+                  Sign in with Raindrop
+                </div>
+                <p className="text-[14.5px] leading-[1.55] text-[#7A6F64] flex-1 mb-5">
+                  A browser redirect grants access — nothing to copy or paste.
+                </p>
+                <button
+                  id="oauth-login-main-btn"
+                  onClick={handleOAuthLogin}
+                  disabled={isLoggingInOAuth}
+                  className="w-full flex items-center justify-center gap-2.5 px-[18px] py-3.5 rounded-2xl border-none bg-[#C4633E] text-[#FFF7F1] text-[15px] font-medium cursor-pointer shadow-[0_10px_22px_-12px_rgba(196,99,62,0.9)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+                >
+                  {isLoggingInOAuth ? (
+                    <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                  ) : (
+                    <LogIn className="w-4 h-4" />
+                  )}
+                  <span>{isLoggingInOAuth ? 'Connecting…' : 'Continue with Raindrop'}</span>
+                </button>
+              </div>
+
+              <div className="border border-dashed border-[#DCCFBF] rounded-[22px] p-6 flex flex-col">
+                <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80]">
+                  Alternative
+                </div>
+                <div className="font-serif text-[25px] mt-2 mb-1.5 text-[#2E2A26]">
+                  Paste a token instead
+                </div>
+                <p className="text-[14.5px] leading-[1.55] text-[#7A6F64] flex-1 mb-5">
+                  Already have a test token? Enter it by hand in Settings.
+                </p>
+                <button
+                  id="placeholder-configure-token-btn"
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="w-full px-[18px] py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium cursor-pointer transition-colors hover:border-[#C4633E] hover:text-[#C4633E]"
+                >
+                  Open Settings →
+                </button>
               </div>
             </div>
           </div>
-        ) : settings.raindropToken?.trim() ? (
-          /* State 2: Has token -> Show main UI */
-          <div className="space-y-8">
+        ) : (
+          /* CONNECTED / WORKSPACE */
+          <div className="flex flex-col gap-7 sm:gap-11">
             {/* Status Notification Banner */}
             {raindropMessage && (
               <div
-                className={`alert ${
-                  raindropStatus === 'success' ? 'alert-success' : 'alert-error'
-                } rounded-2xl px-5 py-3.5 text-sm shadow-sm flex items-center justify-between gap-3`}
+                className={`flex items-start gap-3 rounded-2xl px-4 py-3.5 text-[14.5px] leading-[1.5] border ${
+                  raindropStatus === 'success'
+                    ? 'bg-[#EDF1E6] text-[#4E6140] border-[#DCE5CF]'
+                    : 'bg-[#FBEAE5] text-[#96402F] border-[#F1D3C9]'
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  {raindropStatus === 'success' ? (
-                    <CheckCircle2 className="w-5 h-5 shrink-0" />
-                  ) : (
-                    <AlertTriangle className="w-5 h-5 shrink-0" />
-                  )}
-                  <span>{raindropMessage}</span>
-                </div>
+                {raindropStatus === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">{raindropMessage}</div>
 
                 {raindropStatus !== 'success' && (
                   <button
                     onClick={() => setIsSettingsOpen(true)}
-                    className="btn btn-sm btn-outline"
+                    className="shrink-0 px-3 py-1.5 rounded-full border border-current text-[13px] font-medium whitespace-nowrap"
                   >
-                    Configure Settings
+                    Fix in Settings
                   </button>
                 )}
+                <button
+                  onClick={() => setRaindropMessage(null)}
+                  className="shrink-0 opacity-50 hover:opacity-90 text-base leading-none px-1"
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
               </div>
             )}
 
-            {/* Panels in Single Column Stack */}
-            <div className="flex flex-col gap-8">
-              {/* Section 1: Characters Selection */}
-              <CharacterSelector
-                characters={characters}
-                selectedCharacterIds={selectedCharacterIds}
-                onToggleCharacter={handleToggleCharacter}
-                onSelectMultipleCharacters={handleSelectMultipleCharacters}
-                onClearSelection={handleClearCharacters}
-                isLoading={isFetchingRaindrop}
-                onAddCharacter={handleAddCharacter}
-                onDeleteCharacter={handleDeleteCharacter}
-                onUpdateCharacter={handleUpdateCharacter}
-                hasRaindropToken={Boolean(settings.raindropToken && settings.raindropToken.trim())}
-              />
+            {/* Section 1: Characters Selection */}
+            <CharacterSelector
+              characters={characters}
+              selectedCharacterIds={selectedCharacterIds}
+              onToggleCharacter={handleToggleCharacter}
+              onSelectMultipleCharacters={handleSelectMultipleCharacters}
+              onClearSelection={handleClearCharacters}
+              isLoading={isFetchingRaindrop}
+              onAddCharacter={handleAddCharacter}
+              onDeleteCharacter={handleDeleteCharacter}
+              onUpdateCharacter={handleUpdateCharacter}
+              hasRaindropToken={hasToken}
+            />
 
-              {/* Section 2: Styles Selection */}
-              <StyleSelector
-                styles={styles}
-                selectedStyleId={selectedStyleId}
-                onSelectStyle={handleSelectStyle}
-                isLoading={isFetchingRaindrop}
-              />
+            {/* Section 2: Styles Selection */}
+            <StyleSelector
+              styles={styles}
+              selectedStyleId={selectedStyleId}
+              onSelectStyle={handleSelectStyle}
+              isLoading={isFetchingRaindrop}
+            />
 
-              {/* Section 3: Composition Controls */}
-              <GeneratorControls
-                selectedCharacters={selectedCharacters}
-                selectedStyle={selectedStyle}
-                imageAppUrl={settings.imageAppUrl}
-                raindropToken={settings.raindropToken}
-                onResetAll={handleResetAllInputs}
-              />
-            </div>
-          </div>
-        ) : (
-          /* State 3: Otherwise (No token) -> Show "Raindrop API Bearer Token Required" UI */
-          <div className="my-auto py-8 flex flex-col items-center justify-center text-center">
-            <div className="card bg-base-100 border border-base-300 rounded-3xl p-10 sm:p-14 shadow-sm w-full max-w-2xl text-center relative overflow-hidden">
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 border border-primary/20">
-                  <Key className="w-8 h-8" />
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-bold text-base-content mb-3">
-                  Connect Your Raindrop Account
-                </h2>
-
-                <p className="text-sm sm:text-base text-base-content/70 max-w-md mb-9 leading-relaxed">
-                  Configure your Raindrop API Bearer Token in Settings to load your characters and style packs.
-                </p>
-
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md mb-10">
-                  <button
-                    id="oauth-login-main-btn"
-                    onClick={handleOAuthLogin}
-                    disabled={isLoggingInOAuth}
-                    className="btn btn-primary gap-2 shadow-sm w-full sm:w-auto"
-                  >
-                    {isLoggingInOAuth ? (
-                      <>
-                        <span className="loading loading-spinner loading-xs"></span>
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        <LogIn className="w-4 h-4" />
-                        Login with Raindrop (OAuth2)
-                      </>
-                    )}
-                  </button>
-                  <button
-                    id="placeholder-configure-token-btn"
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="btn btn-outline border-base-300 gap-2 w-full sm:w-auto"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Manual Token
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-9 border-t border-base-200 text-left w-full">
-                  <div className="p-4 bg-base-200/50 rounded-xl border border-base-300">
-                    <div className="text-sm font-semibold text-base-content flex items-center gap-2 mb-1.5">
-                      <Sparkles className="w-4 h-4 text-primary" />
-                      1. Characters
-                    </div>
-                    <p className="text-xs text-base-content/60 leading-relaxed">
-                      Import reference characters &amp; tags from Raindrop Shower.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-base-200/50 rounded-xl border border-base-300">
-                    <div className="text-sm font-semibold text-base-content flex items-center gap-2 mb-1.5">
-                      <Sparkles className="w-4 h-4 text-secondary" />
-                      2. Style Packs
-                    </div>
-                    <p className="text-xs text-base-content/60 leading-relaxed">
-                      Sync aesthetic prompts &amp; style collections instantly.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-base-200/50 rounded-xl border border-base-300">
-                    <div className="text-sm font-semibold text-base-content flex items-center gap-2 mb-1.5">
-                      <Sparkles className="w-4 h-4 text-accent" />
-                      3. Payload
-                    </div>
-                    <p className="text-xs text-base-content/60 leading-relaxed">
-                      Inspect structured generation parameters &amp; payload JSON.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Section 3: Composition Controls */}
+            <GeneratorControls
+              selectedCharacters={selectedCharacters}
+              selectedStyle={selectedStyle}
+              imageAppUrl={settings.imageAppUrl}
+              raindropToken={settings.raindropToken}
+              onResetAll={handleResetAllInputs}
+            />
           </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-base-300 bg-base-100 py-5 px-4 text-center text-xs text-base-content/50">
-        <p>Shower Studio — AI image composition from your Raindrop collections</p>
+      <footer className="px-4 sm:px-6 lg:px-10 py-6 border-t border-[#EEE5D9] font-mono text-[11.5px] tracking-[0.04em] text-[#AB9E92]">
+        Shower Studio — selections, prompts and sync data stay on this device.
       </footer>
 
       {/* Settings Modal */}

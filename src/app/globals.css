@@ -4,12 +4,24 @@
 
 @layer base {
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
+  }
+
+  html {
+    background: #faf6f0;
   }
 
   body {
-    @apply bg-base-300 text-base-content antialiased selection:bg-primary selection:text-primary-content;
+    @apply text-base-content antialiased selection:bg-primary selection:text-primary-content;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #fdf1e6 0%, rgba(253, 241, 230, 0) 60%),
+      radial-gradient(900px 500px at 95% 0%, #eff2e8 0%, rgba(239, 242, 232, 0) 55%),
+      #faf6f0;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::placeholder {
+    color: #a79c92;
   }
 }
 
@@ -24,10 +36,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.4);
+  background: rgba(196, 99, 62, 0.25);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.6);
+  background: rgba(196, 99, 62, 0.4);
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Key, Database, ExternalLink, ShieldCheck, Check, LogIn, Sparkles } from 'lucide-react';
+import { X, ExternalLink, LogIn } from 'lucide-react';
 import { AppSettings } from '../types';
 
 interface SettingsModalProps {
@@ -39,13 +39,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setRaindropToken(settings.raindropToken);
       setOauthError(null);
 
-      // Check if OAuth is configured on server
       fetch('/api/auth/config')
-        ? fetch('/api/auth/config')
-            .then((res) => res.json())
-            .then((data) => setOauthConfigured(Boolean(data.oauthConfigured)))
-            .catch(() => setOauthConfigured(false))
-        : setOauthConfigured(false);
+        .then((res) => res.json())
+        .then((data) => setOauthConfigured(Boolean(data.oauthConfigured)))
+        .catch(() => setOauthConfigured(false));
     }
   }, [isOpen, settings]);
 
@@ -78,97 +75,86 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onClose();
   };
 
+  const handleDisconnect = () => {
+    setRaindropToken('');
+    onSaveSettings({ ...settings, raindropToken: '' });
+    onClose();
+  };
+
   return createPortal(
     <div
-      className="modal modal-open bg-black/60 backdrop-blur-sm fixed inset-0 z-[999] flex items-center justify-center p-4"
       onClick={onClose}
+      className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center"
     >
       <div
-        className="modal-box max-w-xl p-0 overflow-hidden bg-base-100 border border-base-300 shadow-2xl rounded-2xl"
         onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#FFFDFA] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
       >
-        {/* Modal Header */}
-        <div className="flex items-center justify-between px-7 py-5 border-b border-base-300 bg-base-200/50">
-          <div className="flex items-center gap-3.5">
-            <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-              <Key className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-base-content">Raindrop Authentication</h2>
-              <p className="text-sm text-base-content/60 mt-0.5">Connect via OAuth2 Login or manual Bearer Token</p>
-            </div>
-          </div>
+        <div className="flex items-start gap-3.5 mb-1.5">
+          <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">Settings</h3>
           <button
             id="close-settings-btn"
             onClick={onClose}
-            className="btn btn-sm btn-ghost btn-circle"
             aria-label="Close"
+            className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
+        <p className="mb-5 text-[#8A7E73] text-[14.5px] leading-[1.55]">
+          Paste a Raindrop token to connect manually, or sign in with OAuth. It stays on this device.
+        </p>
 
-        {/* Modal Form */}
-        <form onSubmit={handleSave} className="p-7 space-y-7">
-          {/* OAuth2 Login Section */}
-          <div className="p-5 bg-primary/5 rounded-2xl border border-primary/20 space-y-3.5">
+        <form onSubmit={handleSave} className="flex flex-col gap-4">
+          {/* OAuth Login */}
+          <div className="rounded-2xl border border-dashed border-[#DCCFBF] p-[18px] flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="font-semibold text-sm text-base-content">
-                  Raindrop OAuth2 Quick Login
-                </span>
-              </div>
+              <span className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80]">
+                Recommended
+              </span>
               {oauthConfigured === true && (
-                <span className="badge badge-success badge-sm">OAuth Ready</span>
+                <span className="px-2.5 py-1 rounded-full bg-[#EDF1E6] text-[#4E6140] text-[11.5px] font-medium">
+                  OAuth ready
+                </span>
               )}
             </div>
-
-            <p className="text-sm text-base-content/70 leading-relaxed">
-              Sign in directly with your Raindrop.io account to authorize access without manually generating tokens.
+            <p className="text-[14px] text-[#7A6F64] leading-[1.5]">
+              A browser redirect grants access — nothing to copy or paste.
             </p>
-
-            {oauthError && (
-              <p className="text-sm text-error font-medium">{oauthError}</p>
-            )}
-
+            {oauthError && <p className="text-[13.5px] text-[#A0433A]">{oauthError}</p>}
             <button
               type="button"
               id="oauth-login-btn"
               onClick={handleOAuthLogin}
               disabled={isLoggingInOAuth}
-              className="btn btn-primary w-full gap-2 shadow-sm"
+              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] font-medium cursor-pointer disabled:opacity-70"
             >
               {isLoggingInOAuth ? (
-                <>
-                  <span className="loading loading-spinner loading-xs"></span>
-                  Connecting to Raindrop...
-                </>
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
               ) : (
-                <>
-                  <LogIn className="w-4 h-4" />
-                  Login with Raindrop.io (OAuth2)
-                </>
+                <LogIn className="w-4 h-4" />
               )}
+              {isLoggingInOAuth ? 'Connecting to Raindrop…' : 'Continue with Raindrop'}
             </button>
           </div>
 
-          <div className="divider text-xs text-base-content/40 my-0">OR MANUAL TOKEN</div>
+          <div className="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.12em] text-[#A08F80]">
+            <div className="flex-1 h-px bg-[#EAE0D4]" />
+            or manual token
+            <div className="flex-1 h-px bg-[#EAE0D4]" />
+          </div>
 
           {/* Raindrop Token Field */}
-          <div className="form-control w-full">
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <label htmlFor="raindrop-token-input" className="label-text font-semibold text-sm text-base-content flex items-center gap-2">
-                <Database className="w-4 h-4 text-primary" />
-                Raindrop API Bearer Token
-              </label>
+          <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
+            <div className="flex items-center justify-between gap-2">
+              <span>Raindrop token</span>
               <a
                 href="https://app.raindrop.io/settings/integrations"
                 target="_blank"
                 rel="noreferrer"
-                className="link link-primary text-xs flex items-center gap-1 hover:underline shrink-0"
+                className="flex items-center gap-1 text-[#C4633E] text-[12.5px] hover:text-[#9E4A29]"
               >
-                Get Test Token <ExternalLink className="w-3 h-3" />
+                Get test token <ExternalLink className="w-3 h-3" />
               </a>
             </div>
             <input
@@ -176,61 +162,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               type="password"
               value={raindropToken}
               onChange={(e) => setRaindropToken(e.target.value)}
-              placeholder="Paste your Raindrop Test Token or OAuth Token..."
-              className="input input-bordered w-full font-mono text-sm focus:input-primary"
+              placeholder="rd_live_…"
+              className="px-3.5 py-3 rounded-xl border border-[#E3D8CA] bg-[#FCFAF6] text-[14.5px] font-mono outline-none focus:border-[#C4633E]"
             />
-            <p className="text-xs text-base-content/60 mt-1.5 leading-relaxed">
-              Required to fetch Shower characters and styles from your Raindrop collections.
-            </p>
+          </label>
 
-            {/* Test Raindrop Connection Button */}
-            <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
-              <button
-                type="button"
-                id="test-raindrop-token-btn"
-                onClick={() => onTestRaindropSync(raindropToken)}
-                disabled={isTestingSync || !raindropToken.trim()}
-                className="btn btn-sm btn-outline btn-primary"
-              >
-                {isTestingSync ? (
-                  <>
-                    <span className="loading loading-spinner loading-xs"></span>
-                    Testing Connection...
-                  </>
-                ) : (
-                  'Test Raindrop Sync'
-                )}
-              </button>
-              {syncTestMessage && (
-                <span className="text-xs text-info truncate max-w-[280px]">
-                  {syncTestMessage}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Security Note */}
-          <div className="alert alert-info py-3 px-4 rounded-xl text-sm flex items-center gap-2.5">
-            <ShieldCheck className="w-4 h-4 shrink-0" />
-            <span>Credentials are kept in secure local state &amp; server environment proxies.</span>
-          </div>
-
-          {/* Submit Actions */}
-          <div className="modal-action mt-2 pt-2 border-t border-base-200 flex items-center justify-end gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <button
               type="button"
-              onClick={onClose}
-              className="btn btn-ghost"
+              id="test-raindrop-token-btn"
+              onClick={() => onTestRaindropSync(raindropToken)}
+              disabled={isTestingSync || !raindropToken.trim()}
+              className="px-4 py-2.5 rounded-full border border-[#C4633E] bg-transparent text-[#C4633E] text-[13.5px] font-medium disabled:opacity-50"
             >
-              Cancel
+              {isTestingSync ? 'Testing connection…' : 'Test Raindrop sync'}
             </button>
+            {syncTestMessage && (
+              <span className="text-[12.5px] text-[#6E6459] truncate max-w-[280px]">{syncTestMessage}</span>
+            )}
+          </div>
+
+          <div className="flex gap-2.5 flex-wrap pt-2">
             <button
               type="submit"
               id="save-settings-btn"
-              className="btn btn-primary gap-1.5"
+              className="px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] font-medium cursor-pointer"
             >
-              <Check className="w-4 h-4" />
-              Save Configuration
+              Save &amp; sync
+            </button>
+            <button
+              type="button"
+              onClick={handleDisconnect}
+              className="px-[18px] py-3 rounded-xl border border-[#E3D8CA] bg-transparent text-[#A0776A] text-[14.5px] cursor-pointer"
+            >
+              Disconnect
             </button>
           </div>
         </form>

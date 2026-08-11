@@ -3,17 +3,11 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  User,
   Check,
-  Info,
   X,
   Image as ImageIcon,
-  Tag,
-  Search,
-  Minus,
   Plus,
   Trash2,
-  Upload,
   AlertCircle,
   Loader2,
   Pencil,
@@ -69,6 +63,31 @@ interface CharacterSelectorProps {
   hasRaindropToken?: boolean;
 }
 
+function ModalShell({
+  onClose,
+  children,
+  wide = false,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
+  return createPortal(
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[92vh] overflow-y-auto bg-[#FFFDFA] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto`}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   characters,
   selectedCharacterIds,
@@ -81,7 +100,6 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   onUpdateCharacter,
   hasRaindropToken = false,
 }) => {
-  const [tagSearchQuery, setTagSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
 
   React.useEffect(() => {
@@ -156,13 +174,6 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     });
   }, [characters]);
 
-  // Filter tags based on tag search query
-  const filteredTagItems = useMemo(() => {
-    if (!tagSearchQuery.trim()) return tagItems;
-    const q = tagSearchQuery.toLowerCase().trim();
-    return tagItems.filter((t) => t.name.toLowerCase().includes(q));
-  }, [tagItems, tagSearchQuery]);
-
   // Handlers for Add Character Form
   const handleAddTag = (tagToAdd?: string) => {
     const target = (tagToAdd !== undefined ? tagToAdd : tagInput).trim();
@@ -208,7 +219,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   const handleSaveCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addTitle.trim()) {
-      setAddError('Character Title is required.');
+      setAddError('A name is required.');
       return;
     }
 
@@ -290,7 +301,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     e.preventDefault();
     if (!editingCharacter) return;
     if (!editTitle.trim()) {
-      setEditError('Character Title is required.');
+      setEditError('A name is required.');
       return;
     }
 
@@ -331,83 +342,101 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     }
   };
 
+  const charCountLabel =
+    selectedCharacterIds.length > 0
+      ? `${selectedCharacterIds.length} of ${characters.length} selected`
+      : `${characters.length} available`;
+
+  const inputClasses =
+    'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] bg-[#FCFAF6] text-[14.5px] text-[#2E2A26] outline-none focus:border-[#C4633E]';
+  const labelClasses = 'flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]';
+
   return (
-    <div className="bg-base-100 border border-base-300 rounded-2xl p-6 sm:p-7 space-y-6 shadow-sm">
-      {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-base-300">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20">
-            <User className="w-5 h-5" />
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-base font-bold text-base-content">
-              1. Choose Character
-            </h2>
-            <span className="text-xs font-medium text-base-content/50">Multi-select</span>
-            {selectedCharacterIds.length > 0 && (
-              <span className="badge badge-primary font-semibold">
-                {selectedCharacterIds.length} selected
-              </span>
-            )}
-          </div>
-        </div>
+    <section>
+      <div className="flex items-baseline gap-3.5 flex-wrap mb-1.5">
+        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E]">STEP 01</span>
+        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">Who&apos;s in the shot?</h2>
+        <span className="font-mono text-[12.5px] text-[#8A7E73]">{charCountLabel}</span>
+      </div>
+      <p className="mb-[18px] text-[#8A7E73] text-[15px]">
+        Pick as many characters as you like. Tap a tag to grab the whole group.
+      </p>
 
-        {/* Header Action Tools */}
-        <div className="flex items-center gap-2.5 self-end sm:self-auto flex-wrap">
-          {/* Add Character Button */}
-          {hasRaindropToken && onAddCharacter && (
+      {/* Tag pills + actions */}
+      <div className="flex flex-wrap gap-2 items-center mb-7">
+        {tagItems.map((tag) => {
+          const isSelected =
+            tag.characterIds.length > 0 && tag.characterIds.every((id) => selectedCharacterIds.includes(id));
+          return (
             <button
-              id="open-add-character-modal-btn"
-              onClick={() => setIsAddModalOpen(true)}
-              className="btn btn-sm btn-primary gap-1.5"
-              title="Add a new character item to Raindrop"
+              key={tag.key}
+              type="button"
+              onClick={() => {
+                if (!onSelectMultipleCharacters) return;
+                if (isSelected) {
+                  onSelectMultipleCharacters(tag.characterIds, 'remove');
+                } else {
+                  onSelectMultipleCharacters(tag.characterIds, 'add');
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] cursor-pointer transition-colors ${
+                isSelected
+                  ? 'border border-[#C4633E] bg-[#F7E7DC] text-[#A34E2C]'
+                  : 'border border-[#E3D8CA] bg-[#FFFDFA] text-[#6E6459]'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              <span>Add Character</span>
+              <span>{tag.name}</span>
+              <span className="font-mono text-[11px] opacity-65">{tag.count}</span>
             </button>
-          )}
-
-          {/* Clear All Selections Button */}
-          {selectedCharacterIds.length > 0 && (
-            <button
-              onClick={onClearSelection}
-              className="btn btn-sm btn-ghost border border-base-300 gap-1.5"
-            >
-              <X className="w-3.5 h-3.5" />
-              Clear Selection
-            </button>
-          )}
-        </div>
+          );
+        })}
+        <div className="flex-1 min-w-2" />
+        {selectedCharacterIds.length > 0 && (
+          <button
+            onClick={onClearSelection}
+            className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[13.5px] hover:text-[#C4633E] hover:border-[#C4633E]"
+          >
+            Clear selection
+          </button>
+        )}
+        {onAddCharacter && (
+          <button
+            id="open-add-character-modal-btn"
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[13.5px] font-medium"
+          >
+            + New character
+          </button>
+        )}
       </div>
 
-      {/* Characters Loading state */}
+      {/* Loading state */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 animate-pulse">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-[18px] animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((n) => (
-            <div key={n} className="h-48 bg-base-300/50 rounded-xl" />
+            <div key={n} className="aspect-[3/4] bg-[#EFE6DA]/60 rounded-[20px]" />
           ))}
         </div>
       ) : characters.length === 0 ? (
         /* Empty State */
-        <div className="text-center py-10 border border-dashed border-base-300 rounded-xl bg-base-200/30 px-6">
-          <User className="w-9 h-9 text-base-content/40 mx-auto mb-3" />
-          <p className="text-sm font-medium text-base-content">No Characters Loaded</p>
-          <p className="text-sm text-base-content/60 max-w-sm mx-auto mt-1.5 leading-relaxed">
-            Configure your Raindrop token in <strong className="text-base-content">Settings</strong> to sync items from your <code className="text-primary">Shower &gt; Characters</code> collection.
+        <div className="border border-dashed border-[#DCCFBF] rounded-[22px] px-6 py-10 text-center">
+          <div className="font-serif text-[24px] text-[#2E2A26]">No characters yet</div>
+          <p className="mx-auto mt-2 mb-[18px] max-w-[44ch] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+            Save characters to your Raindrop collection and re-sync, or add one right here — it&apos;ll live
+            locally until you connect.
           </p>
-          {hasRaindropToken && onAddCharacter && (
+          {onAddCharacter && (
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="btn btn-sm btn-primary mt-4 gap-1.5"
+              className="px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              Add Your First Character
+              Add a character
             </button>
           )}
         </div>
       ) : (
         /* Character Grid Cards */
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-[18px]">
           {sortedCharacters.map((char) => {
             const isSelected = selectedCharacterIds.includes(char.id);
 
@@ -415,68 +444,55 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               <div
                 key={char.id}
                 onClick={() => onToggleCharacter(char.id)}
-                className={`group relative rounded-2xl border overflow-hidden cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                className={`group relative rounded-[20px] p-2 cursor-pointer transition-transform hover:-translate-y-0.5 ${
                   isSelected
-                    ? 'bg-primary/10 border-primary shadow-md ring-2 ring-primary/40'
-                    : 'bg-base-200/50 border-base-300 hover:border-primary/50 hover:bg-base-200'
+                    ? 'bg-[#FFF3EA] border-[1.5px] border-[#C4633E] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)]'
+                    : 'bg-[#FFFDFA] border-[1.5px] border-[#EFE6DA]'
                 }`}
               >
-                {/* Character Cover Image */}
-                <div className="relative aspect-square w-full bg-base-300 overflow-hidden">
+                <div className="relative aspect-[3/4] rounded-[14px] overflow-hidden bg-[repeating-linear-gradient(135deg,#F1E7DA_0_8px,#EADFCF_8px_16px)]">
                   {char.cover ? (
                     <img
                       src={char.cover}
                       alt={char.title}
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = 'none';
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-base-content/40 bg-base-200">
-                      <ImageIcon className="w-8 h-8 opacity-40" />
+                    <div className="w-full h-full flex items-center justify-center text-[#A08F80]">
+                      <ImageIcon className="w-7 h-7 opacity-50" />
                     </div>
                   )}
 
-                  {/* Top Badges (Selection indicator + Action Buttons) */}
-                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 pointer-events-none">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-white transition-transform ${
-                        isSelected
-                          ? 'bg-primary scale-100 shadow-sm'
-                          : 'bg-black/40 backdrop-blur-xs scale-90 opacity-70 group-hover:opacity-100'
-                      }`}
-                    >
-                      {isSelected ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="w-2 h-2 rounded-full border border-white" />}
-                    </div>
-
-                    <div className="flex items-center gap-1 pointer-events-auto">
-                      {/* Info / Edit button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenEditModal(char);
-                        }}
-                        className="w-7 h-7 rounded-full bg-black/60 hover:bg-primary text-white flex items-center justify-center transition"
-                        title="Edit character"
-                      >
-                        <Info className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                  <div
+                    className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-[13px] transition-opacity ${
+                      isSelected
+                        ? 'bg-[#C4633E] text-[#FFF7F1]'
+                        : 'bg-[rgba(255,253,250,0.9)] border border-[#E3D8CA] text-transparent opacity-0 group-hover:opacity-100'
+                    }`}
+                  >
+                    <Check className="w-3.5 h-3.5" />
                   </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenEditModal(char);
+                    }}
+                    title="Edit character"
+                    className="absolute top-2 right-2 w-[26px] h-[26px] rounded-full border-none bg-[rgba(255,253,250,0.92)] text-[#5B5148] flex items-center justify-center shadow-[0_2px_8px_rgba(80,60,45,0.18)]"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
                 </div>
 
-                {/* Character Meta Info Footer */}
-                <div className="p-3 space-y-1">
-                  <h3 className="text-sm font-bold text-base-content line-clamp-1 group-hover:text-primary transition-colors">
-                    {char.title}
-                  </h3>
+                <div className="px-1.5 pt-2.5 pb-1">
+                  <div className="text-[15px] font-medium leading-tight text-[#2E2A26] truncate">{char.title}</div>
                   {char.excerpt && (
-                    <p className="text-xs text-base-content/60 line-clamp-2 leading-relaxed">
-                      {char.excerpt}
-                    </p>
+                    <div className="text-[13px] text-[#8A7E73] leading-[1.45] mt-1 line-clamp-2">{char.excerpt}</div>
                   )}
                 </div>
               </div>
@@ -485,390 +501,300 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
         </div>
       )}
 
-      {/* Tags Section */}
-      {tagItems.length > 0 && characters.length > 0 && !isLoading && (
-        <div className="pt-5 border-t border-base-300">
-          <h3 className="text-sm font-bold text-base-content mb-3.5 flex items-center gap-2">
-            <Tag className="w-4 h-4 text-primary" />
-            Filter by Tags
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {tagItems.map((tag) => {
-              const isSelected = tag.characterIds.every(id => selectedCharacterIds.includes(id)) && tag.characterIds.length > 0;
-              return (
-                <button
-                  key={tag.key}
-                  type="button"
-                  onClick={() => {
-                    if (onSelectMultipleCharacters) {
-                      if (isSelected) {
-                        onSelectMultipleCharacters(tag.characterIds, 'remove');
-                      } else {
-                        onSelectMultipleCharacters(tag.characterIds, 'add');
-                      }
-                    }
-                  }}
-                  className={`badge badge-lg cursor-pointer hover:scale-105 transition-transform font-medium ${
-                    isSelected ? 'badge-primary' : 'badge-outline bg-base-200 text-base-content/70'
-                  }`}
-                >
-                  {tag.name} <span className="opacity-60 ml-1.5">({tag.count})</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-
       {/* Add Character Modal */}
-      {isAddModalOpen && mounted && createPortal(
-        <div
-          className="modal modal-open bg-black/60 backdrop-blur-sm fixed inset-0 z-[999] flex items-center justify-center p-4"
-          onClick={handleResetAddForm}
-        >
-          <div
-            className="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300 shadow-2xl rounded-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-base-300 bg-base-200/50">
-              <h3 className="font-bold text-base text-base-content flex items-center gap-2">
-                <Plus className="w-4 h-4 text-primary" />
-                Add New Character to Raindrop
-              </h3>
+      {isAddModalOpen && mounted && (
+        <ModalShell onClose={handleResetAddForm}>
+          <div className="flex items-start gap-3.5 mb-1.5">
+            <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">New character</h3>
+            <button
+              onClick={handleResetAddForm}
+              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+            Name is required. Everything else is optional and editable later.
+          </p>
+
+          <form onSubmit={handleSaveCharacter} className="flex flex-col gap-3.5">
+            {addError && (
+              <div className="flex items-center gap-2 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{addError}</span>
+              </div>
+            )}
+
+            <label className={labelClasses}>
+              Name (required)
+              <input
+                type="text"
+                value={addTitle}
+                onChange={(e) => setAddTitle(e.target.value)}
+                placeholder="Mira Alvent"
+                className={inputClasses}
+                required
+              />
+            </label>
+
+            <label className={labelClasses}>
+              Description
+              <textarea
+                value={addExcerpt}
+                onChange={(e) => setAddExcerpt(e.target.value)}
+                rows={3}
+                placeholder="Freckled, always mid-motion, wears a patched flight coat."
+                className={`${inputClasses} resize-vertical leading-[1.5]`}
+              />
+            </label>
+
+            <div className={labelClasses}>
+              Reference image
               <button
-                onClick={handleResetAddForm}
-                className="btn btn-sm btn-ghost btn-circle"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-[#DCCFBF] bg-[#FCFAF6] text-left"
               >
-                <X className="w-4 h-4" />
+                <span className="w-11 h-11 rounded-[10px] bg-[repeating-linear-gradient(135deg,#F1E7DA_0_6px,#EADFCF_6px_12px)] overflow-hidden shrink-0">
+                  {previewUrl && <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />}
+                </span>
+                <span className="text-[14px] text-[#6E6459]">
+                  {selectedFile ? selectedFile.name : 'Upload a reference image'}
+                </span>
               </button>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
             </div>
 
-            <form onSubmit={handleSaveCharacter} className="p-6 space-y-5">
-              {addError && (
-                <div className="alert alert-error text-sm py-2.5 px-4 rounded-xl flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{addError}</span>
-                </div>
-              )}
-
-              {/* Title */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Character Title *</span>
-                </label>
+            <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459]">
+              Tags
+              <div className="flex flex-wrap gap-1.5">
+                {addTags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] border border-[#EBE1D4] text-[13px] text-[#5B5148]"
+                  >
+                    {tag}
+                    <button type="button" onClick={() => handleRemoveTag(tag)} className="text-[#B0A396] hover:text-[#A0433A]">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  value={addTitle}
-                  onChange={(e) => setAddTitle(e.target.value)}
-                  placeholder="e.g. Cyberpunk Detective"
-                  className="input input-bordered w-full text-sm focus:input-primary"
-                  required
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="Add a tag and press Enter"
+                  className={`flex-1 ${inputClasses} py-2.5`}
                 />
-              </div>
-
-              {/* Image File Selection */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Character Cover Image</span>
-                </label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  accept="image/*"
-                  className="file-input file-input-bordered file-input-primary w-full"
-                />
-                {previewUrl && (
-                  <div className="mt-3 relative aspect-video w-full rounded-xl overflow-hidden border border-base-300 bg-base-200">
-                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
-
-              {/* Excerpt / Prompt */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Prompt Excerpt</span>
-                </label>
-                <textarea
-                  value={addExcerpt}
-                  onChange={(e) => setAddExcerpt(e.target.value)}
-                  placeholder="Character prompt description, clothing, appearance features..."
-                  className="textarea textarea-bordered text-sm w-full h-24 focus:textarea-primary"
-                />
-              </div>
-
-              {/* Tags Input */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Tags (Comma-separated)</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                    placeholder="Add tag and press enter..."
-                    className="input input-bordered flex-1 text-sm focus:input-primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAddTag()}
-                    className="btn btn-ghost border border-base-300 text-sm"
-                  >
-                    Add Tag
-                  </button>
-                </div>
-
-                {addTags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {addTags.map((tag, idx) => (
-                      <span key={idx} className="badge badge-primary badge-outline gap-1.5 py-3">
-                        {tag}
-                        <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-error">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="modal-action pt-4 border-t border-base-200">
                 <button
                   type="button"
-                  onClick={handleResetAddForm}
-                  className="btn btn-ghost"
+                  onClick={() => handleAddTag()}
+                  className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] bg-[#FFFDFA] text-[#5B5148] text-[14px]"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="btn btn-primary gap-1.5"
-                >
-                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  Save to Raindrop
+                  Add
                 </button>
               </div>
-            </form>
-          </div>
-        </div>,
-        document.body
+            </div>
+
+            <div className="flex gap-2.5 flex-wrap pt-1.5">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer disabled:opacity-70"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Save character
+              </button>
+            </div>
+          </form>
+        </ModalShell>
       )}
 
       {/* Edit Character Modal */}
-      {editingCharacter && mounted && createPortal(
-        <div
-          className="modal modal-open bg-black/60 backdrop-blur-sm fixed inset-0 z-[999] flex items-center justify-center p-4"
-          onClick={handleCloseEditModal}
-        >
-          <div
-            className="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300 shadow-2xl rounded-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-base-300 bg-base-200/50">
-              <h3 className="font-bold text-base text-base-content flex items-center gap-2">
-                <Pencil className="w-4 h-4 text-primary" />
-                Edit Character
-              </h3>
+      {editingCharacter && mounted && (
+        <ModalShell onClose={handleCloseEditModal}>
+          <div className="flex items-start gap-3.5 mb-1.5">
+            <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">Edit character</h3>
+            <button
+              onClick={handleCloseEditModal}
+              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+            Name is required. Everything else is optional and editable later.
+          </p>
+
+          <form onSubmit={handleSaveEditCharacter} className="flex flex-col gap-3.5">
+            {editError && (
+              <div className="flex items-center gap-2 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <label className={labelClasses}>
+              Name (required)
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className={inputClasses}
+                required
+              />
+            </label>
+
+            <label className={labelClasses}>
+              Description
+              <textarea
+                value={editExcerpt}
+                onChange={(e) => setEditExcerpt(e.target.value)}
+                rows={3}
+                className={`${inputClasses} resize-vertical leading-[1.5]`}
+              />
+            </label>
+
+            <div className={labelClasses}>
+              Reference image
               <button
-                onClick={handleCloseEditModal}
-                className="btn btn-sm btn-ghost btn-circle"
+                type="button"
+                onClick={() => editFileInputRef.current?.click()}
+                className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-[#DCCFBF] bg-[#FCFAF6] text-left"
               >
-                <X className="w-4 h-4" />
+                <span className="w-11 h-11 rounded-[10px] bg-[repeating-linear-gradient(135deg,#F1E7DA_0_6px,#EADFCF_6px_12px)] overflow-hidden shrink-0">
+                  {editPreviewUrl && <img src={editPreviewUrl} alt="Preview" className="w-full h-full object-cover" />}
+                </span>
+                <span className="text-[14px] text-[#6E6459]">
+                  {editSelectedFile ? editSelectedFile.name : 'Replace reference image'}
+                </span>
               </button>
+              <input
+                ref={editFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleEditFileSelect}
+                className="hidden"
+              />
             </div>
 
-            <form onSubmit={handleSaveEditCharacter} className="p-6 space-y-5">
-              {editError && (
-                <div className="alert alert-error text-sm py-2.5 px-4 rounded-xl flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{editError}</span>
-                </div>
-              )}
-
-              {/* Edit Title */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Character Title *</span>
-                </label>
+            <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459]">
+              Tags
+              <div className="flex flex-wrap gap-1.5">
+                {editTags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] border border-[#EBE1D4] text-[13px] text-[#5B5148]"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEditTag(tag)}
+                      className="text-[#B0A396] hover:text-[#A0433A]"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="input input-bordered w-full text-sm focus:input-primary"
-                  required
+                  value={editTagInput}
+                  onChange={(e) => setEditTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddEditTag();
+                    }
+                  }}
+                  placeholder="Add a tag and press Enter"
+                  className={`flex-1 ${inputClasses} py-2.5`}
                 />
+                <button
+                  type="button"
+                  onClick={() => handleAddEditTag()}
+                  className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] bg-[#FFFDFA] text-[#5B5148] text-[14px]"
+                >
+                  Add
+                </button>
               </div>
+            </div>
 
-              {/* Replace Cover Image */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Replace Cover Image</span>
-                </label>
-                <input
-                  type="file"
-                  ref={editFileInputRef}
-                  onChange={handleEditFileSelect}
-                  accept="image/*"
-                  className="file-input file-input-bordered file-input-primary w-full"
-                />
-                {editPreviewUrl && (
-                  <div className="mt-3 relative aspect-video w-full rounded-xl overflow-hidden border border-base-300 bg-base-200">
-                    <img src={editPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
-
-              {/* Edit Excerpt */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Prompt Excerpt</span>
-                </label>
-                <textarea
-                  value={editExcerpt}
-                  onChange={(e) => setEditExcerpt(e.target.value)}
-                  className="textarea textarea-bordered text-sm w-full h-24 focus:textarea-primary"
-                />
-              </div>
-
-              {/* Edit Tags */}
-              <div className="form-control">
-                <label className="label py-1.5">
-                  <span className="label-text text-sm font-semibold text-base-content">Tags</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={editTagInput}
-                    onChange={(e) => setEditTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddEditTag();
-                      }
-                    }}
-                    placeholder="Add tag and press enter..."
-                    className="input input-bordered flex-1 text-sm focus:input-primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAddEditTag()}
-                    className="btn btn-ghost border border-base-300 text-sm"
-                  >
-                    Add Tag
-                  </button>
-                </div>
-
-                {editTags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {editTags.map((tag, idx) => (
-                      <span key={idx} className="badge badge-primary badge-outline gap-1.5 py-3">
-                        {tag}
-                        <button type="button" onClick={() => handleRemoveEditTag(tag)} className="hover:text-error">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="modal-action pt-4 border-t border-base-200 flex items-center justify-between">
-                {hasRaindropToken && onDeleteCharacter && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (editingCharacter) {
-                        const charToDelete = editingCharacter;
-                        handleCloseEditModal();
-                        setConfirmDeleteChar(charToDelete);
-                      }
-                    }}
-                    className="btn btn-error text-white gap-1.5"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete Character
-                  </button>
-                )}
-                <div className="flex items-center gap-2.5 ml-auto">
-                  <button
-                    type="button"
-                    onClick={handleCloseEditModal}
-                    className="btn btn-ghost"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isUpdating}
-                    className="btn btn-primary gap-1.5"
-                  >
-                    {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    Update Character
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
+            <div className="flex gap-2.5 flex-wrap pt-1.5">
+              <button
+                type="submit"
+                disabled={isUpdating}
+                className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer disabled:opacity-70"
+              >
+                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Save character
+              </button>
+              {onDeleteCharacter && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const charToDelete = editingCharacter;
+                    handleCloseEditModal();
+                    setConfirmDeleteChar(charToDelete);
+                  }}
+                  className="px-[18px] py-3 rounded-xl border border-[#E9D5CD] bg-transparent text-[#A0433A] text-[14.5px] cursor-pointer"
+                >
+                  Delete…
+                </button>
+              )}
+            </div>
+          </form>
+        </ModalShell>
       )}
 
       {/* Delete Confirmation Modal */}
-      {confirmDeleteChar && mounted && createPortal(
-        <div
-          className="modal modal-open bg-black/60 backdrop-blur-sm fixed inset-0 z-[999] flex items-center justify-center p-4"
-          onClick={() => setConfirmDeleteChar(null)}
-        >
-          <div
-            className="modal-box max-w-sm p-6 bg-base-100 border border-base-300 shadow-2xl rounded-2xl space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="font-bold text-base text-base-content flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-error" />
-              Delete Character?
-            </h3>
-            <p className="text-sm text-base-content/70 leading-relaxed">
-              Are you sure you want to delete <strong className="text-base-content">{confirmDeleteChar.title}</strong> from your Raindrop collection? This action cannot be undone.
-            </p>
-            {deleteError && (
-              <div className="alert alert-error text-sm py-2.5 px-4 rounded-xl">
-                {deleteError}
-              </div>
-            )}
-            <div className="modal-action pt-2 flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteChar(null)}
-                className="btn btn-ghost"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-                className="btn btn-error text-white gap-1.5"
-              >
-                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                Delete
-              </button>
-            </div>
+      {confirmDeleteChar && mounted && (
+        <ModalShell onClose={() => setConfirmDeleteChar(null)}>
+          <div className="flex items-start gap-3.5 mb-1.5">
+            <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">Delete this character?</h3>
+            <button
+              onClick={() => setConfirmDeleteChar(null)}
+              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-        </div>,
-        document.body
+          <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+            This removes <strong className="text-[#2E2A26]">{confirmDeleteChar.title}</strong> from your Raindrop
+            collection too. There is no undo.
+          </p>
+          {deleteError && (
+            <div className="mb-3.5 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+              {deleteError}
+            </div>
+          )}
+          <div className="flex gap-2.5 flex-wrap">
+            <button
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#A0433A] text-[#FFF3EF] text-[14.5px] cursor-pointer disabled:opacity-70"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Delete permanently
+            </button>
+            <button
+              onClick={() => setConfirmDeleteChar(null)}
+              className="px-5 py-3 rounded-xl border border-[#E3D8CA] bg-transparent text-[#5B5148] text-[14.5px]"
+            >
+              Keep it
+            </button>
+          </div>
+        </ModalShell>
       )}
-    </div>
+    </section>
   );
 };

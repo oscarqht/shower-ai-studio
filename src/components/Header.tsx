@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RefreshCw, Settings } from 'lucide-react';
+import { RefreshCw, Settings as SettingsIcon } from 'lucide-react';
 
 interface HeaderProps {
   onOpenSettings: () => void;
@@ -19,59 +19,47 @@ export const Header: React.FC<HeaderProps> = ({
   isFetchingRaindrop,
   hasRaindropToken,
 }) => {
+  const statusLabel = hasRaindropToken ? 'connected · raindrop' : 'offline';
+
   return (
-    <header className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-md border-b border-base-300 px-5 lg:px-10 py-4">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Brand & App Title */}
-        <div className="flex items-center gap-3.5">
-          <div className="avatar">
-            <div className="w-11 h-11 rounded-2xl ring-1 ring-base-300 bg-base-200 p-1 shadow-sm">
-              <img
-                src="/app-icon.svg"
-                alt="Shower App Icon"
-                className="w-full h-full object-contain rounded-xl"
-              />
-            </div>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-base-content leading-tight">
-              Shower Studio
-            </h1>
-            <p className="text-sm text-base-content/60 mt-0.5">
-              Compose prompts from your character &amp; style collections
-            </p>
-          </div>
+    <header className="sticky top-0 z-40 flex items-center gap-4 flex-wrap px-4 sm:px-6 lg:px-10 py-3.5 bg-[#FAF6F0]/[0.82] backdrop-blur-xl border-b border-[#EAE0D4]">
+      {/* Brand & App Title */}
+      <div className="flex items-center gap-2.5 mr-auto">
+        <div className="w-[34px] h-[34px] rounded-xl bg-gradient-to-br from-[#E58E62] to-[#C4633E] flex items-center justify-center shadow-[0_4px_12px_rgba(196,99,62,0.28)]">
+          <div className="w-[11px] h-[11px] rounded-full bg-[#FDF3EA]" />
         </div>
-
-        {/* Status Indicators & Action Tools */}
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          {/* Refresh Raindrop Button - Hidden until Raindrop API token is provided */}
-          {hasRaindropToken && (
-            <button
-              id="refresh-raindrop-btn"
-              onClick={onRefreshRaindrop}
-              disabled={isFetchingRaindrop}
-              className="btn btn-ghost border border-base-300 hover:border-primary gap-2 transition disabled:opacity-50"
-              title="Refetch Shower items from Raindrop.io API"
-            >
-              <RefreshCw className={`w-4 h-4 ${isFetchingRaindrop ? 'animate-spin text-primary' : ''}`} />
-              <span>{isFetchingRaindrop ? 'Syncing…' : 'Sync Raindrop'}</span>
-            </button>
-          )}
-
-          {/* Settings Toggle Button */}
-          <button
-            id="open-settings-btn"
-            onClick={onOpenSettings}
-            className="btn btn-primary gap-2 shadow-sm"
-            title="Settings"
-            aria-label="Settings"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Settings</span>
-          </button>
+        <div className="leading-none">
+          <div className="font-serif text-[23px] tracking-[0.1px] text-[#2E2A26]">Shower Studio</div>
+          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mt-1">
+            {statusLabel}
+          </div>
         </div>
       </div>
+
+      {/* Status Indicators & Action Tools */}
+      {hasRaindropToken && (
+        <button
+          id="refresh-raindrop-btn"
+          onClick={onRefreshRaindrop}
+          disabled={isFetchingRaindrop}
+          title="Refetch Shower items from Raindrop.io API"
+          className="flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-[#E3D8CA] bg-[#FFFDFA] text-[#5B5148] text-[13.5px] font-medium cursor-pointer transition-colors hover:border-[#C4633E] hover:text-[#C4633E] disabled:opacity-60"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isFetchingRaindrop ? 'animate-spin text-[#C4633E]' : 'opacity-45'}`} />
+          <span>{isFetchingRaindrop ? 'Syncing…' : 'Re-sync'}</span>
+        </button>
+      )}
+
+      <button
+        id="open-settings-btn"
+        onClick={onOpenSettings}
+        title="Settings"
+        aria-label="Settings"
+        className="flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-[#E3D8CA] bg-[#FFFDFA] text-[#5B5148] text-[13.5px] font-medium cursor-pointer transition-colors hover:border-[#C4633E] hover:text-[#C4633E]"
+      >
+        <SettingsIcon className="w-[15px] h-[15px]" />
+        <span>Settings</span>
+      </button>
     </header>
   );
 };
