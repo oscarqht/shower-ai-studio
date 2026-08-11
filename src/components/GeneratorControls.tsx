@@ -188,7 +188,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       model: model,
       ratio: aspectRatio,
       language: textLanguage,
-      instruction: compositionPrompt,
     };
 
     const jsonString = JSON.stringify(promptData, null, 2);
