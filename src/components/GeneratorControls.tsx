@@ -189,7 +189,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       model: model,
       ratio: aspectRatio,
       language: textLanguage,
-      instruction: compositionPrompt,
     };
 
     const jsonString = JSON.stringify(promptData, null, 2);
@@ -209,7 +208,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       if (res.ok && data.status === 'success' && data.imageAppUrl) {
         const baseUrl = data.imageAppUrl;
         const delimiter = baseUrl.includes('?') ? '&' : '?';
-        const finalUrl = `${baseUrl}${delimiter}json=${encodeURIComponent(jsonString)}`;
+        const finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
 
         if (newTab) {
           newTab.location.href = finalUrl;
