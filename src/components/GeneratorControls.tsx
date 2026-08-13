@@ -87,6 +87,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isOpeningApp, setIsOpeningApp] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
+  const [isStyleCopied, setIsStyleCopied] = useState(false);
 
   // Persist controls state changes to localStorage
   useEffect(() => {
@@ -260,6 +261,17 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     : 'No characters selected yet';
   const styleSummary = selectedStyle ? selectedStyle.title : 'No style selected yet';
 
+  const handleCopyStyle = async () => {
+    if (styleSummary === 'No style selected yet') return;
+    try {
+      await navigator.clipboard.writeText(styleSummary);
+      setIsStyleCopied(true);
+      setTimeout(() => setIsStyleCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy style name:', err);
+    }
+  };
+
   return (
     <section
       id="composition-section"
@@ -278,10 +290,22 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             {castSummary}
           </div>
         </div>
-        <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
+        <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5 relative flex flex-col justify-center group">
           <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">Style</div>
-          <div className={`text-[14.5px] leading-[1.5] ${selectedStyle ? 'text-[#4F4740]' : 'text-[#A79C92]'}`}>
-            {styleSummary}
+          <div className="flex items-center justify-between gap-2">
+            <div className={`text-[14.5px] leading-[1.5] ${selectedStyle ? 'text-[#4F4740]' : 'text-[#A79C92]'}`}>
+              {styleSummary}
+            </div>
+            {selectedStyle && (
+              <button
+                type="button"
+                onClick={handleCopyStyle}
+                title="Copy style name"
+                className="p-1.5 rounded-lg border border-[#EBE1D4] bg-[#FFFDFA] text-[#8A7E73] hover:text-[#2E2A26] hover:bg-[#F6F0E7] transition-colors"
+              >
+                {isStyleCopied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            )}
           </div>
         </div>
       </div>
