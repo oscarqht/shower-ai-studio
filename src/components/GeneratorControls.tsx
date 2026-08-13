@@ -194,7 +194,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
 
     const jsonString = JSON.stringify(promptData, null, 2);
 
-    const newTab = window.open('about:blank', '_blank');
     setIsOpeningApp(true);
 
     try {
@@ -211,19 +210,13 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         const delimiter = baseUrl.includes('?') ? '&' : '?';
         const finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
 
-        if (newTab) {
-          newTab.location.href = finalUrl;
-        } else {
-          window.open(finalUrl, '_blank');
-        }
+        window.location.href = finalUrl;
       } else {
-        if (newTab) newTab.close();
         setAppError(
           data?.message || 'Could not resolve Image Generation App URL from Raindrop ("Shower > Apps > Image generation app").'
         );
       }
     } catch (e: any) {
-      if (newTab) newTab.close();
       console.error('Failed to resolve imageAppUrl at runtime:', e);
       setAppError(`Failed to resolve app URL from Raindrop: ${e?.message || 'Network error'}`);
     } finally {
@@ -436,7 +429,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           ) : (
             <ExternalLink className="w-4 h-4" />
           )}
-          <span>{isOpeningApp ? 'Opening…' : 'Open image app ↗'}</span>
+          <span>{isOpeningApp ? 'Opening…' : 'Open image app'}</span>
         </button>
 
         <button
