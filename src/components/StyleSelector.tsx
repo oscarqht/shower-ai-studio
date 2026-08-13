@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, X, Image as ImageIcon } from 'lucide-react';
+import { Check, X, Image as ImageIcon, Info } from 'lucide-react';
 import { StylePack } from '../types';
 
 interface StyleSelectorProps {
@@ -99,13 +99,11 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                     </div>
                   )}
 
-                  <div
-                    className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium ${
-                      isSelected ? 'bg-[#C4633E] text-[#FFF7F1]' : 'bg-[rgba(255,253,250,0.9)] text-[#6E6459]'
-                    }`}
-                  >
-                    {isSelected ? 'Selected' : 'Style pack'}
-                  </div>
+                  {isSelected && (
+                    <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-[#C4633E] text-[#FFF7F1]">
+                      Selected
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -114,9 +112,9 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                       setInspectStyle(style);
                     }}
                     title="View style details"
-                    className="absolute bottom-2 right-2 px-3 py-1.5 rounded-full border border-[#E3D8CA] bg-[rgba(255,253,250,0.92)] text-[#6E6459] text-[12.5px]"
+                    className="absolute bottom-2 right-2 p-1.5 rounded-full border border-[#E3D8CA] bg-[rgba(255,253,250,0.92)] text-[#6E6459] flex items-center justify-center hover:bg-[#F8F3ED] transition-colors"
                   >
-                    View details
+                    <Info className="w-[18px] h-[18px]" />
                   </button>
                 </div>
 
