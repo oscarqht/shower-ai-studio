@@ -301,12 +301,6 @@ export default function Home() {
       console.error('Failed to load settings on mount:', e);
     }
 
-    const hasCache = Boolean(localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY));
-    if (hasCache && (characters.length > 0 || styles.length > 0)) {
-      setRaindropStatus('success');
-      setRaindropMessage(`Loaded ${characters.length} characters and ${styles.length} style packs from local cache.`);
-    }
-
     setIsMounted(true);
   }, []);
 
