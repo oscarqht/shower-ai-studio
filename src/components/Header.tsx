@@ -25,8 +25,8 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 flex items-center gap-4 flex-wrap px-4 sm:px-6 lg:px-10 py-3.5 bg-[#FAF6F0]/[0.82] backdrop-blur-xl border-b border-[#EAE0D4]">
       {/* Brand & App Title */}
       <div className="flex items-center gap-2.5 mr-auto">
-        <div className="w-[34px] h-[34px] rounded-xl bg-gradient-to-br from-[#E58E62] to-[#C4633E] flex items-center justify-center shadow-[0_4px_12px_rgba(196,99,62,0.28)]">
-          <div className="w-[11px] h-[11px] rounded-full bg-[#FDF3EA]" />
+        <div className="w-[34px] h-[34px] flex items-center justify-center text-3xl">
+          🚿
         </div>
         <div className="leading-none">
           <div className="font-serif text-[23px] tracking-[0.1px] text-[#2E2A26]">Shower Studio</div>
