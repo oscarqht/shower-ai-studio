@@ -210,7 +210,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         const delimiter = baseUrl.includes('?') ? '&' : '?';
         const finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
 
-        window.location.href = finalUrl;
+        window.open(finalUrl, '_blank');
       } else {
         setAppError(
           data?.message || 'Could not resolve Image Generation App URL from Raindrop ("Shower > Apps > Image generation app").'
