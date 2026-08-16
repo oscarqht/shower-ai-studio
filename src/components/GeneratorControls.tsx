@@ -88,6 +88,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [isOpeningApp, setIsOpeningApp] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
   const [isStyleCopied, setIsStyleCopied] = useState(false);
+  const [uploadedFileIds, setUploadedFileIds] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Persist controls state changes to localStorage
   useEffect(() => {
@@ -113,6 +116,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setCompositionPrompt('');
     setAspectRatio('Auto');
     setTextLanguage('Auto');
+    setUploadedFileIds([]);
+    setUploadError(null);
     try {
       localStorage.removeItem(INPUTS_STORAGE_KEY);
     } catch (e) {
@@ -208,7 +213,11 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       if (res.ok && data.status === 'success' && data.imageAppUrl) {
         const baseUrl = data.imageAppUrl;
         const delimiter = baseUrl.includes('?') ? '&' : '?';
-        const finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
+        let finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
+
+        if (uploadedFileIds && uploadedFileIds.length > 0) {
+          finalUrl += `&attachment_file_ids=${encodeURIComponent(uploadedFileIds.join(','))}`;
+        }
 
         window.open(finalUrl, '_blank');
       } else {
@@ -262,6 +271,48 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       setTimeout(() => setIsStyleCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy style name:', err);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!raindropToken || !raindropToken.trim()) {
+      setUploadError('No valid connection — add a token in settings to upload attachments.');
+      return;
+    }
+
+    setUploadError(null);
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append('token', raindropToken);
+    Array.from(files).forEach((file) => {
+      formData.append('files', file);
+    });
+
+    try {
+      const res = await fetch('/api/upload-attachments', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success' && data.file_ids) {
+        setUploadedFileIds(data.file_ids);
+      } else {
+        setUploadError(data?.message || 'Failed to upload attachments.');
+        setUploadedFileIds([]);
+      }
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setUploadError(`Failed to upload: ${err.message || 'Network error'}`);
+      setUploadedFileIds([]);
+    } finally {
+      setIsUploading(false);
+      // Clear input so same file can be selected again if needed
+      e.target.value = '';
     }
   };
 
@@ -329,6 +380,39 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           </button>
         )}
         <span className="font-mono text-[11.5px] text-[#A08F80]">⌘↵ opens the app</span>
+      </div>
+
+      {/* Upload Attachments */}
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-[#2E2A26] mb-2">
+          Upload attachments
+        </label>
+        <div className="flex flex-col gap-2">
+          <input
+            type="file"
+            multiple
+            onChange={handleFileChange}
+            disabled={isUploading}
+            className="block w-full text-sm text-[#6E6459] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#F6F0E7] file:text-[#4F4740] hover:file:bg-[#EAE0D4] transition-colors cursor-pointer disabled:opacity-50"
+          />
+          {isUploading && (
+            <div className="text-[13px] text-[#C4633E] flex items-center gap-2">
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+              Uploading...
+            </div>
+          )}
+          {uploadError && (
+            <div className="text-[13px] text-[#96402F]">
+              {uploadError}
+            </div>
+          )}
+          {!isUploading && !uploadError && uploadedFileIds.length > 0 && (
+            <div className="text-[13px] text-[#4F4740]">
+              <Check className="w-3.5 h-3.5 inline mr-1 text-green-600" />
+              {uploadedFileIds.length} file{uploadedFileIds.length > 1 ? 's' : ''} uploaded ready
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Prompt History Pills */}
