@@ -208,7 +208,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       if (res.ok && data.status === 'success' && data.imageAppUrl) {
         const baseUrl = data.imageAppUrl;
         const delimiter = baseUrl.includes('?') ? '&' : '?';
-        const finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
+        const finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}&_auto_=1`;
 
         window.open(finalUrl, '_blank');
       } else {
