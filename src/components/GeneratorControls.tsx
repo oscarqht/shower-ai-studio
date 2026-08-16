@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, History, Check, Copy, ExternalLink } from 'lucide-react';
+import { X, Check, Copy, ExternalLink } from 'lucide-react';
 import { Character, StylePack } from '../types';
 
 interface GeneratorControlsProps {
@@ -37,7 +37,6 @@ const TEXT_LANGUAGES = [
 ];
 
 const INPUTS_STORAGE_KEY = 'raindrop_ai_studio_last_inputs_v1';
-const PROMPT_HISTORY_STORAGE_KEY = 'raindrop_ai_studio_prompt_history_v1';
 
 const getSavedControls = () => {
   if (typeof window === 'undefined') return {};
@@ -50,22 +49,6 @@ const getSavedControls = () => {
     console.error('Failed to parse saved inputs:', e);
   }
   return {};
-};
-
-const getSavedPromptHistory = (): string[] => {
-  if (typeof window === 'undefined') return [];
-  try {
-    const saved = localStorage.getItem(PROMPT_HISTORY_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
-        return parsed.slice(0, 10);
-      }
-    }
-  } catch (e) {
-    console.error('Failed to parse prompt history:', e);
-  }
-  return [];
 };
 
 const selectClasses =
@@ -83,7 +66,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [compositionPrompt, setCompositionPrompt] = useState<string>(saved.compositionPrompt || '');
   const [aspectRatio, setAspectRatio] = useState<string>(saved.aspectRatio || 'Auto');
   const [textLanguage, setTextLanguage] = useState<string>(saved.textLanguage || 'Auto');
-  const [promptHistory, setPromptHistory] = useState<string[]>(getSavedPromptHistory);
   const [isCopied, setIsCopied] = useState(false);
   const [isOpeningApp, setIsOpeningApp] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
@@ -138,24 +120,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     }
   };
 
-  const savePromptToHistory = (promptToSave: string) => {
-    if (!promptToSave || !promptToSave.trim()) return;
-    const trimmed = promptToSave.trim();
-    setPromptHistory((prev) => {
-      const filtered = prev.filter((p) => p !== trimmed);
-      const updated = [trimmed, ...filtered].slice(0, 10);
-      try {
-        localStorage.setItem(PROMPT_HISTORY_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to save prompt history:', e);
-      }
-      return updated;
-    });
-  };
-
   const handleCopyPrompt = async () => {
-    savePromptToHistory(compositionPrompt);
-
     const charactersStr = selectedCharacters
       .map((c) => (c.title || '').trim())
       .filter(Boolean)
@@ -184,7 +149,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleOpenApp = async () => {
-    savePromptToHistory(compositionPrompt);
     setAppError(null);
 
     if (!raindropToken || !raindropToken.trim()) {
@@ -253,22 +217,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         handleOpenApp();
       }
     }
-  };
-
-  const handleDeletePromptFromHistory = (promptToDelete: string) => {
-    setPromptHistory((prev) => {
-      const updated = prev.filter((p) => p !== promptToDelete);
-      try {
-        if (updated.length === 0) {
-          localStorage.removeItem(PROMPT_HISTORY_STORAGE_KEY);
-        } else {
-          localStorage.setItem(PROMPT_HISTORY_STORAGE_KEY, JSON.stringify(updated));
-        }
-      } catch (e) {
-        console.error('Failed to update prompt history:', e);
-      }
-      return updated;
-    });
   };
 
   const castSummary = selectedCharacters.length
@@ -484,43 +432,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           )}
         </div>
       </div>
-
-      {/* Prompt History Pills */}
-      {promptHistory.length > 0 && (
-        <div className="mt-4">
-          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2 flex items-center gap-1.5">
-            <History className="w-3.5 h-3.5" /> Recent prompts
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {promptHistory.map((histPrompt, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-1.5 pl-3.5 pr-2 py-1.5 rounded-full bg-[#F6F0E7] border border-[#EBE1D4] max-w-full"
-              >
-                <button
-                  type="button"
-                  onClick={() => setCompositionPrompt(histPrompt)}
-                  className="text-[13px] text-[#6E6459] truncate max-w-[34ch]"
-                  title={histPrompt}
-                >
-                  {histPrompt}
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeletePromptFromHistory(histPrompt);
-                  }}
-                  className="text-[#B0A396] hover:text-[#A0433A] shrink-0"
-                  title="Remove"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Select Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-[22px]">
