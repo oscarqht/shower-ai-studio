@@ -91,6 +91,14 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [uploadedFileIds, setUploadedFileIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [fileThumbnails, setFileThumbnails] = useState<{ id: string; url: string; name: string }[]>([]);
+
+  // Cleanup object URLs to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      fileThumbnails.forEach((t) => URL.revokeObjectURL(t.url));
+    };
+  }, []);
 
   // Persist controls state changes to localStorage
   useEffect(() => {
@@ -118,6 +126,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setTextLanguage('Auto');
     setUploadedFileIds([]);
     setUploadError(null);
+    fileThumbnails.forEach((t) => URL.revokeObjectURL(t.url));
+    setFileThumbnails([]);
     try {
       localStorage.removeItem(INPUTS_STORAGE_KEY);
     } catch (e) {
@@ -300,20 +310,44 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
 
       const data = await res.json();
       if (res.ok && data.status === 'success' && data.file_ids) {
-        setUploadedFileIds(data.file_ids);
+        // Generate thumbnails
+        const newThumbnails = Array.from(files).map((file, idx) => ({
+          id: data.file_ids[idx],
+          url: URL.createObjectURL(file),
+          name: file.name,
+        }));
+
+        setFileThumbnails(prev => [...prev, ...newThumbnails]);
+        setUploadedFileIds(prev => [...prev, ...data.file_ids]);
       } else {
         setUploadError(data?.message || 'Failed to upload attachments.');
-        setUploadedFileIds([]);
       }
     } catch (err: any) {
       console.error('Upload error:', err);
       setUploadError(`Failed to upload: ${err.message || 'Network error'}`);
-      setUploadedFileIds([]);
     } finally {
       setIsUploading(false);
       // Clear input so same file can be selected again if needed
       e.target.value = '';
     }
+  };
+
+  const handleRemoveAttachment = (idToRemove: string) => {
+    setUploadedFileIds(prev => prev.filter(id => id !== idToRemove));
+    setFileThumbnails(prev => {
+      const itemToRemove = prev.find(t => t.id === idToRemove);
+      if (itemToRemove) {
+        URL.revokeObjectURL(itemToRemove.url);
+      }
+      return prev.filter(t => t.id !== idToRemove);
+    });
+  };
+
+  const handleClearAttachments = () => {
+    fileThumbnails.forEach(t => URL.revokeObjectURL(t.url));
+    setFileThumbnails([]);
+    setUploadedFileIds([]);
+    setUploadError(null);
   };
 
   return (
@@ -384,9 +418,20 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
 
       {/* Upload Attachments */}
       <div className="mt-4">
-        <label className="block text-sm font-medium text-[#2E2A26] mb-2">
-          Upload attachments
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-[#2E2A26]">
+            Upload attachments
+          </label>
+          {uploadedFileIds.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAttachments}
+              className="text-[12.5px] text-[#8A7E73] hover:text-[#2E2A26] transition-colors"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
         <div className="flex flex-col gap-2">
           <input
             type="file"
@@ -407,9 +452,31 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             </div>
           )}
           {!isUploading && !uploadError && uploadedFileIds.length > 0 && (
-            <div className="text-[13px] text-[#4F4740]">
-              <Check className="w-3.5 h-3.5 inline mr-1 text-green-600" />
-              {uploadedFileIds.length} file{uploadedFileIds.length > 1 ? 's' : ''} uploaded ready
+            <div className="text-[13px] text-[#4F4740] flex items-center gap-1.5">
+              <Check className="w-4 h-4 text-green-600" />
+              <span>{uploadedFileIds.length} file{uploadedFileIds.length > 1 ? 's' : ''} uploaded successfully</span>
+            </div>
+          )}
+
+          {fileThumbnails.length > 0 && (
+            <div className="flex flex-wrap gap-3 mt-2">
+              {fileThumbnails.map((thumb) => (
+                <div key={thumb.id} className="relative w-16 h-16 rounded-lg border border-[#E3D8CA] bg-[#FAF5EE] group">
+                  <img
+                    src={thumb.url}
+                    alt={thumb.name}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(thumb.id)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center bg-white rounded-full border border-[#E3D8CA] shadow-sm text-[#8A7E73] hover:text-[#96402F] opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove attachment"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
