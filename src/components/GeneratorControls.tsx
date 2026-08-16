@@ -223,11 +223,14 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       if (res.ok && data.status === 'success' && data.imageAppUrl) {
         const baseUrl = data.imageAppUrl;
         const delimiter = baseUrl.includes('?') ? '&' : '?';
+        
         let finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
 
         if (uploadedFileIds && uploadedFileIds.length > 0) {
           finalUrl += `&attachment_file_ids=${encodeURIComponent(uploadedFileIds.join(','))}`;
         }
+        
+        finalUrl += `&_auto_=1`;
 
         window.open(finalUrl, '_blank');
       } else {
