@@ -16,7 +16,16 @@ import { Character } from '../types';
 
 export function parseTagsFromNote(note?: string): string[] {
   if (!note || typeof note !== 'string') return [];
-  const rawParts = note.split(',');
+  let tagsStr = note;
+  try {
+    const parsed = JSON.parse(note);
+    if (parsed && typeof parsed === 'object' && parsed.tags !== undefined) {
+      tagsStr = parsed.tags;
+    }
+  } catch (e) {
+    // Not JSON, use raw string
+  }
+  const rawParts = tagsStr.split(',');
   const tagsSet = new Set<string>();
 
   for (const part of rawParts) {
@@ -136,11 +145,18 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sort character cards alphabetically by name (title)
+  // Sort character cards by index first (ascending), then alphabetically by name (title)
   const sortedCharacters = useMemo(() => {
-    return [...characters].sort((a, b) =>
-      (a.title || '').localeCompare(b.title || '', undefined, { numeric: true, sensitivity: 'base' })
-    );
+    return [...characters].sort((a, b) => {
+      const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
+      const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
+
+      if (indexA !== indexB) {
+        return indexA - indexB;
+      }
+
+      return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true, sensitivity: 'base' });
+    });
   }, [characters]);
 
   // Extract, parse, unique, and count tags across all character notes sorted by count DESC

@@ -5,6 +5,7 @@ export interface Character {
   cover: string;
   link?: string;
   note?: string;
+  index?: number;
 }
 
 export interface StylePack {

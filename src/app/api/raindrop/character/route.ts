@@ -123,7 +123,17 @@ export async function POST(req: NextRequest) {
 
     const collectionId = charactersCollection ? charactersCollection._id : showerId;
 
-    const tagsArray = note
+    let parsedTags = note;
+    try {
+      const parsed = JSON.parse(note);
+      if (parsed && typeof parsed === 'object' && parsed.tags !== undefined) {
+        parsedTags = parsed.tags;
+      }
+    } catch (e) {
+      // not JSON
+    }
+
+    const tagsArray = parsedTags
       .split(',')
       .map((t: string) => t.trim())
       .filter(Boolean);

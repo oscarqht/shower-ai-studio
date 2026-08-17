@@ -361,14 +361,16 @@ export default function Home() {
     imageFile?: File;
   }) => {
     const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
-    const tagsNoteStr = charData.tags.join(', ');
+        const tagsNoteStr = charData.tags.join(', ');
+    const noteObj = { tags: tagsNoteStr };
+    const noteJson = JSON.stringify(noteObj);
 
     if (hasToken) {
       const formData = new FormData();
       formData.append('token', settings.raindropToken);
       formData.append('title', charData.title);
       formData.append('excerpt', charData.excerpt);
-      formData.append('note', tagsNoteStr);
+      formData.append('note', noteJson);
       if (charData.coverDataUrl) {
         formData.append('cover', charData.coverDataUrl);
       }
@@ -406,7 +408,7 @@ export default function Home() {
         title: charData.title,
         excerpt: charData.excerpt,
         cover: charData.coverDataUrl || '',
-        note: tagsNoteStr,
+        note: noteJson,
       };
       setCharacters((prev) => [newChar, ...prev]);
       setRaindropStatus('success');
@@ -443,12 +445,26 @@ export default function Home() {
     const isRaindropId = typeof characterId === 'number' || /^\d+$/.test(String(characterId));
     const tagsNoteStr = charData.tags.join(', ');
 
+    let noteObj: any = { tags: tagsNoteStr };
+    const existingChar = characters.find((c) => String(c.id) === String(characterId));
+    if (existingChar && existingChar.note) {
+      try {
+        const parsed = JSON.parse(existingChar.note);
+        if (parsed && typeof parsed === 'object') {
+          noteObj = { ...parsed, tags: tagsNoteStr };
+        }
+      } catch (e) {
+        // Not JSON
+      }
+    }
+    const noteJson = JSON.stringify(noteObj);
+
     if (hasToken && isRaindropId) {
       const formData = new FormData();
       formData.append('token', settings.raindropToken);
       formData.append('title', charData.title);
       formData.append('excerpt', charData.excerpt);
-      formData.append('note', tagsNoteStr);
+      formData.append('note', noteJson);
       if (charData.imageFile) {
         formData.append('imageFile', charData.imageFile);
       } else if (charData.coverDataUrl) {
@@ -488,7 +504,7 @@ export default function Home() {
         title: charData.title,
         excerpt: charData.excerpt,
         cover: charData.coverDataUrl || characters.find((c) => String(c.id) === String(characterId))?.cover || '',
-        note: tagsNoteStr,
+        note: noteJson,
       };
 
       setCharacters((prev) => prev.map((c) => (String(c.id) === String(characterId) ? updatedChar : c)));
