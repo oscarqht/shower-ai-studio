@@ -150,14 +150,40 @@ export async function POST(req: NextRequest) {
       if (charRes.ok) {
         const charData = await charRes.json();
         const items = charData.items || [];
-        characters = items.map((item: any) => ({
-          id: item._id,
-          title: item.title || 'Untitled Character',
-          excerpt: item.excerpt || item.note || '',
-          cover: item.cover || (item.media && item.media[0] ? item.media[0].link : ''),
-          link: item.link || '',
-          note: item.note || '',
-        }));
+        characters = items.map((item: any) => {
+          let parsedNote: any = null;
+          let parsedTags = '';
+          let parsedIndex: number | undefined = undefined;
+          try {
+            if (item.note) {
+              const parsed = JSON.parse(item.note);
+              if (parsed.tags !== undefined) {
+                parsedTags = parsed.tags;
+                parsedNote = parsed;
+                if (parsed.index !== undefined) {
+                  parsedIndex = typeof parsed.index === 'number' ? parsed.index : parseInt(parsed.index, 10);
+                  if (isNaN(parsedIndex)) {
+                     parsedIndex = undefined;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            // Not JSON
+          }
+
+          const resolvedNote = parsedNote ? parsedTags : (item.note || '');
+
+          return {
+            id: item._id,
+            title: item.title || 'Untitled Character',
+            excerpt: item.excerpt || resolvedNote,
+            cover: item.cover || (item.media && item.media[0] ? item.media[0].link : ''),
+            link: item.link || '',
+            note: item.note || '',
+            index: parsedIndex,
+          };
+        });
       }
     }
 
