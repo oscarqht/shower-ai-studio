@@ -184,13 +184,18 @@ export async function POST(req: NextRequest) {
       origin = parsedUrl.origin;
       const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
       // Example: https://alpha.sea.com/workflows/475
-      if (pathParts.length >= 2 && pathParts[0] === 'workflows') {
-        workflowId = pathParts[1];
-      } else {
+      // Or: https://alpha.sea.com/app/workflows/475
+      if (pathParts.length >= 2 && pathParts[0] === 'app') {
+        workflowId = pathParts[2]; // /app/<type>/<id> -> ['', 'app', 'workflows', '475'] -> split by '/' filter boolean -> ['app', 'workflows', '475'] => pathParts[2] is ID
+      } else if (pathParts.length >= 2) {
+        workflowId = pathParts[1]; // /<type>/<id> -> ['workflows', '475'] => pathParts[1] is ID
+      }
+
+      if (!workflowId) {
          return NextResponse.json(
           {
             status: 'error',
-            message: 'Could not extract workflow ID from the link. Expected format: origin/workflows/<id>',
+            message: 'Could not extract workflow ID from the link. Expected format: origin/<type>/<id> or origin/app/<type>/<id>',
           },
           { status: 400 }
         );
