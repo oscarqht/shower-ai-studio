@@ -233,9 +233,13 @@ export default function Home() {
 
           setCharacters(newChars);
           setStyles(newStyles);
-          if (newImageAppUrl) {
+          if (newImageAppUrl || data.hasUploadCapability !== undefined) {
             setSettings((prev) => {
-              const updated = { ...prev, imageAppUrl: newImageAppUrl };
+              const updated = {
+                ...prev,
+                imageAppUrl: newImageAppUrl || prev.imageAppUrl,
+                hasUploadCapability: data.hasUploadCapability !== undefined ? data.hasUploadCapability : prev.hasUploadCapability,
+              };
               try {
                 localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated));
               } catch (e) {
@@ -845,6 +849,7 @@ export default function Home() {
               imageAppUrl={settings.imageAppUrl}
               raindropToken={settings.raindropToken}
               onResetAll={handleResetAllInputs}
+              hasUploadCapability={settings.hasUploadCapability}
             />
           </div>
         )}

@@ -130,9 +130,22 @@ export async function POST(req: NextRequest) {
       rawLink = 'https://' + rawLink;
     }
 
+    let hasUploadCapability = false;
+    if (imgAppItem.note) {
+      try {
+        const noteConfig = JSON.parse(imgAppItem.note);
+        if (noteConfig && noteConfig.API_KEY) {
+          hasUploadCapability = true;
+        }
+      } catch (e) {
+        // Not valid JSON, ignore
+      }
+    }
+
     return NextResponse.json({
       status: 'success',
       imageAppUrl: rawLink,
+      hasUploadCapability,
       item: {
         id: imgAppItem._id,
         title: imgAppItem.title,

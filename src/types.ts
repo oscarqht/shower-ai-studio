@@ -84,6 +84,7 @@ export interface AppSettings {
   raindropRefreshToken?: string;
   raindropExpiresAt?: number;
   imageAppUrl?: string;
+  hasUploadCapability?: boolean;
   imageApiKey?: string;
   imageWorkflowId?: string;
   imageApiEndpoint?: string;

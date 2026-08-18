@@ -10,6 +10,7 @@ interface GeneratorControlsProps {
   imageAppUrl?: string;
   raindropToken?: string;
   onResetAll?: () => void;
+  hasUploadCapability?: boolean;
 }
 
 const MODEL_OPTIONS = [
@@ -60,6 +61,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   imageAppUrl,
   raindropToken,
   onResetAll,
+  hasUploadCapability,
 }) => {
   const saved = getSavedControls();
   const [model, setModel] = useState<string>(saved.model || 'GPT Image 2');
@@ -368,70 +370,72 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       </div>
 
       {/* Upload Attachments */}
-      <div className="mt-4">
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-[#2E2A26]">
-            Upload attachments
-          </label>
-          {uploadedFileIds.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearAttachments}
-              className="text-[12.5px] text-[#8A7E73] hover:text-[#2E2A26] transition-colors"
-            >
-              Clear all
-            </button>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <input
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            disabled={isUploading}
-            className="block w-full text-sm text-[#6E6459] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#F6F0E7] file:text-[#4F4740] hover:file:bg-[#EAE0D4] transition-colors cursor-pointer disabled:opacity-50"
-          />
-          {isUploading && (
-            <div className="text-[13px] text-[#C4633E] flex items-center gap-2">
-              <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-              Uploading...
-            </div>
-          )}
-          {uploadError && (
-            <div className="text-[13px] text-[#96402F]">
-              {uploadError}
-            </div>
-          )}
-          {!isUploading && !uploadError && uploadedFileIds.length > 0 && (
-            <div className="text-[13px] text-[#4F4740] flex items-center gap-1.5">
-              <Check className="w-4 h-4 text-green-600" />
-              <span>{uploadedFileIds.length} file{uploadedFileIds.length > 1 ? 's' : ''} uploaded successfully</span>
-            </div>
-          )}
+      {hasUploadCapability && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-[#2E2A26]">
+              Upload attachments
+            </label>
+            {uploadedFileIds.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAttachments}
+                className="text-[12.5px] text-[#8A7E73] hover:text-[#2E2A26] transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              disabled={isUploading}
+              className="block w-full text-sm text-[#6E6459] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#F6F0E7] file:text-[#4F4740] hover:file:bg-[#EAE0D4] transition-colors cursor-pointer disabled:opacity-50"
+            />
+            {isUploading && (
+              <div className="text-[13px] text-[#C4633E] flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                Uploading...
+              </div>
+            )}
+            {uploadError && (
+              <div className="text-[13px] text-[#96402F]">
+                {uploadError}
+              </div>
+            )}
+            {!isUploading && !uploadError && uploadedFileIds.length > 0 && (
+              <div className="text-[13px] text-[#4F4740] flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-green-600" />
+                <span>{uploadedFileIds.length} file{uploadedFileIds.length > 1 ? 's' : ''} uploaded successfully</span>
+              </div>
+            )}
 
-          {fileThumbnails.length > 0 && (
-            <div className="flex flex-wrap gap-3 mt-2">
-              {fileThumbnails.map((thumb) => (
-                <div key={thumb.id} className="relative w-16 h-16 rounded-lg border border-[#E3D8CA] bg-[#FAF5EE] group">
-                  <img
-                    src={thumb.url}
-                    alt={thumb.name}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(thumb.id)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center bg-white rounded-full border border-[#E3D8CA] shadow-sm text-[#8A7E73] hover:text-[#96402F] opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Remove attachment"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+            {fileThumbnails.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-2">
+                {fileThumbnails.map((thumb) => (
+                  <div key={thumb.id} className="relative w-16 h-16 rounded-lg border border-[#E3D8CA] bg-[#FAF5EE] group">
+                    <img
+                      src={thumb.url}
+                      alt={thumb.name}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAttachment(thumb.id)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center bg-white rounded-full border border-[#E3D8CA] shadow-sm text-[#8A7E73] hover:text-[#96402F] opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove attachment"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Select Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-[22px]">
