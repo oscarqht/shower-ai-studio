@@ -112,6 +112,7 @@ export async function POST(req: NextRequest) {
     let characters: any[] = [];
     let styles: any[] = [];
     let imageAppUrl = '';
+    let hasUploadCapability = false;
 
     // Step 4: Fetch items in "Apps" collection to get "Image generation app" link
     if (appsCollection) {
@@ -134,6 +135,16 @@ export async function POST(req: NextRequest) {
               rawLink = 'https://' + rawLink;
             }
             imageAppUrl = rawLink;
+          }
+          if (imgAppItem && imgAppItem.note) {
+            try {
+              const noteConfig = JSON.parse(imgAppItem.note);
+              if (noteConfig && noteConfig.API_KEY) {
+                hasUploadCapability = true;
+              }
+            } catch (e) {
+              // Not valid JSON, ignore
+            }
           }
         }
       } catch (e) {
@@ -272,6 +283,7 @@ export async function POST(req: NextRequest) {
       characters,
       styles,
       imageAppUrl,
+      hasUploadCapability,
       debugInfo: {
         showerCollectionId: showerId,
         charactersCollectionId: charactersCollection?._id || null,
@@ -279,6 +291,7 @@ export async function POST(req: NextRequest) {
         appsCollectionId: appsCollection?._id || null,
         styleCollectionsCount: stylePackCollectionsCount,
         imageAppUrl,
+        hasUploadCapability,
       },
     });
   } catch (err: any) {

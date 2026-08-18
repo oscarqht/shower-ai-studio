@@ -115,18 +115,18 @@ export async function POST(req: NextRequest) {
     const appsData = await appsRes.json();
     const items = appsData.items || [];
 
-    // Find the "Upload files app"
+    // Find the "Image generation app"
     const uploadAppItem = items.find((item: any) => {
       if (!item.title) return false;
       const t = item.title.trim().toLowerCase();
-      return t === 'upload files app';
+      return t === 'image generation app' || t.includes('image generation app') || t.includes('image generation');
     });
 
     if (!uploadAppItem) {
       return NextResponse.json(
         {
           status: 'error',
-          message: 'Could not find "Upload files app" in Raindrop "Shower > Apps".',
+          message: 'Could not find "Image generation app" in Raindrop "Shower > Apps".',
         },
         { status: 404 }
       );
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           status: 'error',
-          message: '"Upload files app" item exists but has no link.',
+          message: '"Image generation app" item exists but has no link.',
         },
         { status: 400 }
       );
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           status: 'error',
-          message: '"Upload files app" item exists but has no note content containing API configuration.',
+          message: '"Image generation app" item exists but has no note content containing API configuration.',
         },
         { status: 400 }
       );
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           status: 'error',
-          message: 'The note content of "Upload files app" is not valid JSON.',
+          message: 'The note content of "Image generation app" is not valid JSON.',
         },
         { status: 400 }
       );
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           status: 'error',
-          message: 'The note content of "Upload files app" does not contain an "API_KEY".',
+          message: 'The note content of "Image generation app" does not contain an "API_KEY".',
         },
         { status: 400 }
       );
@@ -184,13 +184,18 @@ export async function POST(req: NextRequest) {
       origin = parsedUrl.origin;
       const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
       // Example: https://alpha.sea.com/workflows/475
-      if (pathParts.length >= 2 && pathParts[0] === 'workflows') {
-        workflowId = pathParts[1];
-      } else {
+      // Or: https://alpha.sea.com/app/workflows/475
+      if (pathParts.length >= 2 && pathParts[0] === 'app') {
+        workflowId = pathParts[2]; // /app/<type>/<id> -> ['', 'app', 'workflows', '475'] -> split by '/' filter boolean -> ['app', 'workflows', '475'] => pathParts[2] is ID
+      } else if (pathParts.length >= 2) {
+        workflowId = pathParts[1]; // /<type>/<id> -> ['workflows', '475'] => pathParts[1] is ID
+      }
+
+      if (!workflowId) {
          return NextResponse.json(
           {
             status: 'error',
-            message: 'Could not extract workflow ID from the link. Expected format: origin/workflows/<id>',
+            message: 'Could not extract workflow ID from the link. Expected format: origin/<type>/<id> or origin/app/<type>/<id>',
           },
           { status: 400 }
         );
@@ -199,54 +204,63 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           status: 'error',
-          message: `Invalid link format in "Upload files app": ${uploadAppItem.link}`,
+          message: `Invalid link format in "Image generation app": ${uploadAppItem.link}`,
         },
         { status: 400 }
       );
     }
 
-    // Prepare upload payload
-    const uploadFormData = new FormData();
-    files.forEach(file => {
-      uploadFormData.append('files', file);
-    });
-
-    const apiUrl = `${origin}/api/workflows/${workflowId}/run`;
+    const apiUrl = `${origin}/api/workflows/${workflowId}/upload`;
 
     try {
-      const uploadRes = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${noteConfig.API_KEY}`,
-          // Don't set Content-Type manually for FormData, node-fetch/undici handles boundaries
-        },
-        body: uploadFormData,
-      });
+      // In the new API format, we need to upload files one by one to /upload,
+      // But let's check how the new format works based on instructions:
+      // curl -X POST '[origin]/api/workflows/[workflow id]/upload' \
+      //  --header 'Authorization: Bearer [API_KEY]' \
+      //  -F 'file=@/path/to/file'
+      // response: { "data": { "expired_at": ..., "file_id": "...", ... } }
 
-      if (!uploadRes.ok) {
-        const errorText = await uploadRes.text();
-        console.error('Upload API failed:', uploadRes.status, errorText);
-        return NextResponse.json(
-          {
-            status: 'error',
-            message: `Upload API returned status ${uploadRes.status}`,
+      const fileIds: string[] = [];
+
+      for (const file of files) {
+        const singleFileFormData = new FormData();
+        singleFileFormData.append('file', file);
+
+        const uploadRes = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${noteConfig.API_KEY}`,
           },
-          { status: uploadRes.status }
-        );
-      }
+          body: singleFileFormData,
+        });
 
-      const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          const errorText = await uploadRes.text();
+          console.error('Upload API failed:', uploadRes.status, errorText);
+          return NextResponse.json(
+            {
+              status: 'error',
+              message: `Upload API returned status ${uploadRes.status}`,
+            },
+            { status: uploadRes.status }
+          );
+        }
 
-      const fileIds = uploadData?.data?.outputs?.file_ids;
+        const uploadData = await uploadRes.json();
 
-      if (!fileIds || !Array.isArray(fileIds)) {
-        return NextResponse.json(
-          {
-            status: 'error',
-            message: 'Upload API did not return data.outputs.file_ids as an array.',
-          },
-          { status: 500 }
-        );
+        const fileId = uploadData?.data?.file_id;
+
+        if (!fileId) {
+          return NextResponse.json(
+            {
+              status: 'error',
+              message: 'Upload API did not return data.file_id for an uploaded file.',
+            },
+            { status: 500 }
+          );
+        }
+
+        fileIds.push(fileId);
       }
 
       return NextResponse.json({
