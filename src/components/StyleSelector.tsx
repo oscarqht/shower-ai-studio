@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, X, Image as ImageIcon, Info } from 'lucide-react';
+import { Check, X, Image as ImageIcon, Info, Copy, ArrowUpRight } from 'lucide-react';
 import { StylePack } from '../types';
 
 interface StyleSelectorProps {
@@ -20,10 +20,17 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
 }) => {
   const [inspectStyle, setInspectStyle] = useState<StylePack | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [copiedTitle, setCopiedTitle] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleCopyTitle = (title: string) => {
+    navigator.clipboard.writeText(title);
+    setCopiedTitle(true);
+    setTimeout(() => setCopiedTitle(false), 2000);
+  };
 
   // Sort style pack cards in reverse order
   const reversedStyles = useMemo(() => {
@@ -167,12 +174,31 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
             >
               <div className="flex items-start gap-3.5 mb-1.5">
                 <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">{inspectStyle.title}</h3>
-                <button
-                  onClick={() => setInspectStyle(null)}
-                  className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleCopyTitle(inspectStyle.title)}
+                    title="Copy style pack name"
+                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                  >
+                    {copiedTitle ? <Check className="w-4 h-4 text-[#3F6B2F]" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  <a
+                    href={`https://app.raindrop.io/my/${inspectStyle.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open in Raindrop.io"
+                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                  >
+                    <ArrowUpRight className="w-4 h-4" />
+                  </a>
+                  <button
+                    onClick={() => setInspectStyle(null)}
+                    title="Close"
+                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
                 Browsing here never changes your current selection.
