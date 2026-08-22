@@ -216,25 +216,6 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                   </div>
                 )}
 
-                <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
-                  <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
-                    Style prompt
-                  </div>
-                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] whitespace-pre-wrap">
-                    {inspectStyle.style_prompt || 'No style prompt defined.'}
-                  </div>
-                </div>
-
-                {inspectStyle.extra_style_instruction && (
-                  <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
-                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
-                      Extra instructions
-                    </div>
-                    <div className="text-[14.5px] leading-[1.6] text-[#4F4740]">
-                      {inspectStyle.extra_style_instruction}
-                    </div>
-                  </div>
-                )}
 
                 {inspectStyle.style_reference_links && inspectStyle.style_reference_links.length > 0 && (
                   <div>
@@ -252,6 +233,26 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                           />
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
+                  <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                    Style prompt
+                  </div>
+                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] whitespace-pre-wrap">
+                    {inspectStyle.style_prompt || 'No style prompt defined.'}
+                  </div>
+                </div>
+
+                {inspectStyle.extra_style_instruction && (
+                  <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
+                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                      Extra instructions
+                    </div>
+                    <div className="text-[14.5px] leading-[1.6] text-[#4F4740]">
+                      {inspectStyle.extra_style_instruction}
                     </div>
                   </div>
                 )}
