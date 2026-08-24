@@ -18,6 +18,7 @@ interface GeneratorControlsProps {
   onTextLanguageChange?: (value: string) => void;
   imageAppUrl?: string;
   raindropToken?: string;
+  hasRaindropToken?: boolean;
   onResetAll?: () => void;
   hasUploadCapability?: boolean;
   onSaveAsPreset?: (payload: {
@@ -86,6 +87,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   onTextLanguageChange,
   imageAppUrl,
   raindropToken,
+  hasRaindropToken,
   onResetAll,
   hasUploadCapability,
   onSaveAsPreset,
@@ -313,8 +315,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    if (!raindropToken || !raindropToken.trim()) {
-      setUploadError('No valid connection — add a token in settings to upload attachments.');
+    const isConnected = Boolean((raindropToken && raindropToken.trim()) || hasRaindropToken);
+    if (!isConnected) {
+      setUploadError('No valid connection — configure Raindrop in settings or RAINDROP_TOKEN environment variable.');
       return;
     }
 
@@ -322,7 +325,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setIsUploading(true);
 
     const formData = new FormData();
-    formData.append('token', raindropToken);
+    if (raindropToken && raindropToken.trim()) {
+      formData.append('token', raindropToken.trim());
+    }
     Array.from(files).forEach((file) => {
       formData.append('files', file);
     });

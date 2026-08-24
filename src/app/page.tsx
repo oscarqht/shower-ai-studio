@@ -207,6 +207,7 @@ export default function Home() {
   });
 
   // Status & Loading States
+  const [hasEnvToken, setHasEnvToken] = useState(false);
   const [isFetchingRaindrop, setIsFetchingRaindrop] = useState(false);
   const [raindropStatus, setRaindropStatus] = useState<'success' | 'partial' | 'error' | 'idle'>('idle');
   const [raindropMessage, setRaindropMessage] = useState<string | null>(null);
@@ -320,9 +321,10 @@ export default function Home() {
       setIsFetchingRaindrop(true);
       setRaindropMessage(null);
 
-      if (!activeToken || !activeToken.trim()) {
+      const hasValidToken = Boolean((activeToken && activeToken.trim()) || hasEnvToken);
+      if (!hasValidToken) {
         setRaindropStatus('error');
-        setRaindropMessage('Raindrop API Token is missing. Click Settings to enter your token.');
+        setRaindropMessage('Raindrop API Token is missing. Click Settings to enter your token or set RAINDROP_TOKEN.');
         setIsFetchingRaindrop(false);
         return;
       }
@@ -333,7 +335,7 @@ export default function Home() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ token: activeToken }),
+          body: JSON.stringify({ token: activeToken && activeToken.trim() ? activeToken.trim() : undefined }),
         });
 
         if (res.status === 401 && !isRetry && settings.raindropRefreshToken) {
@@ -403,11 +405,12 @@ export default function Home() {
         setIsFetchingRaindrop(false);
       }
     },
-    [settings.raindropToken, settings.raindropRefreshToken, refreshRaindropToken]
+    [settings.raindropToken, settings.raindropRefreshToken, refreshRaindropToken, hasEnvToken]
   );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    let localToken = '';
     try {
       const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (saved) {
@@ -418,6 +421,7 @@ export default function Home() {
           imageWorkflowId: workflowId,
           imageApiEndpoint: parsed.imageApiEndpoint || composeWorkflowEndpoint(workflowId, parsed.imageWorkflowUrl || parsed.imageWorkflowOrigin),
         };
+        localToken = loadedSettings.raindropToken || '';
         setSettings(loadedSettings);
         if (loadedSettings.raindropToken && loadedSettings.raindropToken.trim()) {
           const validCache = getValidCachedRaindropData();
@@ -430,6 +434,22 @@ export default function Home() {
       console.error('Failed to load settings on mount:', e);
     }
 
+    // Check if RAINDROP_TOKEN or OAuth is configured on server
+    fetch('/api/auth/config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.hasEnvToken) {
+          setHasEnvToken(true);
+          if (!localToken.trim()) {
+            const validCache = getValidCachedRaindropData();
+            if (!validCache) {
+              fetchRaindropData('');
+            }
+          }
+        }
+      })
+      .catch(() => {});
+
     setIsMounted(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -441,17 +461,19 @@ export default function Home() {
       const res = await fetch('/api/raindrop/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tokenToTest }),
+        body: JSON.stringify({ token: tokenToTest && tokenToTest.trim() ? tokenToTest.trim() : undefined }),
       });
       const data = await res.json();
       if (res.ok && data.status === 'success') {
         setSyncTestMessage(
           `Success! Found ${data.characters?.length || 0} characters, ${data.styles?.length || 0} styles, and ${data.presets?.length || 0} presets.`
         );
-        handleSaveSettings({
-          ...settings,
-          raindropToken: tokenToTest,
-        });
+        if (tokenToTest && tokenToTest.trim()) {
+          handleSaveSettings({
+            ...settings,
+            raindropToken: tokenToTest.trim(),
+          });
+        }
       } else {
         setSyncTestMessage(`Status: ${formatErrorMessage(data.message) || 'Failed'}`);
       }
@@ -492,14 +514,16 @@ export default function Home() {
     coverDataUrl?: string;
     imageFile?: File;
   }) => {
-    const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
-        const tagsNoteStr = charData.tags.join(', ');
+    const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
+    const tagsNoteStr = charData.tags.join(', ');
     const noteObj = { tags: tagsNoteStr };
     const noteJson = JSON.stringify(noteObj);
 
-    if (hasToken) {
+    if (isConnected) {
       const formData = new FormData();
-      formData.append('token', settings.raindropToken);
+      if (settings.raindropToken && settings.raindropToken.trim()) {
+        formData.append('token', settings.raindropToken.trim());
+      }
       formData.append('title', charData.title);
       formData.append('excerpt', charData.excerpt);
       formData.append('note', noteJson);
@@ -573,7 +597,7 @@ export default function Home() {
       imageFile?: File;
     }
   ) => {
-    const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
+    const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
     const isRaindropId = typeof characterId === 'number' || /^\d+$/.test(String(characterId));
     const tagsNoteStr = charData.tags.join(', ');
 
@@ -591,9 +615,11 @@ export default function Home() {
     }
     const noteJson = JSON.stringify(noteObj);
 
-    if (hasToken && isRaindropId) {
+    if (isConnected && isRaindropId) {
       const formData = new FormData();
-      formData.append('token', settings.raindropToken);
+      if (settings.raindropToken && settings.raindropToken.trim()) {
+        formData.append('token', settings.raindropToken.trim());
+      }
       formData.append('title', charData.title);
       formData.append('excerpt', charData.excerpt);
       formData.append('note', noteJson);
@@ -666,14 +692,17 @@ export default function Home() {
   };
 
   const handleDeleteCharacter = async (characterId: string | number) => {
-    const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
+    const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
     const targetChar = characters.find((c) => String(c.id) === String(characterId));
     const charTitle = targetChar?.title || 'Character';
 
     const isRaindropId = typeof characterId === 'number' || /^\d+$/.test(String(characterId));
 
-    if (hasToken && isRaindropId) {
-      const res = await fetch(`/api/raindrop/character/${characterId}?token=${encodeURIComponent(settings.raindropToken)}`, {
+    if (isConnected && isRaindropId) {
+      const query = settings.raindropToken && settings.raindropToken.trim()
+        ? `?token=${encodeURIComponent(settings.raindropToken.trim())}`
+        : '';
+      const res = await fetch(`/api/raindrop/character/${characterId}${query}`, {
         method: 'DELETE',
       });
 
@@ -733,11 +762,13 @@ export default function Home() {
     stylePackName?: string;
     characterNames?: string[];
   }) => {
-    const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
+    const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
 
-    if (hasToken) {
+    if (isConnected) {
       const formData = new FormData();
-      formData.append('token', settings.raindropToken);
+      if (settings.raindropToken && settings.raindropToken.trim()) {
+        formData.append('token', settings.raindropToken.trim());
+      }
       formData.append('title', presetData.title);
       formData.append('prompt', presetData.prompt);
       if (presetData.model) formData.append('model', presetData.model);
@@ -812,14 +843,17 @@ export default function Home() {
   };
 
   const handleDeletePreset = async (presetId: string | number) => {
-    const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
+    const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
     const targetPreset = presets.find((p) => String(p.id) === String(presetId));
     const presetTitle = targetPreset?.title || 'Preset';
 
     const isRaindropId = typeof presetId === 'number' || /^\d+$/.test(String(presetId));
 
-    if (hasToken && isRaindropId) {
-      const res = await fetch(`/api/raindrop/preset/${presetId}?token=${encodeURIComponent(settings.raindropToken)}`, {
+    if (isConnected && isRaindropId) {
+      const query = settings.raindropToken && settings.raindropToken.trim()
+        ? `?token=${encodeURIComponent(settings.raindropToken.trim())}`
+        : '';
+      const res = await fetch(`/api/raindrop/preset/${presetId}${query}`, {
         method: 'DELETE',
       });
 
@@ -1023,7 +1057,7 @@ export default function Home() {
   const selectedStyle = styles.find((s) => s.id === selectedStyleId) || null;
   const selectedPreset = presets.find((p) => String(p.id) === String(selectedPresetId)) || null;
 
-  const hasToken = isMounted && Boolean(settings.raindropToken && settings.raindropToken.trim());
+  const hasToken = isMounted && Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
 
   if (!isMounted) {
     return (
@@ -1251,6 +1285,7 @@ export default function Home() {
               onTextLanguageChange={setTextLanguage}
               imageAppUrl={settings.imageAppUrl}
               raindropToken={settings.raindropToken}
+              hasRaindropToken={hasToken}
               onResetAll={handleResetAllInputs}
               hasUploadCapability={settings.hasUploadCapability}
               onSaveAsPreset={handleSaveAsPreset}
@@ -1273,6 +1308,7 @@ export default function Home() {
         onTestRaindropSync={handleTestRaindropSync}
         isTestingSync={isTestingSync}
         syncTestMessage={syncTestMessage}
+        hasEnvToken={hasEnvToken}
       />
     </div>
   );

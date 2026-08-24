@@ -13,6 +13,7 @@ interface SettingsModalProps {
   onTestRaindropSync: (token: string) => Promise<void>;
   isTestingSync: boolean;
   syncTestMessage: string | null;
+  hasEnvToken?: boolean;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -23,10 +24,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onTestRaindropSync,
   isTestingSync,
   syncTestMessage,
+  hasEnvToken: propHasEnvToken,
 }) => {
   const [raindropToken, setRaindropToken] = useState(settings.raindropToken);
   const [mounted, setMounted] = useState(false);
   const [oauthConfigured, setOauthConfigured] = useState<boolean | null>(null);
+  const [hasEnvToken, setHasEnvToken] = useState<boolean>(Boolean(propHasEnvToken));
   const [isLoggingInOAuth, setIsLoggingInOAuth] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
 
@@ -41,7 +44,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       fetch('/api/auth/config')
         .then((res) => res.json())
-        .then((data) => setOauthConfigured(Boolean(data.oauthConfigured)))
+        .then((data) => {
+          setOauthConfigured(Boolean(data.oauthConfigured));
+          if (data.hasEnvToken !== undefined) {
+            setHasEnvToken(Boolean(data.hasEnvToken));
+          }
+        })
         .catch(() => setOauthConfigured(false));
     }
   }, [isOpen, settings]);
@@ -147,7 +155,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Raindrop Token Field */}
           <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
             <div className="flex items-center justify-between gap-2">
-              <span>Raindrop token</span>
+              <div className="flex items-center gap-2">
+                <span>Raindrop token</span>
+                {hasEnvToken && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#EDF1E6] text-[#4E6140] text-[11px] font-medium">
+                    RAINDROP_TOKEN env active
+                  </span>
+                )}
+              </div>
               <a
                 href="https://app.raindrop.io/settings/integrations"
                 target="_blank"
@@ -162,7 +177,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               type="password"
               value={raindropToken}
               onChange={(e) => setRaindropToken(e.target.value)}
-              placeholder="rd_live_…"
+              placeholder={hasEnvToken ? 'Using RAINDROP_TOKEN env var (paste to override)' : 'rd_live_…'}
               className="px-3.5 py-3 rounded-xl border border-[#E3D8CA] bg-[#FCFAF6] text-[14.5px] font-mono outline-none focus:border-[#C4633E]"
             />
           </label>
@@ -172,7 +187,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               type="button"
               id="test-raindrop-token-btn"
               onClick={() => onTestRaindropSync(raindropToken)}
-              disabled={isTestingSync || !raindropToken.trim()}
+              disabled={isTestingSync || (!raindropToken.trim() && !hasEnvToken)}
               className="px-4 py-2.5 rounded-full border border-[#C4633E] bg-transparent text-[#C4633E] text-[13.5px] font-medium disabled:opacity-50"
             >
               {isTestingSync ? 'Testing connection…' : 'Test Raindrop sync'}
