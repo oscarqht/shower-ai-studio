@@ -1,0 +1,74 @@
+name: Cross-Repo PR Sync
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  create-cross-repo-pr:
+    name: Sync to Target Repo and Create PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push Branch and Create/Update Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+          TARGET_REPO: ${{ secrets.TARGET_REPO || vars.TARGET_REPO }}
+          TARGET_BRANCH: ${{ secrets.TARGET_BRANCH || vars.TARGET_BRANCH || 'main' }}
+          SYNC_BRANCH_PREFIX: ${{ secrets.SYNC_BRANCH_PREFIX || vars.SYNC_BRANCH_PREFIX || 'sync/main' }}
+        run: |
+          if [ -z "$TARGET_REPO" ]; then
+            echo "Error: TARGET_REPO is not set. Please set TARGET_REPO in Repository Secrets or Variables."
+            exit 1
+          fi
+
+          if [ -z "$GH_TOKEN" ]; then
+            echo "Error: CROSS_REPO_TOKEN secret is not set. Please add a Personal Access Token with repo permissions."
+            exit 1
+          fi
+
+          echo "Configuring git identity..."
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Define the sync branch name
+          SYNC_BRANCH="${SYNC_BRANCH_PREFIX}"
+
+          echo "Target repo: ${TARGET_REPO}"
+          echo "Target base branch: ${TARGET_BRANCH}"
+          echo "Sync branch: ${SYNC_BRANCH}"
+
+          # Add target remote with token authentication
+          git remote add target "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git"
+
+          # Push current main commit to target repo sync branch
+          echo "Pushing latest commits to target repository branch: ${SYNC_BRANCH}..."
+          git push target HEAD:refs/heads/${SYNC_BRANCH} --force
+
+          # Check if an open PR already exists for this branch in the target repo
+          echo "Checking for existing pull requests..."
+          EXISTING_PR=$(gh pr list --repo "${TARGET_REPO}" --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #${EXISTING_PR} already exists in ${TARGET_REPO}. The branch was updated automatically."
+          else
+            echo "Creating a new pull request in ${TARGET_REPO}..."
+            gh pr create \
+              --repo "${TARGET_REPO}" \
+              --head "${SYNC_BRANCH}" \
+              --base "${TARGET_BRANCH}" \
+              --title "Sync: Updates from ${GITHUB_REPOSITORY} (${GITHUB_SHA::7})" \
+              --body "### Automated Sync PR
+
+Automated pull request triggered by push to \`${GITHUB_REF_NAME}\` in [${GITHUB_REPOSITORY}](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}).
+
+- **Source Commit:** \`${GITHUB_SHA}\`
+- **Triggered By:** @${GITHUB_ACTOR}
+- **Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          fi
