@@ -18,6 +18,19 @@ export interface StylePack {
   style_reference_links: string[];
 }
 
+export interface Preset {
+  id: string | number;
+  title: string;
+  preview_image: string;
+  prompt: string;
+  model?: string;
+  aspect_ratio?: string;
+  text_language?: string;
+  style_pack_name?: string;
+  character_names?: string[];
+  raw_note?: string;
+}
+
 export interface WorkflowInfo {
   workflowId: string;
   origin: string;
@@ -29,7 +42,9 @@ export interface WorkflowInfo {
 export interface RaindropFetchResult {
   characters: Character[];
   styles: StylePack[];
+  presets?: Preset[];
   imageAppUrl?: string;
+  hasUploadCapability?: boolean;
   status: 'success' | 'partial' | 'error' | 'demo';
   message?: string;
   debugInfo?: any;

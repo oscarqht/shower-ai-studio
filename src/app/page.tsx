@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { SettingsModal } from '@/components/SettingsModal';
+import { PresetSelector } from '@/components/PresetSelector';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { StyleSelector } from '@/components/StyleSelector';
 import { GeneratorControls } from '@/components/GeneratorControls';
-import { Character, StylePack, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage } from '@/types';
+import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage } from '@/types';
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
 
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
@@ -17,6 +18,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 interface CachedRaindropData {
   characters: Character[];
   styles: StylePack[];
+  presets: Preset[];
   timestamp: number;
 }
 
@@ -37,6 +39,7 @@ const getValidCachedRaindropData = (): CachedRaindropData | null => {
     return {
       characters: Array.isArray(parsed.characters) ? parsed.characters : [],
       styles: Array.isArray(parsed.styles) ? parsed.styles : [],
+      presets: Array.isArray(parsed.presets) ? parsed.presets : [],
       timestamp,
     };
   } catch (e) {
@@ -89,6 +92,79 @@ export default function Home() {
   const [styles, setStyles] = useState<StylePack[]>(() => {
     const cached = getValidCachedRaindropData();
     return cached?.styles || [];
+  });
+
+  const [presets, setPresets] = useState<Preset[]>(() => {
+    const cached = getValidCachedRaindropData();
+    return cached?.presets || [];
+  });
+
+  const [selectedPresetId, setSelectedPresetId] = useState<string | number | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem(INPUTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.selectedPresetId !== undefined) {
+          return parsed.selectedPresetId;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load saved preset selection:', e);
+    }
+    return null;
+  });
+
+  const [compositionPrompt, setCompositionPrompt] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const saved = localStorage.getItem(INPUTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.compositionPrompt === 'string') {
+          return parsed.compositionPrompt;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load saved composition prompt:', e);
+    }
+    return '';
+  });
+
+  const [model, setModel] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'GPT Image 2';
+    try {
+      const saved = localStorage.getItem(INPUTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.model) return parsed.model;
+      }
+    } catch {}
+    return 'GPT Image 2';
+  });
+
+  const [aspectRatio, setAspectRatio] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'Auto';
+    try {
+      const saved = localStorage.getItem(INPUTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.aspectRatio) return parsed.aspectRatio;
+      }
+    } catch {}
+    return 'Auto';
+  });
+
+  const [textLanguage, setTextLanguage] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'Auto';
+    try {
+      const saved = localStorage.getItem(INPUTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.textLanguage) return parsed.textLanguage;
+      }
+    } catch {}
+    return 'Auto';
   });
 
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<(string | number)[]>(() => {
@@ -244,10 +320,12 @@ export default function Home() {
         if (res.ok && data.status === 'success') {
           const newChars = data.characters || [];
           const newStyles = data.styles || [];
+          const newPresets = data.presets || [];
           const newImageAppUrl = data.imageAppUrl || '';
 
           setCharacters(newChars);
           setStyles(newStyles);
+          setPresets(newPresets);
           if (newImageAppUrl || data.hasUploadCapability !== undefined) {
             setSettings((prev) => {
               const updated = {
@@ -266,7 +344,7 @@ export default function Home() {
 
           setRaindropStatus('success');
           setRaindropMessage(
-            `Successfully fetched ${newChars.length} characters and ${newStyles.length} style packs from Raindrop Shower!`
+            `Successfully fetched ${newChars.length} characters, ${newStyles.length} style packs, and ${newPresets.length} presets from Raindrop Shower!`
           );
 
           try {
@@ -275,6 +353,7 @@ export default function Home() {
               JSON.stringify({
                 characters: newChars,
                 styles: newStyles,
+                presets: newPresets,
                 timestamp: Date.now(),
               })
             );
@@ -335,7 +414,9 @@ export default function Home() {
       });
       const data = await res.json();
       if (res.ok && data.status === 'success') {
-        setSyncTestMessage(`Success! Found ${data.characters?.length || 0} characters and ${data.styles?.length || 0} style packs.`);
+        setSyncTestMessage(
+          `Success! Found ${data.characters?.length || 0} characters, ${data.styles?.length || 0} styles, and ${data.presets?.length || 0} presets.`
+        );
         handleSaveSettings({
           ...settings,
           raindropToken: tokenToTest,
@@ -610,6 +691,156 @@ export default function Home() {
     }
   };
 
+  const handleAddPreset = async (presetData: {
+    title: string;
+    prompt: string;
+    previewImageFile?: File;
+    previewImageDataUrl?: string;
+    model?: string;
+    aspectRatio?: string;
+    textLanguage?: string;
+    stylePackName?: string;
+    characterNames?: string[];
+  }) => {
+    const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
+
+    if (hasToken) {
+      const formData = new FormData();
+      formData.append('token', settings.raindropToken);
+      formData.append('title', presetData.title);
+      formData.append('prompt', presetData.prompt);
+      if (presetData.model) formData.append('model', presetData.model);
+      if (presetData.aspectRatio) formData.append('aspectRatio', presetData.aspectRatio);
+      if (presetData.textLanguage) formData.append('textLanguage', presetData.textLanguage);
+      if (presetData.stylePackName) formData.append('stylePackName', presetData.stylePackName);
+      if (presetData.characterNames && presetData.characterNames.length > 0) {
+        formData.append('characterNames', JSON.stringify(presetData.characterNames));
+      }
+      if (presetData.previewImageFile) {
+        formData.append('imageFile', presetData.previewImageFile);
+      } else if (presetData.previewImageDataUrl) {
+        formData.append('cover', presetData.previewImageDataUrl);
+      }
+
+      const res = await fetch('/api/raindrop/preset', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const resText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(resText);
+      } catch (e) {
+        throw new Error(`Server endpoint error (${res.status}): ${resText.slice(0, 150)}`);
+      }
+
+      if (!res.ok || data.status !== 'success') {
+        throw new Error(formatErrorMessage(data.message) || 'Failed to save preset to Raindrop');
+      }
+
+      const newPreset: Preset = data.preset;
+      setPresets((prev) => [newPreset, ...prev.filter((p) => String(p.id) !== String(newPreset.id))]);
+
+      setRaindropStatus('success');
+      setRaindropMessage(`Added preset "${newPreset.title}" to Raindrop Shower!`);
+
+      await fetchRaindropData(settings.raindropToken);
+    } else {
+      const newPreset: Preset = {
+        id: `preset-local-${Date.now()}`,
+        title: presetData.title,
+        prompt: presetData.prompt,
+        preview_image: presetData.previewImageDataUrl || '',
+        model: presetData.model,
+        aspect_ratio: presetData.aspectRatio,
+        text_language: presetData.textLanguage,
+        style_pack_name: presetData.stylePackName,
+        character_names: presetData.characterNames,
+      };
+
+      setPresets((prev) => [newPreset, ...prev]);
+      setRaindropStatus('success');
+      setRaindropMessage(`Added preset "${newPreset.title}" to local session!`);
+
+      try {
+        const currentCache = localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY);
+        const parsed = currentCache ? JSON.parse(currentCache) : {};
+        localStorage.setItem(
+          RAINDROP_CACHE_STORAGE_KEY,
+          JSON.stringify({
+            ...parsed,
+            presets: [newPreset, ...(parsed.presets || [])],
+            timestamp: Date.now(),
+          })
+        );
+      } catch (e) {
+        console.error('Failed to update cache:', e);
+      }
+    }
+  };
+
+  const handleDeletePreset = async (presetId: string | number) => {
+    const hasToken = Boolean(settings.raindropToken && settings.raindropToken.trim());
+    const targetPreset = presets.find((p) => String(p.id) === String(presetId));
+    const presetTitle = targetPreset?.title || 'Preset';
+
+    const isRaindropId = typeof presetId === 'number' || /^\d+$/.test(String(presetId));
+
+    if (hasToken && isRaindropId) {
+      const res = await fetch(`/api/raindrop/preset/${presetId}?token=${encodeURIComponent(settings.raindropToken)}`, {
+        method: 'DELETE',
+      });
+
+      const resText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(resText);
+      } catch (e) {
+        throw new Error(`Server endpoint error (${res.status}): ${resText.slice(0, 150)}`);
+      }
+
+      if (!res.ok || data.status !== 'success') {
+        throw new Error(formatErrorMessage(data.message) || 'Failed to delete preset from Raindrop');
+      }
+
+      setPresets((prev) => prev.filter((p) => String(p.id) !== String(presetId)));
+      if (String(selectedPresetId) === String(presetId)) {
+        setSelectedPresetId(null);
+      }
+      setRaindropStatus('success');
+      setRaindropMessage(`Deleted preset "${presetTitle}".`);
+
+      await fetchRaindropData(settings.raindropToken);
+      return;
+    }
+
+    setPresets((prev) => prev.filter((p) => String(p.id) !== String(presetId)));
+    if (String(selectedPresetId) === String(presetId)) {
+      setSelectedPresetId(null);
+    }
+    setRaindropStatus('success');
+    setRaindropMessage(`Deleted preset "${presetTitle}".`);
+
+    try {
+      const currentCache = localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY);
+      if (currentCache) {
+        const parsed = JSON.parse(currentCache);
+        const updatedPresets = (parsed.presets || []).filter((p: any) => String(p.id) !== String(presetId));
+        localStorage.setItem(
+          RAINDROP_CACHE_STORAGE_KEY,
+          JSON.stringify({
+            ...parsed,
+            presets: updatedPresets,
+            timestamp: Date.now(),
+          })
+        );
+      }
+    } catch (e) {
+      console.error('Failed to update cache after delete preset:', e);
+    }
+  };
+
   const handleSelectStyle = (id: string | number | null) => {
     const isSelectingNewStyle = selectedStyleId !== id;
     setSelectedStyleId((prev) => (prev === id ? null : id));
@@ -646,6 +877,71 @@ export default function Home() {
     }
   };
 
+  const handleSelectPreset = (preset: Preset | null) => {
+    if (!preset || String(selectedPresetId) === String(preset.id)) {
+      setSelectedPresetId(null);
+      return;
+    }
+
+    setSelectedPresetId(preset.id);
+
+    // 1. Update Composition Prompt if preset has prompt
+    if (preset.prompt) {
+      setCompositionPrompt(preset.prompt);
+    }
+
+    // 2. Update Model if preset has model
+    if (preset.model) {
+      setModel(preset.model);
+    }
+
+    // 3. Update Aspect Ratio if preset has aspect_ratio
+    if (preset.aspect_ratio) {
+      setAspectRatio(preset.aspect_ratio);
+    }
+
+    // 4. Update Text Language if preset has text_language
+    if (preset.text_language) {
+      setTextLanguage(preset.text_language);
+    }
+
+    // 5. Match style pack if provided
+    if (preset.style_pack_name) {
+      const targetStyleName = preset.style_pack_name.toLowerCase().trim();
+      const matchedStyle = styles.find(
+        (s) =>
+          s.title &&
+          (s.title.toLowerCase().trim() === targetStyleName ||
+            s.title.toLowerCase().includes(targetStyleName) ||
+            targetStyleName.includes(s.title.toLowerCase().trim()))
+      );
+      if (matchedStyle) {
+        setSelectedStyleId(matchedStyle.id);
+      }
+    }
+
+    // 6. Match characters if provided
+    if (preset.character_names && preset.character_names.length > 0) {
+      const matchedCharIds: (string | number)[] = [];
+      preset.character_names.forEach((name) => {
+        const cleanName = name.toLowerCase().trim();
+        const matched = characters.find(
+          (c) =>
+            c.title &&
+            (c.title.toLowerCase().trim() === cleanName ||
+              c.title.toLowerCase().includes(cleanName) ||
+              cleanName.includes(c.title.toLowerCase().trim()))
+        );
+        if (matched && !matchedCharIds.includes(matched.id)) {
+          matchedCharIds.push(matched.id);
+        }
+      });
+      if (matchedCharIds.length > 0) {
+        setSelectedCharacterIds(matchedCharIds);
+      }
+    }
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -655,6 +951,11 @@ export default function Home() {
         INPUTS_STORAGE_KEY,
         JSON.stringify({
           ...existing,
+          selectedPresetId,
+          compositionPrompt,
+          model,
+          aspectRatio,
+          textLanguage,
           selectedCharacterIds,
           selectedStyleId,
         })
@@ -662,9 +963,22 @@ export default function Home() {
     } catch (e) {
       console.error('Failed to save selection to localStorage:', e);
     }
-  }, [selectedCharacterIds, selectedStyleId]);
+  }, [
+    selectedPresetId,
+    compositionPrompt,
+    model,
+    aspectRatio,
+    textLanguage,
+    selectedCharacterIds,
+    selectedStyleId,
+  ]);
 
   const handleResetAllInputs = () => {
+    setSelectedPresetId(null);
+    setCompositionPrompt('');
+    setModel('GPT Image 2');
+    setAspectRatio('Auto');
+    setTextLanguage('Auto');
     setSelectedCharacterIds([]);
     setSelectedStyleId(null);
     try {
@@ -676,6 +990,7 @@ export default function Home() {
 
   const selectedCharacters = characters.filter((c) => selectedCharacterIds.includes(c.id));
   const selectedStyle = styles.find((s) => s.id === selectedStyleId) || null;
+  const selectedPreset = presets.find((p) => String(p.id) === String(selectedPresetId)) || null;
 
   const hasToken = isMounted && Boolean(settings.raindropToken && settings.raindropToken.trim());
 
@@ -836,6 +1151,27 @@ export default function Home() {
               </div>
             )}
 
+            {/* Presets Section */}
+            <PresetSelector
+              presets={presets}
+              selectedPresetId={selectedPresetId}
+              onSelectPreset={handleSelectPreset}
+              isLoading={isFetchingRaindrop}
+              onAddPreset={handleAddPreset}
+              onDeletePreset={handleDeletePreset}
+              availableCharacters={characters}
+              availableStyles={styles}
+              currentWorkspaceValues={{
+                prompt: compositionPrompt,
+                model,
+                aspectRatio,
+                textLanguage,
+                stylePackName: selectedStyle?.title,
+                characterNames: selectedCharacters.map((c) => c.title),
+              }}
+              hasRaindropToken={hasToken}
+            />
+
             {/* Section 1: Characters Selection */}
             <CharacterSelector
               characters={characters}
@@ -862,6 +1198,15 @@ export default function Home() {
             <GeneratorControls
               selectedCharacters={selectedCharacters}
               selectedStyle={selectedStyle}
+              selectedPreset={selectedPreset}
+              compositionPrompt={compositionPrompt}
+              onCompositionPromptChange={setCompositionPrompt}
+              model={model}
+              onModelChange={setModel}
+              aspectRatio={aspectRatio}
+              onAspectRatioChange={setAspectRatio}
+              textLanguage={textLanguage}
+              onTextLanguageChange={setTextLanguage}
               imageAppUrl={settings.imageAppUrl}
               raindropToken={settings.raindropToken}
               onResetAll={handleResetAllInputs}

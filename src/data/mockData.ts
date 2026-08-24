@@ -1,4 +1,4 @@
-import { Character, StylePack } from '../types';
+import { Character, StylePack, Preset } from '../types';
 
 export const DEMO_CHARACTERS: Character[] = [
   {
@@ -79,3 +79,83 @@ export const DEMO_STYLES: StylePack[] = [
     ]
   }
 ];
+
+export const DEMO_PRESETS: Preset[] = [
+  {
+    id: 'demo-preset-1',
+    title: 'Neon Cyber Samurai Duel',
+    preview_image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop',
+    prompt: 'A cinematic neon-drenched showdown atop a rain-soaked Neo Tokyo skyscraper at midnight. Dual luminous energy blades clashing with holographic sparks illuminating the dense mist and towering billboards.',
+    model: 'GPT Image 2',
+    aspect_ratio: '16:9',
+    text_language: 'English',
+    style_pack_name: 'Neon Cyberpunk Noir',
+    character_names: ['Cyber Ronin Kaito'],
+    raw_note: JSON.stringify({
+      prompt: 'A cinematic neon-drenched showdown atop a rain-soaked Neo Tokyo skyscraper at midnight. Dual luminous energy blades clashing with holographic sparks illuminating the dense mist and towering billboards.',
+      model: 'GPT Image 2',
+      aspect_ratio: '16:9',
+      text_language: 'English',
+      style_pack_name: 'Neon Cyberpunk Noir',
+      character_names: ['Cyber Ronin Kaito']
+    }, null, 2)
+  },
+  {
+    id: 'demo-preset-2',
+    title: 'Celestial Shrine Blessing',
+    preview_image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop',
+    prompt: 'Floating high above a sea of clouds at twilight, channeling starlight through an arcane orb staff. Golden hour light illuminating floating lanterns and ancient sakura petals swirling in the wind.',
+    model: 'Gemini 3.1 Flash',
+    aspect_ratio: '3:4',
+    text_language: 'Auto',
+    style_pack_name: 'Painterly Anime Dreamscape',
+    character_names: ['Ethereal Starlight Priestess'],
+    raw_note: JSON.stringify({
+      prompt: 'Floating high above a sea of clouds at twilight, channeling starlight through an arcane orb staff. Golden hour light illuminating floating lanterns and ancient sakura petals swirling in the wind.',
+      model: 'Gemini 3.1 Flash',
+      aspect_ratio: '3:4',
+      text_language: 'Auto',
+      style_pack_name: 'Painterly Anime Dreamscape',
+      character_names: ['Ethereal Starlight Priestess']
+    }, null, 2)
+  },
+  {
+    id: 'demo-preset-3',
+    title: 'Mecha Vanguard Overdrive',
+    preview_image: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop',
+    prompt: 'Retro-futuristic tactical repair station in outer orbit. Neon laser grids in the background, cockpit diagnostics in vivid orange and purple glows, intricate mechanical armor assembly.',
+    model: 'GPT Image 2',
+    aspect_ratio: '1:1',
+    text_language: 'No text',
+    style_pack_name: '80s Synthwave Sunset',
+    character_names: ['Mecha Pilot Vesper'],
+    raw_note: JSON.stringify({
+      prompt: 'Retro-futuristic tactical repair station in outer orbit. Neon laser grids in the background, cockpit diagnostics in vivid orange and purple glows, intricate mechanical armor assembly.',
+      model: 'GPT Image 2',
+      aspect_ratio: '1:1',
+      text_language: 'No text',
+      style_pack_name: '80s Synthwave Sunset',
+      character_names: ['Mecha Pilot Vesper']
+    }, null, 2)
+  },
+  {
+    id: 'demo-preset-4',
+    title: 'Ancient Guardian Grove Council',
+    preview_image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop',
+    prompt: 'Deep primordial forest clearing under an ancient colossal tree. Bioluminescent mushrooms and glowing moss casting dramatic green and gold chiaroscuro lighting on two guardians convening in quiet reverence.',
+    model: 'Gemini 3.1 Flash Lite',
+    aspect_ratio: '16:9',
+    text_language: 'Auto',
+    style_pack_name: 'Dark Fantasy Chiaroscuro',
+    character_names: ['Ancient Forest Warden', 'Ethereal Starlight Priestess'],
+    raw_note: JSON.stringify({
+      prompt: 'Deep primordial forest clearing under an ancient colossal tree. Bioluminescent mushrooms and glowing moss casting dramatic green and gold chiaroscuro lighting on two guardians convening in quiet reverence.',
+      model: 'Gemini 3.1 Flash Lite',
+      aspect_ratio: '16:9',
+      text_language: 'Auto',
+      style_pack_name: 'Dark Fantasy Chiaroscuro',
+      character_names: ['Ancient Forest Warden', 'Ethereal Starlight Priestess']
+    }, null, 2)
+  }
+];
+
