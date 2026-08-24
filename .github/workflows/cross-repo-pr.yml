@@ -53,9 +53,25 @@ jobs:
           # Add target remote with token authentication
           git remote add target "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git"
 
-          # Push current main commit to target repo sync branch
-          echo "Pushing latest commits to target repository branch: ${SYNC_BRANCH}..."
-          git push target HEAD:refs/heads/${SYNC_BRANCH} --force
+          echo "Fetching target base branch ${TARGET_BRANCH}..."
+          git fetch target "${TARGET_BRANCH}" || true
+
+          TREE_SHA=$(git rev-parse HEAD^{tree})
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          COMMIT_MSG=$(git log -1 --pretty=format:"Sync updates: %s (%h)" HEAD)
+
+          if git rev-parse --verify "target/${TARGET_BRANCH}" >/dev/null 2>&1; then
+            PARENT_SHA=$(git rev-parse "target/${TARGET_BRANCH}")
+            echo "Target base commit: ${PARENT_SHA:0:7}"
+            SYNC_COMMIT=$(git commit-tree "${TREE_SHA}" -p "${PARENT_SHA}" -m "${COMMIT_MSG}")
+          else
+            echo "Target base branch not found; creating root commit..."
+            SYNC_COMMIT=$(git commit-tree "${TREE_SHA}" -m "${COMMIT_MSG}")
+          fi
+
+          # Push sync commit to target repo sync branch
+          echo "Pushing sync commit (${SYNC_COMMIT:0:7}) to target repository branch: ${SYNC_BRANCH}..."
+          git push target "${SYNC_COMMIT}:refs/heads/${SYNC_BRANCH}" --force
 
           # Check if an open PR already exists for this branch in the target repo
           echo "Checking for existing pull requests..."
