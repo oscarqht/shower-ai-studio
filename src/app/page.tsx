@@ -19,6 +19,7 @@ interface CachedRaindropData {
   characters: Character[];
   styles: StylePack[];
   presets: Preset[];
+  presetsCollectionId?: string | number | null;
   timestamp: number;
 }
 
@@ -40,6 +41,7 @@ const getValidCachedRaindropData = (): CachedRaindropData | null => {
       characters: Array.isArray(parsed.characters) ? parsed.characters : [],
       styles: Array.isArray(parsed.styles) ? parsed.styles : [],
       presets: Array.isArray(parsed.presets) ? parsed.presets : [],
+      presetsCollectionId: parsed.presetsCollectionId || null,
       timestamp,
     };
   } catch (e) {
@@ -97,6 +99,11 @@ export default function Home() {
   const [presets, setPresets] = useState<Preset[]>(() => {
     const cached = getValidCachedRaindropData();
     return cached?.presets || [];
+  });
+
+  const [presetsCollectionId, setPresetsCollectionId] = useState<string | number | null>(() => {
+    const cached = getValidCachedRaindropData();
+    return cached?.presetsCollectionId || null;
   });
 
   const [selectedPresetId, setSelectedPresetId] = useState<string | number | null>(() => {
@@ -342,11 +349,13 @@ export default function Home() {
           const newChars = data.characters || [];
           const newStyles = data.styles || [];
           const newPresets = data.presets || [];
+          const newPresetsCollectionId = data.presetsCollectionId || data.debugInfo?.presetsCollectionId || null;
           const newImageAppUrl = data.imageAppUrl || '';
 
           setCharacters(newChars);
           setStyles(newStyles);
           setPresets(newPresets);
+          setPresetsCollectionId(newPresetsCollectionId);
           if (newImageAppUrl || data.hasUploadCapability !== undefined) {
             setSettings((prev) => {
               const updated = {
@@ -375,6 +384,7 @@ export default function Home() {
                 characters: newChars,
                 styles: newStyles,
                 presets: newPresets,
+                presetsCollectionId: newPresetsCollectionId,
                 timestamp: Date.now(),
               })
             );
@@ -1176,6 +1186,7 @@ export default function Home() {
             <PresetSelector
               presets={presets}
               selectedPresetId={selectedPresetId}
+              presetCollectionId={presetsCollectionId}
               onSelectPreset={handleSelectPreset}
               isLoading={isFetchingRaindrop}
               onAddPreset={handleAddPreset}

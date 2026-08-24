@@ -51,6 +51,7 @@ const TEXT_LANGUAGE_OPTIONS = [
 interface PresetSelectorProps {
   presets: Preset[];
   selectedPresetId: string | number | null;
+  presetCollectionId?: string | number | null;
   onSelectPreset: (preset: Preset | null) => void;
   isLoading?: boolean;
   onAddPreset?: (presetData: {
@@ -85,6 +86,7 @@ interface PresetSelectorProps {
 export const PresetSelector: React.FC<PresetSelectorProps> = ({
   presets,
   selectedPresetId,
+  presetCollectionId,
   onSelectPreset,
   isLoading = false,
   onAddPreset,
@@ -874,7 +876,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 <div className="flex items-center gap-2">
                   {typeof inspectPreset.id === 'number' || /^\d+$/.test(String(inspectPreset.id)) ? (
                     <a
-                      href={`https://app.raindrop.io/my/${inspectPreset.id}`}
+                      href={`https://app.raindrop.io/my/${inspectPreset.collection_id || presetCollectionId || '0'}/item/${inspectPreset.id}/edit`}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Open in Raindrop.io"

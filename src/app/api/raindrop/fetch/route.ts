@@ -346,8 +346,13 @@ export async function POST(req: NextRequest) {
               }
             }
 
+            const collection_id = item.collection?.$id !== undefined
+              ? item.collection.$id
+              : (item.collectionId !== undefined ? item.collectionId : (presetsCollection?._id || undefined));
+
             return {
               id: item._id,
+              collection_id,
               title,
               preview_image,
               prompt,
@@ -370,6 +375,7 @@ export async function POST(req: NextRequest) {
       characters,
       styles,
       presets,
+      presetsCollectionId: presetsCollection?._id || null,
       imageAppUrl,
       hasUploadCapability,
       debugInfo: {

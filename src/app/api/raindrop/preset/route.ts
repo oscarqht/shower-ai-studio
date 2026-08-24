@@ -256,6 +256,7 @@ export async function POST(req: NextRequest) {
 
     const newPreset = {
       id: createdItem._id,
+      collection_id: collectionId,
       title: createdItem.title || title,
       preview_image: createdItem.cover || cover || (createdItem.media && createdItem.media[0] ? createdItem.media[0].link : '') || createdItem.link || '',
       prompt,

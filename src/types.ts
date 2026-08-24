@@ -20,6 +20,7 @@ export interface StylePack {
 
 export interface Preset {
   id: string | number;
+  collection_id?: string | number;
   title: string;
   preview_image: string;
   prompt: string;
@@ -52,6 +53,7 @@ export interface RaindropFetchResult {
   characters: Character[];
   styles: StylePack[];
   presets?: Preset[];
+  presetsCollectionId?: string | number;
   imageAppUrl?: string;
   hasUploadCapability?: boolean;
   status: 'success' | 'partial' | 'error' | 'demo';
