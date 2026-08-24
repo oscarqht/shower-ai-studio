@@ -12,6 +12,43 @@ import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
 const INPUTS_STORAGE_KEY = 'raindrop_ai_studio_last_inputs_v1';
 const RAINDROP_CACHE_STORAGE_KEY = 'raindrop_ai_studio_cache_v1';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface CachedRaindropData {
+  characters: Character[];
+  styles: StylePack[];
+  timestamp: number;
+}
+
+const getValidCachedRaindropData = (): CachedRaindropData | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const timestamp = typeof parsed?.timestamp === 'number' ? parsed.timestamp : 0;
+
+    // Invalidate and purge cache if older than 24 hours or missing timestamp
+    if (!timestamp || Date.now() - timestamp > CACHE_TTL_MS) {
+      localStorage.removeItem(RAINDROP_CACHE_STORAGE_KEY);
+      return null;
+    }
+
+    return {
+      characters: Array.isArray(parsed.characters) ? parsed.characters : [],
+      styles: Array.isArray(parsed.styles) ? parsed.styles : [],
+      timestamp,
+    };
+  } catch (e) {
+    console.error('Failed to parse cached Raindrop data from localStorage:', e);
+    try {
+      localStorage.removeItem(RAINDROP_CACHE_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+};
 
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
@@ -43,37 +80,15 @@ export default function Home() {
     };
   });
 
-  // Raindrop Data States
+  // Raindrop Data States (with 24h cache TTL check)
   const [characters, setCharacters] = useState<Character[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.characters)) {
-          return parsed.characters;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load cached characters from localStorage:', e);
-    }
-    return [];
+    const cached = getValidCachedRaindropData();
+    return cached?.characters || [];
   });
 
   const [styles, setStyles] = useState<StylePack[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.styles)) {
-          return parsed.styles;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load cached styles from localStorage:', e);
-    }
-    return [];
+    const cached = getValidCachedRaindropData();
+    return cached?.styles || [];
   });
 
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<(string | number)[]>(() => {
@@ -149,8 +164,8 @@ export default function Home() {
       console.error('Failed to save settings:', e);
     }
     if (newSettings.raindropToken && newSettings.raindropToken.trim()) {
-      const hasCache = Boolean(localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY));
-      if (!hasCache && characters.length === 0 && styles.length === 0) {
+      const validCache = getValidCachedRaindropData();
+      if (!validCache) {
         fetchRaindropData(newSettings.raindropToken);
       }
     }
@@ -295,8 +310,8 @@ export default function Home() {
         };
         setSettings(loadedSettings);
         if (loadedSettings.raindropToken && loadedSettings.raindropToken.trim()) {
-          const hasCache = Boolean(localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY));
-          if (!hasCache && characters.length === 0 && styles.length === 0) {
+          const validCache = getValidCachedRaindropData();
+          if (!validCache) {
             fetchRaindropData(loadedSettings.raindropToken);
           }
         }
@@ -306,6 +321,7 @@ export default function Home() {
     }
 
     setIsMounted(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTestRaindropSync = async (tokenToTest: string) => {
