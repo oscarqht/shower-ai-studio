@@ -31,6 +31,15 @@ export interface Preset {
   raw_note?: string;
 }
 
+export interface PresetModalInitialValues {
+  prompt?: string;
+  model?: string;
+  aspectRatio?: string;
+  textLanguage?: string;
+  stylePackName?: string;
+  characterNames?: string[];
+}
+
 export interface WorkflowInfo {
   workflowId: string;
   origin: string;
