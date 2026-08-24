@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Check, Copy, ExternalLink, Sparkles } from 'lucide-react';
+import { X, Check, Copy, ExternalLink, Sparkles, BookmarkPlus } from 'lucide-react';
 import { Character, StylePack, Preset } from '../types';
 
 interface GeneratorControlsProps {
@@ -20,6 +20,14 @@ interface GeneratorControlsProps {
   raindropToken?: string;
   onResetAll?: () => void;
   hasUploadCapability?: boolean;
+  onSaveAsPreset?: (payload: {
+    prompt: string;
+    model: string;
+    aspectRatio: string;
+    textLanguage: string;
+    stylePackName?: string;
+    characterNames?: string[];
+  }) => void;
 }
 
 const MODEL_OPTIONS = [
@@ -80,6 +88,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   raindropToken,
   onResetAll,
   hasUploadCapability,
+  onSaveAsPreset,
 }) => {
   const saved = getSavedControls();
   const [internalModel, setInternalModel] = useState<string>(saved.model || 'GPT Image 2');
@@ -197,6 +206,19 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy prompt to clipboard:', err);
+    }
+  };
+
+  const handleSaveAsPreset = () => {
+    if (onSaveAsPreset) {
+      onSaveAsPreset({
+        prompt: compositionPrompt,
+        model: model,
+        aspectRatio: aspectRatio,
+        textLanguage: textLanguage,
+        stylePackName: selectedStyle ? (selectedStyle.title || '').trim() : '',
+        characterNames: selectedCharacters.map((c) => (c.title || '').trim()).filter(Boolean),
+      });
     }
   };
 
@@ -573,7 +595,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           type="button"
           id="copy-prompt-btn"
           onClick={handleCopyPrompt}
-          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer"
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:bg-[#FAF5EE] transition-colors"
         >
           {isCopied ? (
             <>
@@ -586,6 +608,17 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
               <span>Copy payload</span>
             </>
           )}
+        </button>
+
+        <button
+          type="button"
+          id="save-as-preset-btn"
+          onClick={handleSaveAsPreset}
+          title="Save current prompt, cast, style, and settings as a new preset recipe"
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:border-[#C4633E] hover:text-[#C4633E] hover:bg-[#FAF5EE] transition-colors"
+        >
+          <BookmarkPlus className="w-4 h-4 text-[#C4633E]" />
+          <span>Save as preset</span>
         </button>
 
         <div className="flex-1 min-w-2" />
