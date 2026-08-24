@@ -1,12 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Check, Copy, ExternalLink } from 'lucide-react';
-import { Character, StylePack } from '../types';
+import { X, Check, Copy, ExternalLink, Sparkles } from 'lucide-react';
+import { Character, StylePack, Preset } from '../types';
 
 interface GeneratorControlsProps {
   selectedCharacters: Character[];
   selectedStyle: StylePack | null;
+  selectedPreset?: Preset | null;
+  compositionPrompt?: string;
+  onCompositionPromptChange?: (value: string) => void;
+  model?: string;
+  onModelChange?: (value: string) => void;
+  aspectRatio?: string;
+  onAspectRatioChange?: (value: string) => void;
+  textLanguage?: string;
+  onTextLanguageChange?: (value: string) => void;
   imageAppUrl?: string;
   raindropToken?: string;
   onResetAll?: () => void;
@@ -58,16 +67,53 @@ const selectClasses =
 export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   selectedCharacters,
   selectedStyle,
+  selectedPreset,
+  compositionPrompt: compositionPromptProp,
+  onCompositionPromptChange,
+  model: modelProp,
+  onModelChange,
+  aspectRatio: aspectRatioProp,
+  onAspectRatioChange,
+  textLanguage: textLanguageProp,
+  onTextLanguageChange,
   imageAppUrl,
   raindropToken,
   onResetAll,
   hasUploadCapability,
 }) => {
   const saved = getSavedControls();
-  const [model, setModel] = useState<string>(saved.model || 'GPT Image 2');
-  const [compositionPrompt, setCompositionPrompt] = useState<string>(saved.compositionPrompt || '');
-  const [aspectRatio, setAspectRatio] = useState<string>(saved.aspectRatio || 'Auto');
-  const [textLanguage, setTextLanguage] = useState<string>(saved.textLanguage || 'Auto');
+  const [internalModel, setInternalModel] = useState<string>(saved.model || 'GPT Image 2');
+  const [internalCompositionPrompt, setInternalCompositionPrompt] = useState<string>(saved.compositionPrompt || '');
+  const [internalAspectRatio, setInternalAspectRatio] = useState<string>(saved.aspectRatio || 'Auto');
+  const [internalTextLanguage, setInternalTextLanguage] = useState<string>(saved.textLanguage || 'Auto');
+
+  const isControlledModel = modelProp !== undefined;
+  const isControlledPrompt = compositionPromptProp !== undefined;
+  const isControlledAspect = aspectRatioProp !== undefined;
+  const isControlledLang = textLanguageProp !== undefined;
+
+  const model = isControlledModel ? modelProp : internalModel;
+  const compositionPrompt = isControlledPrompt ? compositionPromptProp : internalCompositionPrompt;
+  const aspectRatio = isControlledAspect ? aspectRatioProp : internalAspectRatio;
+  const textLanguage = isControlledLang ? textLanguageProp : internalTextLanguage;
+
+  const setModel = (val: string) => {
+    if (onModelChange) onModelChange(val);
+    if (!isControlledModel) setInternalModel(val);
+  };
+  const setCompositionPrompt = (val: string) => {
+    if (onCompositionPromptChange) onCompositionPromptChange(val);
+    if (!isControlledPrompt) setInternalCompositionPrompt(val);
+  };
+  const setAspectRatio = (val: string) => {
+    if (onAspectRatioChange) onAspectRatioChange(val);
+    if (!isControlledAspect) setInternalAspectRatio(val);
+  };
+  const setTextLanguage = (val: string) => {
+    if (onTextLanguageChange) onTextLanguageChange(val);
+    if (!isControlledLang) setInternalTextLanguage(val);
+  };
+
   const [isCopied, setIsCopied] = useState(false);
   const [isOpeningApp, setIsOpeningApp] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
@@ -80,9 +126,13 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   // Cleanup object URLs to avoid memory leaks
   useEffect(() => {
     return () => {
-      fileThumbnails.forEach((t) => URL.revokeObjectURL(t.url));
+      fileThumbnails.forEach((t) => {
+        if (t.url.startsWith('blob:')) {
+          URL.revokeObjectURL(t.url);
+        }
+      });
     };
-  }, []);
+  }, [fileThumbnails]);
 
   // Persist controls state changes to localStorage
   useEffect(() => {
@@ -312,6 +362,24 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E]">STEP 03</span>
         <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">Compose &amp; hand off</h2>
       </div>
+
+      {/* Selected Preset Banner */}
+      {selectedPreset && (
+        <div className="mt-4 px-4 py-3 rounded-2xl bg-[#FFF6EE] border border-[#F0D8C4] flex items-center justify-between gap-3 text-[14px]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-6 h-6 rounded-full bg-[#C4633E] text-[#FFF7F1] flex items-center justify-center shrink-0">
+              <Sparkles className="w-3.5 h-3.5" />
+            </span>
+            <div className="truncate">
+              <span className="text-[#8A7E73] text-[13px] mr-1.5">Preset:</span>
+              <strong className="text-[#2E2A26] font-medium">{selectedPreset.title}</strong>
+            </div>
+          </div>
+          <span className="font-mono text-[11.5px] text-[#C4633E] bg-[#FFEADA] px-2.5 py-0.5 rounded-full shrink-0">
+            Recipe active
+          </span>
+        </div>
+      )}
 
       {/* Selected Items Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-[18px] mb-[22px]">
