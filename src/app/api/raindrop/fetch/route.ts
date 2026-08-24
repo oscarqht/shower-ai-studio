@@ -108,9 +108,15 @@ export async function POST(req: NextRequest) {
     const appsCollection = allCollections.find(
       (c) => isParentShower(c) && c.title && c.title.trim().toLowerCase() === 'apps'
     );
+    const presetsCollection = allCollections.find(
+      (c) => isParentShower(c) && c.title && c.title.trim().toLowerCase() === 'presets'
+    ) || allCollections.find(
+      (c) => c.title && c.title.trim().toLowerCase() === 'presets'
+    );
 
     let characters: any[] = [];
     let styles: any[] = [];
+    let presets: any[] = [];
     let imageAppUrl = '';
     let hasUploadCapability = false;
 
@@ -278,10 +284,92 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Step 7: Fetch items in "Presets" collection
+    if (presetsCollection) {
+      try {
+        const presetRes = await fetch(
+          `https://api.raindrop.io/rest/v1/raindrops/${presetsCollection._id}?perpage=50`,
+          { headers }
+        );
+        if (presetRes.ok) {
+          const presetData = await presetRes.json();
+          const items = presetData.items || [];
+          presets = items.map((item: any) => {
+            const title = item.title || 'Untitled Preset';
+            // Preview image should be the raindrop item's thumbnail
+            const preview_image = item.cover || (item.media && item.media[0] ? item.media[0].link : '') || item.link || '';
+
+            let prompt = item.excerpt || '';
+            let model: string | undefined = undefined;
+            let aspect_ratio: string | undefined = undefined;
+            let text_language: string | undefined = undefined;
+            let style_pack_name: string | undefined = undefined;
+            let character_names: string[] | undefined = undefined;
+
+            if (item.note) {
+              try {
+                const parsed = JSON.parse(item.note);
+                if (parsed && typeof parsed === 'object') {
+                  if (parsed.prompt !== undefined) prompt = String(parsed.prompt);
+                  else if (parsed.instruction !== undefined) prompt = String(parsed.instruction);
+                  else if (parsed.compositionPrompt !== undefined) prompt = String(parsed.compositionPrompt);
+                  else if (parsed.composition_prompt !== undefined) prompt = String(parsed.composition_prompt);
+                  else if (parsed.description !== undefined) prompt = String(parsed.description);
+
+                  if (parsed.model !== undefined) model = String(parsed.model);
+                  else if (parsed.ai_model !== undefined) model = String(parsed.ai_model);
+                  else if (parsed.aiModel !== undefined) model = String(parsed.aiModel);
+
+                  if (parsed.aspect_ratio !== undefined) aspect_ratio = String(parsed.aspect_ratio);
+                  else if (parsed.aspectRatio !== undefined) aspect_ratio = String(parsed.aspectRatio);
+                  else if (parsed.ratio !== undefined) aspect_ratio = String(parsed.ratio);
+
+                  if (parsed.text_language !== undefined) text_language = String(parsed.text_language);
+                  else if (parsed.textLanguage !== undefined) text_language = String(parsed.textLanguage);
+                  else if (parsed.language !== undefined) text_language = String(parsed.language);
+
+                  if (parsed.style_pack_name !== undefined) style_pack_name = String(parsed.style_pack_name);
+                  else if (parsed.stylePackName !== undefined) style_pack_name = String(parsed.stylePackName);
+                  else if (parsed.style_pack !== undefined) style_pack_name = String(parsed.style_pack);
+                  else if (parsed.style !== undefined) style_pack_name = String(parsed.style);
+                  else if (parsed.stylePack !== undefined) style_pack_name = String(parsed.stylePack);
+
+                  const rawChars = parsed.character_names ?? parsed.characterNames ?? parsed.characters ?? parsed.cast;
+                  if (Array.isArray(rawChars)) {
+                    character_names = rawChars.map((c: any) => String(c).trim()).filter(Boolean);
+                  } else if (typeof rawChars === 'string' && rawChars.trim()) {
+                    character_names = rawChars.split(/[,·]/).map((c: string) => c.trim()).filter(Boolean);
+                  }
+                }
+              } catch {
+                if (!prompt) prompt = item.note;
+              }
+            }
+
+            return {
+              id: item._id,
+              title,
+              preview_image,
+              prompt,
+              model,
+              aspect_ratio,
+              text_language,
+              style_pack_name,
+              character_names,
+              raw_note: item.note || '',
+            };
+          });
+        }
+      } catch (e) {
+        console.error('Failed to fetch Presets collection items:', e);
+      }
+    }
+
     return NextResponse.json({
       status: 'success',
       characters,
       styles,
+      presets,
       imageAppUrl,
       hasUploadCapability,
       debugInfo: {
@@ -289,7 +377,9 @@ export async function POST(req: NextRequest) {
         charactersCollectionId: charactersCollection?._id || null,
         stylesCollectionId: stylesCollection?._id || null,
         appsCollectionId: appsCollection?._id || null,
+        presetsCollectionId: presetsCollection?._id || null,
         styleCollectionsCount: stylePackCollectionsCount,
+        presetsCount: presets.length,
         imageAppUrl,
         hasUploadCapability,
       },
