@@ -23,8 +23,8 @@ jobs:
           TARGET_REPO_VAR: ${{ vars.TARGET_REPO }}
           TARGET_BRANCH_SECRET: ${{ secrets.TARGET_BRANCH }}
           TARGET_BRANCH_VAR: ${{ vars.TARGET_BRANCH }}
-          SYNC_BRANCH_SECRET: ${{ secrets.SYNC_BRANCH_PREFIX }}
-          SYNC_BRANCH_VAR: ${{ vars.SYNC_BRANCH_PREFIX }}
+          SYNC_BRANCH_SECRET: ${{ secrets.SYNC_BRANCH || secrets.SYNC_BRANCH_PREFIX }}
+          SYNC_BRANCH_VAR: ${{ vars.SYNC_BRANCH || vars.SYNC_BRANCH_PREFIX }}
         run: |
           TARGET_REPO="${TARGET_REPO_SECRET:-$TARGET_REPO_VAR}"
           TARGET_BRANCH="${TARGET_BRANCH_SECRET:-${TARGET_BRANCH_VAR:-main}}"
@@ -57,9 +57,9 @@ jobs:
 
           # Check if an open PR already exists for this branch in the target repo
           echo "Checking for existing pull requests..."
-          EXISTING_PR=$(gh pr list --repo "${TARGET_REPO}" --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number')
+          EXISTING_PR=$(gh pr list --repo "${TARGET_REPO}" --head "${SYNC_BRANCH}" --base "${TARGET_BRANCH}" --state open --json number --jq '.[0].number // empty')
 
-          if [ -n "$EXISTING_PR" ]; then
+          if [ -n "$EXISTING_PR" ] && [ "$EXISTING_PR" != "null" ]; then
             echo "PR #${EXISTING_PR} already exists in ${TARGET_REPO}. The branch was updated automatically."
           else
             echo "Creating a new pull request in ${TARGET_REPO}..."
@@ -67,15 +67,15 @@ jobs:
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
 
             cat <<EOF > /tmp/pr_body.md
-### Automated Sync PR
+          ### Automated Sync PR
 
-Automated pull request triggered by push to \`${GITHUB_REF_NAME}\` in [${GITHUB_REPOSITORY}](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}).
+          Automated pull request triggered by push to \`${GITHUB_REF_NAME}\` in [${GITHUB_REPOSITORY}](https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}).
 
-- **Source Repository:** ${GITHUB_REPOSITORY}
-- **Source Commit:** ${SHORT_SHA} (${GITHUB_SHA})
-- **Triggered By:** @${GITHUB_ACTOR}
-- **Timestamp:** ${TIMESTAMP}
-EOF
+          - **Source Repository:** ${GITHUB_REPOSITORY}
+          - **Source Commit:** ${SHORT_SHA} (${GITHUB_SHA})
+          - **Triggered By:** @${GITHUB_ACTOR}
+          - **Timestamp:** ${TIMESTAMP}
+          EOF
 
             gh pr create \
               --repo "${TARGET_REPO}" \
