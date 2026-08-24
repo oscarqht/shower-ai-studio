@@ -22,7 +22,7 @@ import {
   SlidersHorizontal,
   Upload,
 } from 'lucide-react';
-import { Preset, Character, StylePack } from '../types';
+import { Preset, Character, StylePack, PresetModalInitialValues } from '../types';
 
 const MODEL_OPTIONS = [
   { value: 'GPT Image 2', label: 'GPT Image 2' },
@@ -76,6 +76,10 @@ interface PresetSelectorProps {
     characterNames?: string[];
   };
   hasRaindropToken?: boolean;
+  isAddModalOpen?: boolean;
+  onOpenAddModal?: (initialValues?: PresetModalInitialValues) => void;
+  onCloseAddModal?: () => void;
+  initialModalValues?: PresetModalInitialValues | null;
 }
 
 export const PresetSelector: React.FC<PresetSelectorProps> = ({
@@ -89,13 +93,20 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   availableStyles = [],
   currentWorkspaceValues,
   hasRaindropToken = false,
+  isAddModalOpen: propsIsAddModalOpen,
+  onOpenAddModal,
+  onCloseAddModal,
+  initialModalValues,
 }) => {
   const [inspectPreset, setInspectPreset] = useState<Preset | null>(null);
   const [mounted, setMounted] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   // Add Preset Modal State
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [internalIsAddModalOpen, setInternalIsAddModalOpen] = useState(false);
+  const isControlledAddModal = propsIsAddModalOpen !== undefined;
+  const isAddModalOpen = isControlledAddModal ? propsIsAddModalOpen : internalIsAddModalOpen;
+
   const [addTitle, setAddTitle] = useState('');
   const [addPrompt, setAddPrompt] = useState('');
   const [addModel, setAddModel] = useState('GPT Image 2');
@@ -120,6 +131,50 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // When modal is opened, sync initial values or workspace values
+  useEffect(() => {
+    if (isAddModalOpen) {
+      if (initialModalValues) {
+        setAddPrompt(initialModalValues.prompt !== undefined ? initialModalValues.prompt : '');
+        setAddModel(initialModalValues.model || 'GPT Image 2');
+        setAddAspectRatio(initialModalValues.aspectRatio || 'Auto');
+        setAddTextLanguage(initialModalValues.textLanguage || 'Auto');
+        setAddStylePackName(initialModalValues.stylePackName || '');
+        setAddCharacterNames(initialModalValues.characterNames || []);
+      } else if (currentWorkspaceValues) {
+        setAddPrompt(currentWorkspaceValues.prompt !== undefined ? currentWorkspaceValues.prompt : '');
+        setAddModel(currentWorkspaceValues.model || 'GPT Image 2');
+        setAddAspectRatio(currentWorkspaceValues.aspectRatio || 'Auto');
+        setAddTextLanguage(currentWorkspaceValues.textLanguage || 'Auto');
+        setAddStylePackName(currentWorkspaceValues.stylePackName || '');
+        setAddCharacterNames(currentWorkspaceValues.characterNames || []);
+      }
+      setAddTitle('');
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setAddError(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isAddModalOpen, initialModalValues, currentWorkspaceValues]);
+
+  const handleOpenAddModalInternal = () => {
+    if (onOpenAddModal) {
+      onOpenAddModal(currentWorkspaceValues || undefined);
+    } else {
+      if (currentWorkspaceValues) {
+        setAddPrompt(currentWorkspaceValues.prompt !== undefined ? currentWorkspaceValues.prompt : '');
+        setAddModel(currentWorkspaceValues.model || 'GPT Image 2');
+        setAddAspectRatio(currentWorkspaceValues.aspectRatio || 'Auto');
+        setAddTextLanguage(currentWorkspaceValues.textLanguage || 'Auto');
+        setAddStylePackName(currentWorkspaceValues.stylePackName || '');
+        setAddCharacterNames(currentWorkspaceValues.characterNames || []);
+      }
+      setInternalIsAddModalOpen(true);
+    }
+  };
 
   const handleCopyPrompt = (promptText: string) => {
     navigator.clipboard.writeText(promptText);
@@ -231,7 +286,12 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
     setSelectedFile(null);
     setPreviewUrl(null);
     setAddError(null);
-    setIsAddModalOpen(false);
+    if (!isControlledAddModal) {
+      setInternalIsAddModalOpen(false);
+    }
+    if (onCloseAddModal) {
+      onCloseAddModal();
+    }
   };
 
   const handleSavePreset = async (e: React.FormEvent) => {
@@ -319,7 +379,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
           {onAddPreset && (
             <button
               id="add-first-preset-btn"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={handleOpenAddModalInternal}
               className="mt-4 inline-flex items-center gap-2 px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] font-medium cursor-pointer shadow-sm hover:opacity-95"
             >
               <Plus className="w-4 h-4" />
@@ -429,7 +489,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
           {onAddPreset && (
             <button
               id="open-add-preset-modal-btn"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={handleOpenAddModalInternal}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[13.5px] font-medium hover:bg-[#433D37] transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />

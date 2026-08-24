@@ -7,7 +7,7 @@ import { PresetSelector } from '@/components/PresetSelector';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { StyleSelector } from '@/components/StyleSelector';
 import { GeneratorControls } from '@/components/GeneratorControls';
-import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage } from '@/types';
+import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues } from '@/types';
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
 
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
@@ -206,9 +206,30 @@ export default function Home() {
 
   // Modals & OAuth States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAddPresetModalOpen, setIsAddPresetModalOpen] = useState(false);
+  const [presetModalInitialValues, setPresetModalInitialValues] = useState<PresetModalInitialValues | null>(null);
   const [syncTestMessage, setSyncTestMessage] = useState<string | null>(null);
   const [isTestingSync, setIsTestingSync] = useState(false);
   const [isLoggingInOAuth, setIsLoggingInOAuth] = useState(false);
+
+  const handleSaveAsPreset = (payload: {
+    prompt: string;
+    model: string;
+    aspectRatio: string;
+    textLanguage: string;
+    stylePackName?: string;
+    characterNames?: string[];
+  }) => {
+    setPresetModalInitialValues({
+      prompt: payload.prompt,
+      model: payload.model,
+      aspectRatio: payload.aspectRatio,
+      textLanguage: payload.textLanguage,
+      stylePackName: payload.stylePackName,
+      characterNames: payload.characterNames,
+    });
+    setIsAddPresetModalOpen(true);
+  };
 
   const handleOAuthLogin = async () => {
     setIsLoggingInOAuth(true);
@@ -1170,6 +1191,16 @@ export default function Home() {
                 characterNames: selectedCharacters.map((c) => c.title),
               }}
               hasRaindropToken={hasToken}
+              isAddModalOpen={isAddPresetModalOpen}
+              onOpenAddModal={(vals) => {
+                setPresetModalInitialValues(vals || null);
+                setIsAddPresetModalOpen(true);
+              }}
+              onCloseAddModal={() => {
+                setIsAddPresetModalOpen(false);
+                setPresetModalInitialValues(null);
+              }}
+              initialModalValues={presetModalInitialValues}
             />
 
             {/* Section 1: Characters Selection */}
@@ -1211,6 +1242,7 @@ export default function Home() {
               raindropToken={settings.raindropToken}
               onResetAll={handleResetAllInputs}
               hasUploadCapability={settings.hasUploadCapability}
+              onSaveAsPreset={handleSaveAsPreset}
             />
           </div>
         )}
