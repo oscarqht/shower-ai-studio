@@ -21,6 +21,8 @@ import {
   Trash2,
   SlidersHorizontal,
   Upload,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { Preset, Character, StylePack, PresetModalInitialValues } from '../types';
 
@@ -103,6 +105,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   const [inspectPreset, setInspectPreset] = useState<Preset | null>(null);
   const [mounted, setMounted] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Add Preset Modal State
   const [internalIsAddModalOpen, setInternalIsAddModalOpen] = useState(false);
@@ -351,179 +354,231 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   const labelClasses = 'flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]';
 
   return (
-    <section id="presets-section">
-      <div className="flex items-baseline justify-between gap-3.5 flex-wrap mb-1.5">
-        <div className="flex items-baseline gap-3.5 flex-wrap">
-          <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E] uppercase flex items-center gap-1">
-            <Sparkles className="w-3 h-3 inline-block" />
-            PRESETS
-          </span>
-          <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">Curated Presets</h2>
-          <span className="font-mono text-[12.5px] text-[#8A7E73]">{presetCountLabel}</span>
-        </div>
-      </div>
-      <p className="mb-[18px] text-[#8A7E73] text-[15px]">
-        Select a ready-to-use recipe to instantly fill in your cast, style pack, composition prompt, and generator settings.
-      </p>
+    <section
+      id="presets-section"
+      className="rounded-[24px] border border-[#EAE0D4] bg-[#FFFDFA] overflow-hidden transition-all duration-300 shadow-[0_4px_20px_-10px_rgba(88,66,48,0.06)]"
+    >
+      {/* Header Bar / Collapsible Toggle */}
+      <div
+        onClick={() => setIsExpanded((prev) => !prev)}
+        className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4 cursor-pointer select-none hover:bg-[#FAF5EE]/60 transition-colors"
+      >
+        <div className="flex items-center gap-3.5 min-w-0">
+          <button
+            type="button"
+            className="w-8 h-8 rounded-full bg-[#FAF5EE] border border-[#E6DCCF] text-[#7A6F64] flex items-center justify-center shrink-0 transition-transform duration-200"
+            aria-label={isExpanded ? 'Collapse curated presets' : 'Expand curated presets'}
+          >
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4 text-[#C4633E]" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-[#8A7E73]" />
+            )}
+          </button>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px] animate-pulse">
-          {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="aspect-[16/10] bg-[#EFE6DA]/60 rounded-[20px]" />
-          ))}
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 truncate">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[#C4633E] bg-[#F7E7DC] px-2 py-0.5 rounded-md font-medium flex items-center gap-1">
+                <Sparkles className="w-3 h-3 inline-block" />
+                PRESETS
+              </span>
+              <h3 className="font-serif font-normal text-[20px] sm:text-[23px] text-[#2E2A26] truncate">
+                Curated Presets
+              </h3>
+            </div>
+            <span className="text-xs sm:text-[13px] text-[#8A7E73] truncate">
+              {presetCountLabel} • Quick recipes for cast, style & prompt
+            </span>
+          </div>
         </div>
-      ) : presets.length === 0 ? (
-        <div className="border border-dashed border-[#DCCFBF] rounded-[22px] px-6 py-9 text-center bg-[#FFFDFA]/60">
-          <div className="font-serif text-[22px] text-[#2E2A26]">No presets found</div>
-          <p className="mx-auto mt-2 max-w-[48ch] text-[#8A7E73] text-[14px] leading-[1.55]">
-            Create shot recipes in your <strong className="text-[#2E2A26]">Presets</strong> collection in Raindrop, or click below to save your first preset recipe.
-          </p>
+
+        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {selectedPreset && (
+            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] bg-[#EDF1E6] text-[#5C6B50] font-medium">
+              Active: {selectedPreset.title}
+            </span>
+          )}
           {onAddPreset && (
             <button
-              id="add-first-preset-btn"
+              type="button"
+              id="header-add-preset-btn"
               onClick={handleOpenAddModalInternal}
-              className="mt-4 inline-flex items-center gap-2 px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] font-medium cursor-pointer shadow-sm hover:opacity-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[12.5px] font-medium hover:bg-[#433D37] transition-colors shadow-sm"
             >
-              <Plus className="w-4 h-4" />
-              Add a preset
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Add preset</span>
             </button>
           )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px]">
-          {presets.map((preset) => {
-            const isSelected = String(selectedPresetId) === String(preset.id);
+      </div>
 
-            return (
-              <div
-                key={preset.id}
-                onClick={() => onSelectPreset(isSelected ? null : preset)}
-                className={`rounded-[20px] p-2 cursor-pointer transition-transform hover:-translate-y-0.5 flex flex-col justify-between ${
-                  isSelected
-                    ? 'bg-[#FFF3EA] border-[1.5px] border-[#C4633E] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)]'
-                    : 'bg-[#FFFDFA] border-[1.5px] border-[#EFE6DA]'
-                }`}
-              >
-                <div>
-                  <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#EFE6DA]">
-                    {preset.preview_image ? (
-                      <img
-                        src={preset.preview_image}
-                        alt={preset.title}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-[#A08F80]">
-                        <ImageIcon className="w-7 h-7 mb-1.5 opacity-50" />
-                        <span className="text-xs">No preview</span>
+      {/* Expanded Content Area */}
+      {isExpanded && (
+        <div className="px-5 sm:px-6 pt-1 pb-6 border-t border-[#F2E9DE] bg-[#FFFDFC]">
+          <p className="mb-4 mt-3 text-[#8A7E73] text-[14px]">
+            Select a ready-to-use recipe to instantly fill in your cast, style pack, composition prompt, and generator settings.
+          </p>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px] animate-pulse py-2">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="aspect-[16/10] bg-[#EFE6DA]/60 rounded-[20px]" />
+              ))}
+            </div>
+          ) : presets.length === 0 ? (
+            <div className="border border-dashed border-[#DCCFBF] rounded-[22px] px-6 py-9 text-center bg-[#FFFDFA]/60 my-2">
+              <div className="font-serif text-[22px] text-[#2E2A26]">No presets found</div>
+              <p className="mx-auto mt-2 max-w-[48ch] text-[#8A7E73] text-[14px] leading-[1.55]">
+                Create shot recipes in your <strong className="text-[#2E2A26]">Presets</strong> collection in Raindrop, or click below to save your first preset recipe.
+              </p>
+              {onAddPreset && (
+                <button
+                  id="add-first-preset-btn"
+                  onClick={handleOpenAddModalInternal}
+                  className="mt-4 inline-flex items-center gap-2 px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] font-medium cursor-pointer shadow-sm hover:opacity-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add a preset
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px]">
+              {presets.map((preset) => {
+                const isSelected = String(selectedPresetId) === String(preset.id);
+
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => onSelectPreset(isSelected ? null : preset)}
+                    className={`rounded-[20px] p-2 cursor-pointer transition-transform hover:-translate-y-0.5 flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-[#FFF3EA] border-[1.5px] border-[#C4633E] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)]'
+                        : 'bg-[#FFFDFA] border-[1.5px] border-[#EFE6DA]'
+                    }`}
+                  >
+                    <div>
+                      <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#EFE6DA]">
+                        {preset.preview_image ? (
+                          <img
+                            src={preset.preview_image}
+                            alt={preset.title}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-[#A08F80]">
+                            <ImageIcon className="w-7 h-7 mb-1.5 opacity-50" />
+                            <span className="text-xs">No preview</span>
+                          </div>
+                        )}
+
+                        {isSelected && (
+                          <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-[#C4633E] text-[#FFF7F1] flex items-center gap-1 shadow-sm">
+                            <Check className="w-3 h-3" /> Selected
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInspectPreset(preset);
+                          }}
+                          title="Inspect preset details"
+                          className="absolute bottom-2 right-2 p-1.5 rounded-full border border-[#E3D8CA] bg-[rgba(255,253,250,0.92)] text-[#6E6459] flex items-center justify-center hover:bg-[#F8F3ED] transition-colors shadow-sm"
+                        >
+                          <Info className="w-[18px] h-[18px]" />
+                        </button>
                       </div>
-                    )}
 
-                    {isSelected && (
-                      <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-[#C4633E] text-[#FFF7F1] flex items-center gap-1 shadow-sm">
-                        <Check className="w-3 h-3" /> Selected
+                      <div className="px-1.5 pt-2.5 pb-1 flex flex-col gap-1">
+                        <div className="text-[16px] font-medium text-[#2E2A26] truncate" title={preset.title}>
+                          {preset.title}
+                        </div>
+                        {preset.prompt && (
+                          <p className="text-[13px] text-[#8A7E73] leading-[1.45] line-clamp-2">{preset.prompt}</p>
+                        )}
                       </div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInspectPreset(preset);
-                      }}
-                      title="Inspect preset details"
-                      className="absolute bottom-2 right-2 p-1.5 rounded-full border border-[#E3D8CA] bg-[rgba(255,253,250,0.92)] text-[#6E6459] flex items-center justify-center hover:bg-[#F8F3ED] transition-colors shadow-sm"
-                    >
-                      <Info className="w-[18px] h-[18px]" />
-                    </button>
-                  </div>
-
-                  <div className="px-1.5 pt-2.5 pb-1 flex flex-col gap-1">
-                    <div className="text-[16px] font-medium text-[#2E2A26] truncate" title={preset.title}>
-                      {preset.title}
                     </div>
-                    {preset.prompt && (
-                      <p className="text-[13px] text-[#8A7E73] leading-[1.45] line-clamp-2">{preset.prompt}</p>
-                    )}
-                  </div>
-                </div>
 
-                {/* Metadata Pills / Tags */}
-                <div className="px-1.5 pt-2 flex flex-wrap gap-1.5 mt-auto border-t border-[#F4ECE2]/80">
-                  {preset.style_pack_name && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] text-[11.5px] text-[#6E6459] max-w-[140px] truncate" title={`Style: ${preset.style_pack_name}`}>
-                      <Palette className="w-3 h-3 shrink-0 text-[#A08F80]" />
-                      <span className="truncate">{preset.style_pack_name}</span>
-                    </span>
-                  )}
-                  {preset.character_names && preset.character_names.length > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] text-[11.5px] text-[#6E6459] max-w-[140px] truncate" title={`Cast: ${preset.character_names.join(', ')}`}>
-                      <Users className="w-3 h-3 shrink-0 text-[#A08F80]" />
-                      <span className="truncate">{preset.character_names.join(', ')}</span>
-                    </span>
-                  )}
-                  {preset.model && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] border border-[#EFE6DA] text-[11px] font-mono text-[#8A7E73]">
-                      <Cpu className="w-2.5 h-2.5 text-[#A08F80]" />
-                      <span>{preset.model}</span>
-                    </span>
-                  )}
-                  {preset.aspect_ratio && preset.aspect_ratio !== 'Auto' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] border border-[#EFE6DA] text-[11px] font-mono text-[#8A7E73]">
-                      <Ratio className="w-2.5 h-2.5 text-[#A08F80]" />
-                      <span>{preset.aspect_ratio}</span>
-                    </span>
-                  )}
-                </div>
+                    {/* Metadata Pills / Tags */}
+                    <div className="px-1.5 pt-2 flex flex-wrap gap-1.5 mt-auto border-t border-[#F4ECE2]/80">
+                      {preset.style_pack_name && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] text-[11.5px] text-[#6E6459] max-w-[140px] truncate" title={`Style: ${preset.style_pack_name}`}>
+                          <Palette className="w-3 h-3 shrink-0 text-[#A08F80]" />
+                          <span className="truncate">{preset.style_pack_name}</span>
+                        </span>
+                      )}
+                      {preset.character_names && preset.character_names.length > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] text-[11.5px] text-[#6E6459] max-w-[140px] truncate" title={`Cast: ${preset.character_names.join(', ')}`}>
+                          <Users className="w-3 h-3 shrink-0 text-[#A08F80]" />
+                          <span className="truncate">{preset.character_names.join(', ')}</span>
+                        </span>
+                      )}
+                      {preset.model && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] border border-[#EFE6DA] text-[11px] font-mono text-[#8A7E73]">
+                          <Cpu className="w-2.5 h-2.5 text-[#A08F80]" />
+                          <span>{preset.model}</span>
+                        </span>
+                      )}
+                      {preset.aspect_ratio && preset.aspect_ratio !== 'Auto' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] border border-[#EFE6DA] text-[11px] font-mono text-[#8A7E73]">
+                          <Ratio className="w-2.5 h-2.5 text-[#A08F80]" />
+                          <span>{preset.aspect_ratio}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Bottom Action Bar for Presets */}
+          <div className="flex items-center justify-between gap-3 mt-5 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {onAddPreset && (
+                <button
+                  id="open-add-preset-modal-btn"
+                  onClick={handleOpenAddModalInternal}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[13.5px] font-medium hover:bg-[#433D37] transition-colors shadow-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add preset</span>
+                </button>
+              )}
+
+              {selectedPresetId !== null && (
+                <button
+                  id="clear-preset-selection-btn"
+                  onClick={() => onSelectPreset(null)}
+                  className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[13.5px] hover:text-[#2E2A26] transition-colors"
+                >
+                  Clear preset
+                </button>
+              )}
+            </div>
+
+            {isPresetChosen && selectedPreset && (
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EDF1E6] text-[#5C6B50] text-[13.5px] animate-rise">
+                <span>
+                  Preset active: <strong className="font-medium text-[#384d2b]">{selectedPreset.title}</strong>
+                </span>
+                <button
+                  onClick={scrollToCompose}
+                  className="border-none bg-transparent text-[#3F6B2F] font-medium underline underline-offset-2 hover:opacity-80"
+                >
+                  Review composition ↓
+                </button>
               </div>
-            );
-          })}
+            )}
+          </div>
         </div>
       )}
-
-      {/* Bottom Action Bar for Presets */}
-      <div className="flex items-center justify-between gap-3 mt-4 flex-wrap">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {onAddPreset && (
-            <button
-              id="open-add-preset-modal-btn"
-              onClick={handleOpenAddModalInternal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[13.5px] font-medium hover:bg-[#433D37] transition-colors shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add preset</span>
-            </button>
-          )}
-
-          {selectedPresetId !== null && (
-            <button
-              id="clear-preset-selection-btn"
-              onClick={() => onSelectPreset(null)}
-              className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[13.5px] hover:text-[#2E2A26] transition-colors"
-            >
-              Clear preset
-            </button>
-          )}
-        </div>
-
-        {isPresetChosen && selectedPreset && (
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EDF1E6] text-[#5C6B50] text-[13.5px] animate-rise">
-            <span>
-              Preset active: <strong className="font-medium text-[#384d2b]">{selectedPreset.title}</strong>
-            </span>
-            <button
-              onClick={scrollToCompose}
-              className="border-none bg-transparent text-[#3F6B2F] font-medium underline underline-offset-2 hover:opacity-80"
-            >
-              Review composition ↓
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* Add Preset Modal */}
       {isAddModalOpen && mounted &&

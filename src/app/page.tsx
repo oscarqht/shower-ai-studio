@@ -6,6 +6,7 @@ import { SettingsModal } from '@/components/SettingsModal';
 import { PresetSelector } from '@/components/PresetSelector';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { StyleSelector } from '@/components/StyleSelector';
+import { MoreStyleSelector, MORE_STYLES_CACHE_STORAGE_KEY } from '@/components/MoreStyleSelector';
 import { GeneratorControls } from '@/components/GeneratorControls';
 import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues } from '@/types';
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
@@ -94,6 +95,22 @@ export default function Home() {
   const [styles, setStyles] = useState<StylePack[]>(() => {
     const cached = getValidCachedRaindropData();
     return cached?.styles || [];
+  });
+
+  const [moreStyles, setMoreStyles] = useState<StylePack[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const cached = localStorage.getItem(MORE_STYLES_CACHE_STORAGE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed.styles)) {
+          return parsed.styles;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load more styles cache from localStorage:', e);
+    }
+    return [];
   });
 
   const [presets, setPresets] = useState<Preset[]>(() => {
@@ -972,8 +989,9 @@ export default function Home() {
 
     // 5. Match style pack if provided
     if (preset.style_pack_name) {
+      const allAvailableStyles = [...styles, ...moreStyles];
       const targetStyleName = preset.style_pack_name.toLowerCase().trim();
-      const matchedStyle = styles.find(
+      const matchedStyle = allAvailableStyles.find(
         (s) =>
           s.title &&
           (s.title.toLowerCase().trim() === targetStyleName ||
@@ -1054,7 +1072,7 @@ export default function Home() {
   };
 
   const selectedCharacters = characters.filter((c) => selectedCharacterIds.includes(c.id));
-  const selectedStyle = styles.find((s) => s.id === selectedStyleId) || null;
+  const selectedStyle = [...styles, ...moreStyles].find((s) => s.id === selectedStyleId) || null;
   const selectedPreset = presets.find((p) => String(p.id) === String(selectedPresetId)) || null;
 
   const hasToken = isMounted && Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
@@ -1216,38 +1234,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* Presets Section */}
-            <PresetSelector
-              presets={presets}
-              selectedPresetId={selectedPresetId}
-              presetCollectionId={presetsCollectionId}
-              onSelectPreset={handleSelectPreset}
-              isLoading={isFetchingRaindrop}
-              onAddPreset={handleAddPreset}
-              onDeletePreset={handleDeletePreset}
-              availableCharacters={characters}
-              availableStyles={styles}
-              currentWorkspaceValues={{
-                prompt: compositionPrompt,
-                model,
-                aspectRatio,
-                textLanguage,
-                stylePackName: selectedStyle?.title,
-                characterNames: selectedCharacters.map((c) => c.title),
-              }}
-              hasRaindropToken={hasToken}
-              isAddModalOpen={isAddPresetModalOpen}
-              onOpenAddModal={(vals) => {
-                setPresetModalInitialValues(vals || null);
-                setIsAddPresetModalOpen(true);
-              }}
-              onCloseAddModal={() => {
-                setIsAddPresetModalOpen(false);
-                setPresetModalInitialValues(null);
-              }}
-              initialModalValues={presetModalInitialValues}
-            />
-
             {/* Section 1: Characters Selection */}
             <CharacterSelector
               characters={characters}
@@ -1268,6 +1254,47 @@ export default function Home() {
               selectedStyleId={selectedStyleId}
               onSelectStyle={handleSelectStyle}
               isLoading={isFetchingRaindrop}
+            />
+
+            {/* More Style Packs Section (Collapsed by default, caches without expiration) */}
+            <MoreStyleSelector
+              selectedStyleId={selectedStyleId}
+              onSelectStyle={handleSelectStyle}
+              raindropToken={settings.raindropToken}
+              hasRaindropToken={hasToken}
+              onStylesLoaded={(loadedStyles) => setMoreStyles(loadedStyles)}
+            />
+
+            {/* Presets Section */}
+            <PresetSelector
+              presets={presets}
+              selectedPresetId={selectedPresetId}
+              presetCollectionId={presetsCollectionId}
+              onSelectPreset={handleSelectPreset}
+              isLoading={isFetchingRaindrop}
+              onAddPreset={handleAddPreset}
+              onDeletePreset={handleDeletePreset}
+              availableCharacters={characters}
+              availableStyles={[...styles, ...moreStyles]}
+              currentWorkspaceValues={{
+                prompt: compositionPrompt,
+                model,
+                aspectRatio,
+                textLanguage,
+                stylePackName: selectedStyle?.title,
+                characterNames: selectedCharacters.map((c) => c.title),
+              }}
+              hasRaindropToken={hasToken}
+              isAddModalOpen={isAddPresetModalOpen}
+              onOpenAddModal={(vals) => {
+                setPresetModalInitialValues(vals || null);
+                setIsAddPresetModalOpen(true);
+              }}
+              onCloseAddModal={() => {
+                setIsAddPresetModalOpen(false);
+                setPresetModalInitialValues(null);
+              }}
+              initialModalValues={presetModalInitialValues}
             />
 
             {/* Section 3: Composition Controls */}
