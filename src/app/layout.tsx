@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Instrument_Serif, DM_Sans, DM_Mono } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
@@ -29,6 +30,32 @@ export const metadata: Metadata = {
   },
 };
 
+const themeInitScript = `
+  (function() {
+    try {
+      var savedMode = localStorage.getItem('shower_theme_mode');
+      var isDark = false;
+      if (savedMode === 'dark') {
+        isDark = true;
+      } else if (savedMode === 'light') {
+        isDark = false;
+      } else {
+        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      var docEl = document.documentElement;
+      if (isDark) {
+        docEl.classList.add('dark');
+        docEl.setAttribute('data-theme', 'shower-dark');
+        docEl.style.colorScheme = 'dark';
+      } else {
+        docEl.classList.remove('dark');
+        docEl.setAttribute('data-theme', 'shower');
+        docEl.style.colorScheme = 'light';
+      }
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -41,9 +68,15 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${instrumentSerif.variable} ${dmSans.variable} ${dmMono.variable}`}
     >
-      <body className="min-h-screen font-sans antialiased">
-        {children}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="min-h-screen font-sans antialiased text-base-content">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+

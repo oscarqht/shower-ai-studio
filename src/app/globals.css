@@ -11,8 +11,13 @@
     background: #faf6f0;
   }
 
+  html.dark {
+    color-scheme: dark;
+    background: #141210;
+  }
+
   body {
-    @apply text-base-content antialiased selection:bg-primary selection:text-primary-content;
+    @apply text-base-content antialiased selection:bg-primary selection:text-primary-content transition-colors duration-150;
     background:
       radial-gradient(1200px 600px at 15% -10%, #fdf1e6 0%, rgba(253, 241, 230, 0) 60%),
       radial-gradient(900px 500px at 95% 0%, #eff2e8 0%, rgba(239, 242, 232, 0) 55%),
@@ -20,8 +25,19 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  html.dark body {
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(224, 122, 82, 0.07) 0%, rgba(20, 18, 16, 0) 60%),
+      radial-gradient(900px 500px at 95% 0%, rgba(143, 168, 127, 0.06) 0%, rgba(20, 18, 16, 0) 55%),
+      #141210;
+  }
+
   ::placeholder {
     color: #a79c92;
+  }
+
+  html.dark ::placeholder {
+    color: #7a6e63;
   }
 }
 
@@ -42,4 +58,12 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(196, 99, 62, 0.4);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(224, 122, 82, 0.3);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(224, 122, 82, 0.5);
 }

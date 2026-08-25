@@ -84,11 +84,11 @@ function ModalShell({
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center transition-colors"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[92vh] overflow-y-auto bg-[#FFFDFA] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto`}
+        className={`w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[92vh] overflow-y-auto bg-[#FFFDFA] dark:bg-[#1C1916] text-[#2E2A26] dark:text-[#F5EFEA] border border-[#EBE1D4] dark:border-[#2E2924] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto shadow-2xl`}
       >
         {children}
       </div>
@@ -364,17 +364,17 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       : `${characters.length} available`;
 
   const inputClasses =
-    'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] bg-[#FCFAF6] text-[14.5px] text-[#2E2A26] outline-none focus:border-[#C4633E]';
-  const labelClasses = 'flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]';
+    'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] text-[14.5px] text-[#2E2A26] dark:text-[#F5EFEA] outline-none focus:border-[#C4633E] dark:focus:border-[#E07A52] placeholder:text-[#B0A396] dark:placeholder:text-[#6E6459]';
+  const labelClasses = 'flex flex-col gap-1.5 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]';
 
   return (
     <section>
       <div className="flex items-baseline gap-3.5 flex-wrap mb-1.5">
-        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E]">STEP 01</span>
-        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">Who&apos;s in the shot?</h2>
-        <span className="font-mono text-[12.5px] text-[#8A7E73]">{charCountLabel}</span>
+        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E] dark:text-[#E07A52]">STEP 01</span>
+        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26] dark:text-[#F5EFEA]">Who&apos;s in the shot?</h2>
+        <span className="font-mono text-[12.5px] text-[#8A7E73] dark:text-[#A69B90]">{charCountLabel}</span>
       </div>
-      <p className="mb-[18px] text-[#8A7E73] text-[15px]">
+      <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[15px]">
         Pick as many characters as you like. Tap a tag to grab the whole group.
       </p>
 
@@ -397,8 +397,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               }}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13.5px] cursor-pointer transition-colors ${
                 isSelected
-                  ? 'border border-[#C4633E] bg-[#F7E7DC] text-[#A34E2C]'
-                  : 'border border-[#E3D8CA] bg-[#FFFDFA] text-[#6E6459]'
+                  ? 'border border-[#C4633E] dark:border-[#E07A52] bg-[#F7E7DC] dark:bg-[#3D251C] text-[#A34E2C] dark:text-[#F5AB88]'
+                  : 'border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#6E6459] dark:text-[#D5CCC3] hover:border-[#C4633E] dark:hover:border-[#E07A52]'
               }`}
             >
               <span>{tag.name}</span>
@@ -410,7 +410,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
         {selectedCharacterIds.length > 0 && (
           <button
             onClick={onClearSelection}
-            className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[13.5px] hover:text-[#C4633E] hover:border-[#C4633E]"
+            className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] text-[13.5px] hover:text-[#C4633E] dark:hover:text-[#E07A52] hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors cursor-pointer"
           >
             Clear selection
           </button>
@@ -419,7 +419,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
           <button
             id="open-add-character-modal-btn"
             onClick={() => setIsAddModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[13.5px] font-medium"
+            className="px-3.5 py-1.5 rounded-full border border-[#2E2A26] dark:border-[#FDF6EE] bg-[#2E2A26] dark:bg-[#FDF6EE] text-[#FDF6EE] dark:text-[#1C1916] text-[13.5px] font-medium transition-colors cursor-pointer hover:opacity-90"
           >
             + New character
           </button>
@@ -430,21 +430,21 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-[18px] animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((n) => (
-            <div key={n} className="aspect-[3/4] bg-[#EFE6DA]/60 rounded-[20px]" />
+            <div key={n} className="aspect-[3/4] bg-[#EFE6DA]/60 dark:bg-[#2A2520]/60 rounded-[20px]" />
           ))}
         </div>
       ) : characters.length === 0 ? (
         /* Empty State */
-        <div className="border border-dashed border-[#DCCFBF] rounded-[22px] px-6 py-10 text-center">
-          <div className="font-serif text-[24px] text-[#2E2A26]">No characters yet</div>
-          <p className="mx-auto mt-2 mb-[18px] max-w-[44ch] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+        <div className="border border-dashed border-[#DCCFBF] dark:border-[#3D352E] rounded-[22px] px-6 py-10 text-center">
+          <div className="font-serif text-[24px] text-[#2E2A26] dark:text-[#F5EFEA]">No characters yet</div>
+          <p className="mx-auto mt-2 mb-[18px] max-w-[44ch] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
             Save characters to your Raindrop collection and re-sync, or add one right here — it&apos;ll live
             locally until you connect.
           </p>
           {onAddCharacter && (
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer"
+              className="px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer hover:opacity-90 transition-opacity"
             >
               Add a character
             </button>
@@ -462,11 +462,11 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 onClick={() => onToggleCharacter(char.id)}
                 className={`group relative rounded-[20px] p-2 cursor-pointer transition-transform hover:-translate-y-0.5 ${
                   isSelected
-                    ? 'bg-[#FFF3EA] border-[1.5px] border-[#C4633E] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)]'
-                    : 'bg-[#FFFDFA] border-[1.5px] border-[#EFE6DA]'
+                    ? 'bg-[#FFF3EA] dark:bg-[#2C1C14] border-[1.5px] border-[#C4633E] dark:border-[#E07A52] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)] dark:shadow-none'
+                    : 'bg-[#FFFDFA] dark:bg-[#1C1916] border-[1.5px] border-[#EFE6DA] dark:border-[#2E2924]'
                 }`}
               >
-                <div className="relative aspect-[3/4] rounded-[14px] overflow-hidden bg-[repeating-linear-gradient(135deg,#F1E7DA_0_8px,#EADFCF_8px_16px)]">
+                <div className="relative aspect-[3/4] rounded-[14px] overflow-hidden bg-[repeating-linear-gradient(135deg,#F1E7DA_0_8px,#EADFCF_8px_16px)] dark:bg-[repeating-linear-gradient(135deg,#2E2924_0_8px,#24201C_8px_16px)]">
                   {char.cover ? (
                     <img
                       src={char.cover}
@@ -478,7 +478,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[#A08F80]">
+                    <div className="w-full h-full flex items-center justify-center text-[#A08F80] dark:text-[#8C8074]">
                       <ImageIcon className="w-7 h-7 opacity-50" />
                     </div>
                   )}
@@ -486,8 +486,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                   <div
                     className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-[13px] transition-opacity ${
                       isSelected
-                        ? 'bg-[#C4633E] text-[#FFF7F1]'
-                        : 'bg-[rgba(255,253,250,0.9)] border border-[#E3D8CA] text-transparent opacity-0 group-hover:opacity-100'
+                        ? 'bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411]'
+                        : 'bg-[rgba(255,253,250,0.9)] dark:bg-[rgba(28,25,22,0.9)] border border-[#E3D8CA] dark:border-[#3D352E] text-transparent opacity-0 group-hover:opacity-100'
                     }`}
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -499,16 +499,16 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                       handleOpenEditModal(char);
                     }}
                     title="Edit character"
-                    className="absolute top-2 right-2 w-[26px] h-[26px] rounded-full border-none bg-[rgba(255,253,250,0.92)] text-[#5B5148] flex items-center justify-center shadow-[0_2px_8px_rgba(80,60,45,0.18)]"
+                    className="absolute top-2 right-2 w-[26px] h-[26px] rounded-full border-none bg-[rgba(255,253,250,0.92)] dark:bg-[rgba(28,25,22,0.92)] text-[#5B5148] dark:text-[#D5CCC3] flex items-center justify-center shadow-[0_2px_8px_rgba(80,60,45,0.18)] dark:shadow-none hover:opacity-80 transition-opacity"
                   >
                     <Pencil className="w-3 h-3" />
                   </button>
                 </div>
 
                 <div className="px-1.5 pt-2.5 pb-1">
-                  <div className="text-[15px] font-medium leading-tight text-[#2E2A26] truncate">{char.title}</div>
+                  <div className="text-[15px] font-medium leading-tight text-[#2E2A26] dark:text-[#F5EFEA] truncate">{char.title}</div>
                   {char.excerpt && (
-                    <div className="text-[13px] text-[#8A7E73] leading-[1.45] mt-1 line-clamp-2">{char.excerpt}</div>
+                    <div className="text-[13px] text-[#8A7E73] dark:text-[#A69B90] leading-[1.45] mt-1 line-clamp-2">{char.excerpt}</div>
                   )}
                 </div>
               </div>
@@ -521,21 +521,21 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       {isAddModalOpen && mounted && (
         <ModalShell onClose={handleResetAddForm}>
           <div className="flex items-start gap-3.5 mb-1.5">
-            <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">New character</h3>
+            <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">New character</h3>
             <button
               onClick={handleResetAddForm}
-              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#2A2520] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
-          <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+          <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
             Name is required. Everything else is optional and editable later.
           </p>
 
           <form onSubmit={handleSaveCharacter} className="flex flex-col gap-3.5">
             {addError && (
-              <div className="flex items-center gap-2 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+              <div className="flex items-center gap-2 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{addError}</span>
               </div>
@@ -569,28 +569,28 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-[#DCCFBF] bg-[#FCFAF6] text-left"
+                className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-[#DCCFBF] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] text-left cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
               >
-                <span className="w-11 h-11 rounded-[10px] bg-[repeating-linear-gradient(135deg,#F1E7DA_0_6px,#EADFCF_6px_12px)] overflow-hidden shrink-0">
+                <span className="w-11 h-11 rounded-[10px] bg-[repeating-linear-gradient(135deg,#F1E7DA_0_6px,#EADFCF_6px_12px)] dark:bg-[repeating-linear-gradient(135deg,#2E2924_0_6px,#24201C_6px_12px)] overflow-hidden shrink-0">
                   {previewUrl && <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />}
                 </span>
-                <span className="text-[14px] text-[#6E6459]">
+                <span className="text-[14px] text-[#6E6459] dark:text-[#D5CCC3]">
                   {selectedFile ? selectedFile.name : 'Upload a reference image'}
                 </span>
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
             </div>
 
-            <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459]">
+            <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]">
               Tags
               <div className="flex flex-wrap gap-1.5">
                 {addTags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] border border-[#EBE1D4] text-[13px] text-[#5B5148]"
+                    className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] dark:bg-[#2A2520] border border-[#EBE1D4] dark:border-[#3D352E] text-[13px] text-[#5B5148] dark:text-[#D5CCC3]"
                   >
                     {tag}
-                    <button type="button" onClick={() => handleRemoveTag(tag)} className="text-[#B0A396] hover:text-[#A0433A]">
+                    <button type="button" onClick={() => handleRemoveTag(tag)} className="text-[#B0A396] dark:text-[#8C8074] hover:text-[#A0433A] dark:hover:text-[#F5AB88]">
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -613,7 +613,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAddTag()}
-                  className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] bg-[#FFFDFA] text-[#5B5148] text-[14px]"
+                  className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#25211D] text-[#5B5148] dark:text-[#D5CCC3] text-[14px] cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
                 >
                   Add
                 </button>
@@ -624,7 +624,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer disabled:opacity-70"
+                className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer disabled:opacity-70 shadow-[0_10px_22px_-12px_rgba(196,99,62,0.9)] dark:shadow-none transition-transform hover:-translate-y-0.5"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 Save character
@@ -638,21 +638,21 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       {editingCharacter && mounted && (
         <ModalShell onClose={handleCloseEditModal}>
           <div className="flex items-start gap-3.5 mb-1.5">
-            <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">Edit character</h3>
+            <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">Edit character</h3>
             <button
               onClick={handleCloseEditModal}
-              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#2A2520] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
-          <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+          <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
             Name is required. Everything else is optional and editable later.
           </p>
 
           <form onSubmit={handleSaveEditCharacter} className="flex flex-col gap-3.5">
             {editError && (
-              <div className="flex items-center gap-2 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+              <div className="flex items-center gap-2 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{editError}</span>
               </div>
@@ -684,12 +684,12 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               <button
                 type="button"
                 onClick={() => editFileInputRef.current?.click()}
-                className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-[#DCCFBF] bg-[#FCFAF6] text-left"
+                className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-[#DCCFBF] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] text-left cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
               >
-                <span className="w-11 h-11 rounded-[10px] bg-[repeating-linear-gradient(135deg,#F1E7DA_0_6px,#EADFCF_6px_12px)] overflow-hidden shrink-0">
+                <span className="w-11 h-11 rounded-[10px] bg-[repeating-linear-gradient(135deg,#F1E7DA_0_6px,#EADFCF_6px_12px)] dark:bg-[repeating-linear-gradient(135deg,#2E2924_0_6px,#24201C_6px_12px)] overflow-hidden shrink-0">
                   {editPreviewUrl && <img src={editPreviewUrl} alt="Preview" className="w-full h-full object-cover" />}
                 </span>
-                <span className="text-[14px] text-[#6E6459]">
+                <span className="text-[14px] text-[#6E6459] dark:text-[#D5CCC3]">
                   {editSelectedFile ? editSelectedFile.name : 'Replace reference image'}
                 </span>
               </button>
@@ -702,19 +702,19 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               />
             </div>
 
-            <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459]">
+            <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]">
               Tags
               <div className="flex flex-wrap gap-1.5">
                 {editTags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] border border-[#EBE1D4] text-[13px] text-[#5B5148]"
+                    className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] dark:bg-[#2A2520] border border-[#EBE1D4] dark:border-[#3D352E] text-[13px] text-[#5B5148] dark:text-[#D5CCC3]"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => handleRemoveEditTag(tag)}
-                      className="text-[#B0A396] hover:text-[#A0433A]"
+                      className="text-[#B0A396] dark:text-[#8C8074] hover:text-[#A0433A] dark:hover:text-[#F5AB88]"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -738,7 +738,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAddEditTag()}
-                  className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] bg-[#FFFDFA] text-[#5B5148] text-[14px]"
+                  className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#25211D] text-[#5B5148] dark:text-[#D5CCC3] text-[14px] cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
                 >
                   Add
                 </button>
@@ -749,7 +749,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
               <button
                 type="submit"
                 disabled={isUpdating}
-                className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer disabled:opacity-70"
+                className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer disabled:opacity-70 shadow-[0_10px_22px_-12px_rgba(196,99,62,0.9)] dark:shadow-none transition-transform hover:-translate-y-0.5"
               >
                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 Save character
@@ -762,7 +762,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                     handleCloseEditModal();
                     setConfirmDeleteChar(charToDelete);
                   }}
-                  className="px-[18px] py-3 rounded-xl border border-[#E9D5CD] bg-transparent text-[#A0433A] text-[14.5px] cursor-pointer"
+                  className="px-[18px] py-3 rounded-xl border border-[#E9D5CD] dark:border-[#4D2B1C] bg-transparent text-[#A0433A] dark:text-[#F5AB88] text-[14.5px] cursor-pointer hover:bg-[#FBEAE5] dark:hover:bg-[#2C1C14] transition-colors"
                 >
                   Delete…
                 </button>
@@ -776,20 +776,20 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       {confirmDeleteChar && mounted && (
         <ModalShell onClose={() => setConfirmDeleteChar(null)}>
           <div className="flex items-start gap-3.5 mb-1.5">
-            <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">Delete this character?</h3>
+            <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">Delete this character?</h3>
             <button
               onClick={() => setConfirmDeleteChar(null)}
-              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+              className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#2A2520] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
-          <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
-            This removes <strong className="text-[#2E2A26]">{confirmDeleteChar.title}</strong> from your Raindrop
+          <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
+            This removes <strong className="text-[#2E2A26] dark:text-[#F5EFEA]">{confirmDeleteChar.title}</strong> from your Raindrop
             collection too. There is no undo.
           </p>
           {deleteError && (
-            <div className="mb-3.5 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+            <div className="mb-3.5 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
               {deleteError}
             </div>
           )}
@@ -797,14 +797,14 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
             <button
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#A0433A] text-[#FFF3EF] text-[14.5px] cursor-pointer disabled:opacity-70"
+              className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#A0433A] dark:bg-[#C24B3E] text-[#FFF3EF] text-[14.5px] font-medium cursor-pointer disabled:opacity-70 transition-transform hover:-translate-y-0.5 shadow-[0_10px_22px_-12px_rgba(160,67,58,0.9)] dark:shadow-none"
             >
               {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               Delete permanently
             </button>
             <button
               onClick={() => setConfirmDeleteChar(null)}
-              className="px-5 py-3 rounded-xl border border-[#E3D8CA] bg-transparent text-[#5B5148] text-[14.5px]"
+              className="px-5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#5B5148] dark:text-[#D5CCC3] text-[14.5px] cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
             >
               Keep it
             </button>

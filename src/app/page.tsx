@@ -1090,13 +1090,13 @@ export default function Home() {
         <main className="flex-1 w-full max-w-[1180px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10 pb-24 flex items-center justify-center">
           <div className="min-h-[56vh] flex flex-col items-center justify-center gap-[22px] text-center">
             <div className="flex gap-2.5">
-              <span className="w-3.5 h-3.5 rounded-full bg-[#C4633E] animate-breathe" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#D9A06B] animate-breathe [animation-delay:180ms]" />
-              <span className="w-3.5 h-3.5 rounded-full bg-[#7C8F6F] animate-breathe [animation-delay:360ms]" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#C4633E] dark:bg-[#E07A52] animate-breathe" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#D9A06B] dark:bg-[#E6AF7E] animate-breathe [animation-delay:180ms]" />
+              <span className="w-3.5 h-3.5 rounded-full bg-[#7C8F6F] dark:bg-[#8FA87F] animate-breathe [animation-delay:360ms]" />
             </div>
             <div>
-              <div className="font-serif text-[28px] text-[#2E2A26]">Warming up the studio</div>
-              <p className="mt-2 text-[#8A7E73] text-[15px]">Reading your token and cached collections…</p>
+              <div className="font-serif text-[28px] text-[#2E2A26] dark:text-[#F5EFEA]">Warming up the studio</div>
+              <p className="mt-2 text-[#8A7E73] dark:text-[#A69B90] text-[15px]">Reading your token and cached collections…</p>
             </div>
           </div>
         </main>
@@ -1120,15 +1120,15 @@ export default function Home() {
         {!hasToken ? (
           /* NOT CONNECTED */
           <div className="max-w-3xl mx-auto mt-3 sm:mt-10 animate-rise">
-            <span className="inline-block font-mono text-[11px] tracking-[0.16em] uppercase text-[#C4633E] bg-[#F7E7DC] px-3 py-1.5 rounded-full">
+            <span className="inline-block font-mono text-[11px] tracking-[0.16em] uppercase text-[#C4633E] dark:text-[#E07A52] bg-[#F7E7DC] dark:bg-[#2C1C14] px-3 py-1.5 rounded-full">
               Not connected
             </span>
-            <h1 className="font-serif font-normal text-[34px] sm:text-[46px] lg:text-[54px] leading-[1.08] mt-4 -tracking-[0.5px] text-[#2E2A26]">
+            <h1 className="font-serif font-normal text-[34px] sm:text-[46px] lg:text-[54px] leading-[1.08] mt-4 -tracking-[0.5px] text-[#2E2A26] dark:text-[#F5EFEA]">
               Bring your cast and your
               <br />
-              <em className="text-[#C4633E]">style packs</em> into one place.
+              <em className="text-[#C4633E] dark:text-[#E07A52]">style packs</em> into one place.
             </h1>
-            <p className="mt-4 text-[17px] leading-[1.6] text-[#6E6459] max-w-[56ch]">
+            <p className="mt-4 text-[17px] leading-[1.6] text-[#6E6459] dark:text-[#B0A498] max-w-[56ch]">
               Connect Raindrop and Shower Studio imports every character and style pack you&apos;ve saved.
               Pick who&apos;s in the shot, pick the look, describe the scene — and hand a clean,
               structured payload to your image app.
@@ -1138,7 +1138,7 @@ export default function Home() {
               {['Characters, synced', 'Style packs, previewed', 'One-tap handoff'].map((chip) => (
                 <span
                   key={chip}
-                  className="px-3.5 py-1.5 rounded-full bg-[#FFFDFA] border border-[#EAE0D4] text-[13.5px] text-[#6E6459]"
+                  className="px-3.5 py-1.5 rounded-full bg-[#FFFDFA] dark:bg-[#1C1916] border border-[#EAE0D4] dark:border-[#2E2924] text-[13.5px] text-[#6E6459] dark:text-[#B0A498]"
                 >
                   {chip}
                 </span>
@@ -1146,27 +1146,27 @@ export default function Home() {
             </div>
 
             {raindropMessage && raindropStatus === 'error' && (
-              <div className="mb-4 rounded-xl border border-[#F1D3C9] bg-[#FBEAE5] text-[#96402F] text-sm px-4 py-3">
+              <div className="mb-4 rounded-xl border border-[#F1D3C9] dark:border-[#4D2B1C] bg-[#FBEAE5] dark:bg-[#2C1C14] text-[#96402F] dark:text-[#F5AB88] text-sm px-4 py-3">
                 {raindropMessage}
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-              <div className="bg-[#FFFDFA] border border-[#EAE0D4] rounded-[22px] p-6 shadow-[0_14px_34px_-22px_rgba(88,66,48,0.4)] flex flex-col">
-                <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80]">
+              <div className="bg-[#FFFDFA] dark:bg-[#1C1916] border border-[#EAE0D4] dark:border-[#2E2924] rounded-[22px] p-6 shadow-[0_14px_34px_-22px_rgba(88,66,48,0.4)] dark:shadow-none flex flex-col">
+                <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074]">
                   Recommended
                 </div>
-                <div className="font-serif text-[25px] mt-2 mb-1.5 text-[#2E2A26]">
+                <div className="font-serif text-[25px] mt-2 mb-1.5 text-[#2E2A26] dark:text-[#F5EFEA]">
                   Sign in with Raindrop
                 </div>
-                <p className="text-[14.5px] leading-[1.55] text-[#7A6F64] flex-1 mb-5">
+                <p className="text-[14.5px] leading-[1.55] text-[#7A6F64] dark:text-[#A69B90] flex-1 mb-5">
                   A browser redirect grants access — nothing to copy or paste.
                 </p>
                 <button
                   id="oauth-login-main-btn"
                   onClick={handleOAuthLogin}
                   disabled={isLoggingInOAuth}
-                  className="w-full flex items-center justify-center gap-2.5 px-[18px] py-3.5 rounded-2xl border-none bg-[#C4633E] text-[#FFF7F1] text-[15px] font-medium cursor-pointer shadow-[0_10px_22px_-12px_rgba(196,99,62,0.9)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+                  className="w-full flex items-center justify-center gap-2.5 px-[18px] py-3.5 rounded-2xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[15px] font-medium cursor-pointer shadow-[0_10px_22px_-12px_rgba(196,99,62,0.9)] dark:shadow-none transition-transform hover:-translate-y-0.5 disabled:opacity-70"
                 >
                   {isLoggingInOAuth ? (
                     <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
@@ -1177,20 +1177,20 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="border border-dashed border-[#DCCFBF] rounded-[22px] p-6 flex flex-col">
-                <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80]">
+              <div className="border border-dashed border-[#DCCFBF] dark:border-[#3D352E] bg-[#FFFDFA]/40 dark:bg-[#1C1916]/40 rounded-[22px] p-6 flex flex-col">
+                <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074]">
                   Alternative
                 </div>
-                <div className="font-serif text-[25px] mt-2 mb-1.5 text-[#2E2A26]">
+                <div className="font-serif text-[25px] mt-2 mb-1.5 text-[#2E2A26] dark:text-[#F5EFEA]">
                   Paste a token instead
                 </div>
-                <p className="text-[14.5px] leading-[1.55] text-[#7A6F64] flex-1 mb-5">
+                <p className="text-[14.5px] leading-[1.55] text-[#7A6F64] dark:text-[#A69B90] flex-1 mb-5">
                   Already have a test token? Enter it by hand in Settings.
                 </p>
                 <button
                   id="placeholder-configure-token-btn"
                   onClick={() => setIsSettingsOpen(true)}
-                  className="w-full px-[18px] py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium cursor-pointer transition-colors hover:border-[#C4633E] hover:text-[#C4633E]"
+                  className="w-full px-[18px] py-3.5 rounded-2xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-[15px] font-medium cursor-pointer transition-colors hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:text-[#C4633E] dark:hover:text-[#E07A52]"
                 >
                   Open Settings →
                 </button>
@@ -1205,8 +1205,8 @@ export default function Home() {
               <div
                 className={`flex items-start gap-3 rounded-2xl px-4 py-3.5 text-[14.5px] leading-[1.5] border ${
                   raindropStatus === 'success'
-                    ? 'bg-[#EDF1E6] text-[#4E6140] border-[#DCE5CF]'
-                    : 'bg-[#FBEAE5] text-[#96402F] border-[#F1D3C9]'
+                    ? 'bg-[#EDF1E6] dark:bg-[#1E281C] text-[#4E6140] dark:text-[#8FA87F] border-[#DCE5CF] dark:border-[#2C3829]'
+                    : 'bg-[#FBEAE5] dark:bg-[#2C1C14] text-[#96402F] dark:text-[#F5AB88] border-[#F1D3C9] dark:border-[#4D2B1C]'
                 }`}
               >
                 {raindropStatus === 'success' ? (
@@ -1219,14 +1219,14 @@ export default function Home() {
                 {raindropStatus !== 'success' && (
                   <button
                     onClick={() => setIsSettingsOpen(true)}
-                    className="shrink-0 px-3 py-1.5 rounded-full border border-current text-[13px] font-medium whitespace-nowrap"
+                    className="shrink-0 px-3 py-1.5 rounded-full border border-current text-[13px] font-medium whitespace-nowrap cursor-pointer hover:opacity-80"
                   >
                     Fix in Settings
                   </button>
                 )}
                 <button
                   onClick={() => setRaindropMessage(null)}
-                  className="shrink-0 opacity-50 hover:opacity-90 text-base leading-none px-1"
+                  className="shrink-0 opacity-50 hover:opacity-90 text-base leading-none px-1 cursor-pointer"
                   aria-label="Dismiss"
                 >
                   ×
@@ -1322,7 +1322,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="px-4 sm:px-6 lg:px-10 py-6 border-t border-[#EEE5D9] font-mono text-[11.5px] tracking-[0.04em] text-[#AB9E92]">
+      <footer className="px-4 sm:px-6 lg:px-10 py-6 border-t border-[#EEE5D9] dark:border-[#2E2924] font-mono text-[11.5px] tracking-[0.04em] text-[#AB9E92] dark:text-[#80756B] transition-colors">
         Shower Studio — selections, prompts and sync data stay on this device.
       </footer>
 

@@ -71,7 +71,7 @@ const getSavedControls = () => {
 };
 
 const selectClasses =
-  'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] bg-[#FCFAF6] text-[14.5px] text-[#2E2A26] cursor-pointer outline-none focus:border-[#C4633E]';
+  'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] text-[14.5px] text-[#2E2A26] dark:text-[#F5EFEA] cursor-pointer outline-none focus:border-[#C4633E] dark:focus:border-[#E07A52] transition-colors';
 
 export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   selectedCharacters,
@@ -383,26 +383,26 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   return (
     <section
       id="composition-section"
-      className="scroll-mt-20 rounded-[26px] p-5 sm:p-7 bg-[#FFFDFA] border border-[#EAE0D4] shadow-[0_20px_50px_-34px_rgba(88,66,48,0.55)]"
+      className="scroll-mt-20 rounded-[26px] p-5 sm:p-7 bg-[#FFFDFA] dark:bg-[#1C1916] border border-[#EAE0D4] dark:border-[#2E2924] shadow-[0_20px_50px_-34px_rgba(88,66,48,0.55)] dark:shadow-none transition-colors"
     >
       <div className="flex items-baseline gap-3.5 flex-wrap">
-        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E]">STEP 03</span>
-        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">Compose &amp; hand off</h2>
+        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E] dark:text-[#E07A52]">STEP 03</span>
+        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26] dark:text-[#F5EFEA]">Compose &amp; hand off</h2>
       </div>
 
       {/* Selected Preset Banner */}
       {selectedPreset && (
-        <div className="mt-4 px-4 py-3 rounded-2xl bg-[#FFF6EE] border border-[#F0D8C4] flex items-center justify-between gap-3 text-[14px]">
+        <div className="mt-4 px-4 py-3 rounded-2xl bg-[#FFF6EE] dark:bg-[#2C1C14] border border-[#F0D8C4] dark:border-[#4A2E1F] flex items-center justify-between gap-3 text-[14px]">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="w-6 h-6 rounded-full bg-[#C4633E] text-[#FFF7F1] flex items-center justify-center shrink-0">
+            <span className="w-6 h-6 rounded-full bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] flex items-center justify-center shrink-0">
               <Sparkles className="w-3.5 h-3.5" />
             </span>
             <div className="truncate">
-              <span className="text-[#8A7E73] text-[13px] mr-1.5">Preset:</span>
-              <strong className="text-[#2E2A26] font-medium">{selectedPreset.title}</strong>
+              <span className="text-[#8A7E73] dark:text-[#A69B90] text-[13px] mr-1.5">Preset:</span>
+              <strong className="text-[#2E2A26] dark:text-[#F5EFEA] font-medium">{selectedPreset.title}</strong>
             </div>
           </div>
-          <span className="font-mono text-[11.5px] text-[#C4633E] bg-[#FFEADA] px-2.5 py-0.5 rounded-full shrink-0">
+          <span className="font-mono text-[11.5px] text-[#C4633E] dark:text-[#E07A52] bg-[#FFEADA] dark:bg-[#3D2518] px-2.5 py-0.5 rounded-full shrink-0">
             Recipe active
           </span>
         </div>
@@ -410,16 +410,16 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
 
       {/* Selected Items Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-[18px] mb-[22px]">
-        <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
-          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">Cast</div>
-          <div className={`text-[14.5px] leading-[1.5] ${selectedCharacters.length ? 'text-[#4F4740]' : 'text-[#A79C92]'}`}>
+        <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] px-4 py-3.5 border border-transparent dark:border-[#2E2924]">
+          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">Cast</div>
+          <div className={`text-[14.5px] leading-[1.5] ${selectedCharacters.length ? 'text-[#4F4740] dark:text-[#D5CCC3]' : 'text-[#A79C92] dark:text-[#7A7066]'}`}>
             {castSummary}
           </div>
         </div>
-        <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5 relative flex flex-col justify-center group">
-          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">Style</div>
+        <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] px-4 py-3.5 relative flex flex-col justify-center group border border-transparent dark:border-[#2E2924]">
+          <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">Style</div>
           <div className="flex items-center justify-between gap-2">
-            <div className={`text-[14.5px] leading-[1.5] ${selectedStyle ? 'text-[#4F4740]' : 'text-[#A79C92]'}`}>
+            <div className={`text-[14.5px] leading-[1.5] ${selectedStyle ? 'text-[#4F4740] dark:text-[#D5CCC3]' : 'text-[#A79C92] dark:text-[#7A7066]'}`}>
               {styleSummary}
             </div>
             {selectedStyle && (
@@ -427,9 +427,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
                 type="button"
                 onClick={handleCopyStyle}
                 title="Copy style name"
-                className="p-1.5 rounded-lg border border-[#EBE1D4] bg-[#FFFDFA] text-[#8A7E73] hover:text-[#2E2A26] hover:bg-[#F6F0E7] transition-colors"
+                className="p-1.5 rounded-lg border border-[#EBE1D4] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#8A7E73] dark:text-[#A69B90] hover:text-[#2E2A26] dark:hover:text-[#F5EFEA] hover:bg-[#F6F0E7] dark:hover:bg-[#2A2520] transition-colors cursor-pointer"
               >
-                {isStyleCopied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {isStyleCopied ? <Check className="w-3.5 h-3.5 text-green-600 dark:text-[#8FA87F]" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             )}
           </div>
@@ -437,7 +437,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       </div>
 
       {/* Composition Prompt Entry */}
-      <label htmlFor="composition-prompt-textarea" className="block text-sm font-medium text-[#2E2A26] mb-2">
+      <label htmlFor="composition-prompt-textarea" className="block text-sm font-medium text-[#2E2A26] dark:text-[#F5EFEA] mb-2">
         Composition
       </label>
       <textarea
@@ -447,7 +447,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         onKeyDown={handleKeyDown}
         rows={4}
         placeholder="Golden hour on a rooftop, the two of them mid-laugh, shot from below…"
-        className="w-full resize-vertical px-4 py-3.5 rounded-2xl border border-[#E3D8CA] bg-[#FCFAF6] text-[15px] leading-[1.55] text-[#2E2A26] outline-none focus:border-[#C4633E]"
+        className="w-full resize-vertical px-4 py-3.5 rounded-2xl border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] text-[15px] leading-[1.55] text-[#2E2A26] dark:text-[#F5EFEA] placeholder:text-[#A79C92] dark:placeholder:text-[#7A7066] outline-none focus:border-[#C4633E] dark:focus:border-[#E07A52] transition-colors"
       />
 
       <div className="flex flex-wrap gap-2.5 items-center mt-2.5">
@@ -456,26 +456,26 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             type="button"
             id="clear-composition-prompt-btn"
             onClick={() => setCompositionPrompt('')}
-            className="px-3 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[12.5px]"
+            className="px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[12.5px] cursor-pointer"
           >
             Clear text
           </button>
         )}
-        <span className="font-mono text-[11.5px] text-[#A08F80]">⌘↵ opens the app</span>
+        <span className="font-mono text-[11.5px] text-[#A08F80] dark:text-[#7A7066]">⌘↵ opens the app</span>
       </div>
 
       {/* Upload Attachments */}
       {hasUploadCapability && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-[#2E2A26]">
+            <label className="block text-sm font-medium text-[#2E2A26] dark:text-[#F5EFEA]">
               Upload attachments
             </label>
             {uploadedFileIds.length > 0 && (
               <button
                 type="button"
                 onClick={handleClearAttachments}
-                className="text-[12.5px] text-[#8A7E73] hover:text-[#2E2A26] transition-colors"
+                className="text-[12.5px] text-[#8A7E73] dark:text-[#A69B90] hover:text-[#2E2A26] dark:hover:text-[#F5EFEA] transition-colors cursor-pointer"
               >
                 Clear all
               </button>
@@ -487,22 +487,22 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
               multiple
               onChange={handleFileChange}
               disabled={isUploading}
-              className="block w-full text-sm text-[#6E6459] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#F6F0E7] file:text-[#4F4740] hover:file:bg-[#EAE0D4] transition-colors cursor-pointer disabled:opacity-50"
+              className="block w-full text-sm text-[#6E6459] dark:text-[#D5CCC3] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#F6F0E7] dark:file:bg-[#2A2520] file:text-[#4F4740] dark:file:text-[#D5CCC3] hover:file:bg-[#EAE0D4] dark:hover:file:bg-[#332C26] transition-colors cursor-pointer disabled:opacity-50"
             />
             {isUploading && (
-              <div className="text-[13px] text-[#C4633E] flex items-center gap-2">
+              <div className="text-[13px] text-[#C4633E] dark:text-[#E07A52] flex items-center gap-2">
                 <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
                 Uploading...
               </div>
             )}
             {uploadError && (
-              <div className="text-[13px] text-[#96402F]">
+              <div className="text-[13px] text-[#96402F] dark:text-[#E07A52]">
                 {uploadError}
               </div>
             )}
             {!isUploading && !uploadError && uploadedFileIds.length > 0 && (
-              <div className="text-[13px] text-[#4F4740] flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-green-600" />
+              <div className="text-[13px] text-[#4F4740] dark:text-[#D5CCC3] flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-green-600 dark:text-[#8FA87F]" />
                 <span>{uploadedFileIds.length} file{uploadedFileIds.length > 1 ? 's' : ''} uploaded successfully</span>
               </div>
             )}
@@ -510,7 +510,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             {fileThumbnails.length > 0 && (
               <div className="flex flex-wrap gap-3 mt-2">
                 {fileThumbnails.map((thumb) => (
-                  <div key={thumb.id} className="relative w-16 h-16 rounded-lg border border-[#E3D8CA] bg-[#FAF5EE] group">
+                  <div key={thumb.id} className="relative w-16 h-16 rounded-lg border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FAF5EE] dark:bg-[#25211D] group">
                     <img
                       src={thumb.url}
                       alt={thumb.name}
@@ -519,7 +519,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveAttachment(thumb.id)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center bg-white rounded-full border border-[#E3D8CA] shadow-sm text-[#8A7E73] hover:text-[#96402F] opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center bg-white dark:bg-[#2A2520] rounded-full border border-[#E3D8CA] dark:border-[#3D352E] shadow-sm text-[#8A7E73] dark:text-[#D5CCC3] hover:text-[#96402F] dark:hover:text-[#E07A52] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                       title="Remove attachment"
                     >
                       <X className="w-3 h-3" />
@@ -534,18 +534,18 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
 
       {/* Select Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-[22px]">
-        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
+        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459] dark:text-[#D5CCC3]">
           Model
           <select id="model-select" value={model} onChange={(e) => setModel(e.target.value)} className={selectClasses}>
             {MODEL_OPTIONS.map((m) => (
-              <option key={m.value} value={m.value}>
+              <option key={m.value} value={m.value} className="bg-[#FCFAF6] dark:bg-[#25211D] text-[#2E2A26] dark:text-[#F5EFEA]">
                 {m.label}
               </option>
             ))}
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
+        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459] dark:text-[#D5CCC3]">
           Aspect ratio
           <select
             id="aspect-ratio-select"
@@ -554,14 +554,14 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             className={selectClasses}
           >
             {ASPECT_RATIOS.map((ar) => (
-              <option key={ar.value} value={ar.value}>
+              <option key={ar.value} value={ar.value} className="bg-[#FCFAF6] dark:bg-[#25211D] text-[#2E2A26] dark:text-[#F5EFEA]">
                 {ar.label}
               </option>
             ))}
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]">
+        <label className="flex flex-col gap-1.5 text-[13.5px] text-[#6E6459] dark:text-[#D5CCC3]">
           Text language
           <select
             id="text-language-select"
@@ -570,7 +570,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             className={selectClasses}
           >
             {TEXT_LANGUAGES.map((lang) => (
-              <option key={lang.value} value={lang.value}>
+              <option key={lang.value} value={lang.value} className="bg-[#FCFAF6] dark:bg-[#25211D] text-[#2E2A26] dark:text-[#F5EFEA]">
                 {lang.label}
               </option>
             ))}
@@ -579,14 +579,14 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-3 items-center mt-6 pt-5 border-t border-[#F0E7DA]">
+      <div className="flex flex-wrap gap-3 items-center mt-6 pt-5 border-t border-[#F0E7DA] dark:border-[#2E2924]">
         <button
           type="button"
           id="open-app-btn"
           onClick={handleOpenApp}
           disabled={isOpeningApp}
           title="Open Image Generation App with prompt parameters"
-          className="flex items-center justify-center gap-2 px-[22px] py-3.5 rounded-2xl border-none bg-[#C4633E] text-[#FFF7F1] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer shadow-[0_12px_24px_-14px_rgba(196,99,62,0.95)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+          className="flex items-center justify-center gap-2 px-[22px] py-3.5 rounded-2xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer shadow-[0_12px_24px_-14px_rgba(196,99,62,0.95)] dark:shadow-none transition-transform hover:-translate-y-0.5 disabled:opacity-70"
         >
           {isOpeningApp ? (
             <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
@@ -600,11 +600,11 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           type="button"
           id="copy-prompt-btn"
           onClick={handleCopyPrompt}
-          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:bg-[#FAF5EE] transition-colors"
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:bg-[#FAF5EE] dark:hover:bg-[#25211D] hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
         >
           {isCopied ? (
             <>
-              <Check className="w-4 h-4" />
+              <Check className="w-4 h-4 text-green-600 dark:text-[#8FA87F]" />
               <span>Copied ✓</span>
             </>
           ) : (
@@ -620,9 +620,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           id="save-as-preset-btn"
           onClick={handleSaveAsPreset}
           title="Save current prompt, cast, style, and settings as a new preset recipe"
-          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] bg-[#FFFDFA] text-[#5B5148] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:border-[#C4633E] hover:text-[#C4633E] hover:bg-[#FAF5EE] transition-colors"
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:text-[#C4633E] dark:hover:text-[#E07A52] hover:bg-[#FAF5EE] dark:hover:bg-[#25211D] transition-colors"
         >
-          <BookmarkPlus className="w-4 h-4 text-[#C4633E]" />
+          <BookmarkPlus className="w-4 h-4 text-[#C4633E] dark:text-[#E07A52]" />
           <span>Save as preset</span>
         </button>
 
@@ -632,14 +632,14 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           type="button"
           onClick={handleReset}
           title="Reset all inputs"
-          className="px-4 py-3 rounded-2xl border-none bg-transparent text-[#A0776A] text-[14px] whitespace-nowrap shrink-0 cursor-pointer underline underline-offset-[3px]"
+          className="px-4 py-3 rounded-2xl border-none bg-transparent text-[#A0776A] dark:text-[#B89488] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[14px] whitespace-nowrap shrink-0 cursor-pointer underline underline-offset-[3px]"
         >
           Reset everything
         </button>
       </div>
 
       {appError && (
-        <div className="mt-4 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+        <div className="mt-4 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
           {appError}
         </div>
       )}

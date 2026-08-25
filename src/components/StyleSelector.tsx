@@ -52,24 +52,24 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
   return (
     <section>
       <div className="flex items-baseline gap-3.5 flex-wrap mb-1.5">
-        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E]">STEP 02</span>
-        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26]">What should it look like?</h2>
-        <span className="font-mono text-[12.5px] text-[#8A7E73]">{styleCountLabel}</span>
+        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E] dark:text-[#E07A52]">STEP 02</span>
+        <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26] dark:text-[#F5EFEA]">What should it look like?</h2>
+        <span className="font-mono text-[12.5px] text-[#8A7E73] dark:text-[#A69B90]">{styleCountLabel}</span>
       </div>
-      <p className="mb-[18px] text-[#8A7E73] text-[15px]">
+      <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[15px]">
         One style pack at a time. Peek at the details before you commit.
       </p>
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px] animate-pulse">
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="aspect-[16/10] bg-[#EFE6DA]/60 rounded-[20px]" />
+            <div key={n} className="aspect-[16/10] bg-[#EFE6DA]/60 dark:bg-[#2A2520]/60 rounded-[20px]" />
           ))}
         </div>
       ) : styles.length === 0 ? (
-        <div className="border border-dashed border-[#DCCFBF] rounded-[22px] px-6 py-10 text-center">
-          <div className="font-serif text-[24px] text-[#2E2A26]">No style packs yet</div>
-          <p className="mx-auto mt-2 max-w-[44ch] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+        <div className="border border-dashed border-[#DCCFBF] dark:border-[#3D352E] rounded-[22px] px-6 py-10 text-center">
+          <div className="font-serif text-[24px] text-[#2E2A26] dark:text-[#F5EFEA]">No style packs yet</div>
+          <p className="mx-auto mt-2 max-w-[44ch] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
             Save style packs to your Raindrop collection and re-sync to see them here.
           </p>
         </div>
@@ -84,11 +84,11 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                 onClick={() => onSelectStyle(isSelected ? null : style.id)}
                 className={`rounded-[20px] p-2 cursor-pointer transition-transform hover:-translate-y-0.5 ${
                   isSelected
-                    ? 'bg-[#FFF3EA] border-[1.5px] border-[#C4633E] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)]'
-                    : 'bg-[#FFFDFA] border-[1.5px] border-[#EFE6DA]'
+                    ? 'bg-[#FFF3EA] dark:bg-[#2C1C14] border-[1.5px] border-[#C4633E] dark:border-[#E07A52] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)] dark:shadow-none'
+                    : 'bg-[#FFFDFA] dark:bg-[#1C1916] border-[1.5px] border-[#EFE6DA] dark:border-[#2E2924]'
                 }`}
               >
-                <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#EFE6DA]">
+                <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#EFE6DA] dark:bg-[#2A2520]">
                   {style.preview_cover ? (
                     <img
                       src={style.preview_cover}
@@ -100,14 +100,14 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-[#A08F80]">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-[#A08F80] dark:text-[#8C8074]">
                       <ImageIcon className="w-7 h-7 mb-1.5 opacity-50" />
                       <span className="text-xs">No preview</span>
                     </div>
                   )}
 
                   {isSelected && (
-                    <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-[#C4633E] text-[#FFF7F1]">
+                    <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411]">
                       Selected
                     </div>
                   )}
@@ -119,18 +119,18 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                       setInspectStyle(style);
                     }}
                     title="View style details"
-                    className="absolute bottom-2 right-2 p-1.5 rounded-full border border-[#E3D8CA] bg-[rgba(255,253,250,0.92)] text-[#6E6459] flex items-center justify-center hover:bg-[#F8F3ED] transition-colors"
+                    className="absolute bottom-2 right-2 p-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-[rgba(255,253,250,0.92)] dark:bg-[rgba(28,25,22,0.92)] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#F8F3ED] dark:hover:bg-[#2A2520] transition-colors"
                   >
                     <Info className="w-[18px] h-[18px]" />
                   </button>
                 </div>
 
                 <div className="px-1.5 pt-2.5 pb-1.5 flex flex-col gap-1.5">
-                  <div className="text-[16px] font-medium text-[#2E2A26] truncate" title={style.title}>
+                  <div className="text-[16px] font-medium text-[#2E2A26] dark:text-[#F5EFEA] truncate" title={style.title}>
                     {style.title}
                   </div>
                   {style.style_prompt && (
-                    <p className="text-[13px] text-[#8A7E73] leading-[1.5] line-clamp-2">{style.style_prompt}</p>
+                    <p className="text-[13px] text-[#8A7E73] dark:text-[#A69B90] leading-[1.5] line-clamp-2">{style.style_prompt}</p>
                   )}
                 </div>
               </div>
@@ -143,17 +143,17 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
         {selectedStyleId !== null && (
           <button
             onClick={() => onSelectStyle(null)}
-            className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[13.5px]"
+            className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] text-[13.5px] cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52]"
           >
             Clear style
           </button>
         )}
         {styleChosen && (
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EDF1E6] text-[#5C6B50] text-[13.5px] animate-rise">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EDF1E6] dark:bg-[#1E281C] text-[#5C6B50] dark:text-[#8FA87F] text-[13.5px] animate-rise">
             <span>Style locked in — step 3 is ready</span>
             <button
               onClick={scrollToCompose}
-              className="border-none bg-transparent text-[#3F6B2F] font-medium underline underline-offset-2"
+              className="border-none bg-transparent text-[#3F6B2F] dark:text-[#A4C495] font-medium underline underline-offset-2 cursor-pointer"
             >
               Compose ↓
             </button>
@@ -166,47 +166,47 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
         createPortal(
           <div
             onClick={() => setInspectStyle(null)}
-            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center"
+            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center transition-colors"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#FFFDFA] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
+              className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#FFFDFA] dark:bg-[#1C1916] text-[#2E2A26] dark:text-[#F5EFEA] border border-[#EAE0D4] dark:border-[#2E2924] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto shadow-2xl"
             >
               <div className="flex items-start gap-3.5 mb-1.5">
-                <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">{inspectStyle.title}</h3>
+                <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">{inspectStyle.title}</h3>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleCopyTitle(inspectStyle.title)}
                     title="Copy style pack name"
-                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#2A2520] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#332C26] transition-colors cursor-pointer"
                   >
-                    {copiedTitle ? <Check className="w-4 h-4 text-[#3F6B2F]" /> : <Copy className="w-4 h-4" />}
+                    {copiedTitle ? <Check className="w-4 h-4 text-[#3F6B2F] dark:text-[#8FA87F]" /> : <Copy className="w-4 h-4" />}
                   </button>
                   <a
                     href={`https://app.raindrop.io/my/${inspectStyle.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Open in Raindrop.io"
-                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#2A2520] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#332C26] transition-colors"
                   >
                     <ArrowUpRight className="w-4 h-4" />
                   </a>
                   <button
                     onClick={() => setInspectStyle(null)}
                     title="Close"
-                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#2A2520] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#332C26] transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+              <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
                 Browsing here never changes your current selection.
               </p>
 
               <div className="flex flex-col gap-4">
                 {inspectStyle.preview_cover && (
-                  <div className="rounded-2xl overflow-hidden bg-[#EFE6DA] max-h-56">
+                  <div className="rounded-2xl overflow-hidden bg-[#EFE6DA] dark:bg-[#2A2520] max-h-56">
                     <img
                       src={inspectStyle.preview_cover}
                       alt={inspectStyle.title}
@@ -219,12 +219,12 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
 
                 {inspectStyle.style_reference_links && inspectStyle.style_reference_links.length > 0 && (
                   <div>
-                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">
                       Reference images
                     </div>
                     <div className="grid grid-cols-3 gap-2.5">
                       {inspectStyle.style_reference_links.map((link, idx) => (
-                        <div key={idx} className="aspect-square rounded-xl overflow-hidden bg-[#EFE6DA]">
+                        <div key={idx} className="aspect-square rounded-xl overflow-hidden bg-[#EFE6DA] dark:bg-[#2A2520]">
                           <img
                             src={link}
                             alt={`Reference ${idx + 1}`}
@@ -237,21 +237,21 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                   </div>
                 )}
 
-                <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
-                  <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] px-4 py-3.5">
+                  <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">
                     Style prompt
                   </div>
-                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] whitespace-pre-wrap">
+                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] dark:text-[#D5CCC3] whitespace-pre-wrap">
                     {inspectStyle.style_prompt || 'No style prompt defined.'}
                   </div>
                 </div>
 
                 {inspectStyle.extra_style_instruction && (
-                  <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5">
-                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-2">
+                  <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] px-4 py-3.5">
+                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">
                       Extra instructions
                     </div>
-                    <div className="text-[14.5px] leading-[1.6] text-[#4F4740]">
+                    <div className="text-[14.5px] leading-[1.6] text-[#4F4740] dark:text-[#D5CCC3]">
                       {inspectStyle.extra_style_instruction}
                     </div>
                   </div>
@@ -262,7 +262,7 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({
                     onSelectStyle(inspectStyle.id);
                     setInspectStyle(null);
                   }}
-                  className="self-start flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer"
+                  className="self-start flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   {selectedStyleId === inspectStyle.id ? (
                     <>

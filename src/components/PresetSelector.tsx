@@ -350,43 +350,43 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   };
 
   const inputClasses =
-    'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] bg-[#FCFAF6] text-[14.5px] text-[#2E2A26] outline-none focus:border-[#C4633E]';
-  const labelClasses = 'flex flex-col gap-1.5 text-[13.5px] text-[#6E6459]';
+    'w-full px-3.5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] text-[14.5px] text-[#2E2A26] dark:text-[#F5EFEA] outline-none focus:border-[#C4633E] dark:focus:border-[#E07A52]';
+  const labelClasses = 'flex flex-col gap-1.5 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]';
 
   return (
     <section
       id="presets-section"
-      className="rounded-[24px] border border-[#EAE0D4] bg-[#FFFDFA] overflow-hidden transition-all duration-300 shadow-[0_4px_20px_-10px_rgba(88,66,48,0.06)]"
+      className="rounded-[24px] border border-[#EAE0D4] dark:border-[#2E2924] bg-[#FFFDFA] dark:bg-[#1C1916] overflow-hidden transition-all duration-300 shadow-[0_4px_20px_-10px_rgba(88,66,48,0.06)] dark:shadow-none"
     >
       {/* Header Bar / Collapsible Toggle */}
       <div
         onClick={() => setIsExpanded((prev) => !prev)}
-        className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4 cursor-pointer select-none hover:bg-[#FAF5EE]/60 transition-colors"
+        className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 py-4 cursor-pointer select-none hover:bg-[#FAF5EE]/60 dark:hover:bg-[#25211D]/60 transition-colors"
       >
         <div className="flex items-center gap-3.5 min-w-0">
           <button
             type="button"
-            className="w-8 h-8 rounded-full bg-[#FAF5EE] border border-[#E6DCCF] text-[#7A6F64] flex items-center justify-center shrink-0 transition-transform duration-200"
+            className="w-8 h-8 rounded-full bg-[#FAF5EE] dark:bg-[#25211D] border border-[#E6DCCF] dark:border-[#332C26] text-[#7A6F64] dark:text-[#A69B90] flex items-center justify-center shrink-0 transition-transform duration-200"
             aria-label={isExpanded ? 'Collapse curated presets' : 'Expand curated presets'}
           >
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-[#C4633E]" />
+              <ChevronDown className="w-4 h-4 text-[#C4633E] dark:text-[#E07A52]" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-[#8A7E73]" />
+              <ChevronRight className="w-4 h-4 text-[#8A7E73] dark:text-[#A69B90]" />
             )}
           </button>
 
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 truncate">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[#C4633E] bg-[#F7E7DC] px-2 py-0.5 rounded-md font-medium flex items-center gap-1">
+              <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-[#C4633E] dark:text-[#E07A52] bg-[#F7E7DC] dark:bg-[#2C1C14] px-2 py-0.5 rounded-md font-medium flex items-center gap-1">
                 <Sparkles className="w-3 h-3 inline-block" />
                 PRESETS
               </span>
-              <h3 className="font-serif font-normal text-[20px] sm:text-[23px] text-[#2E2A26] truncate">
+              <h3 className="font-serif font-normal text-[20px] sm:text-[23px] text-[#2E2A26] dark:text-[#F5EFEA] truncate">
                 Curated Presets
               </h3>
             </div>
-            <span className="text-xs sm:text-[13px] text-[#8A7E73] truncate">
+            <span className="text-xs sm:text-[13px] text-[#8A7E73] dark:text-[#A69B90] truncate">
               {presetCountLabel} • Quick recipes for cast, style & prompt
             </span>
           </div>
@@ -394,7 +394,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
         <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
           {selectedPreset && (
-            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] bg-[#EDF1E6] text-[#5C6B50] font-medium">
+            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] bg-[#EDF1E6] dark:bg-[#1E281C] text-[#5C6B50] dark:text-[#8FA87F] font-medium">
               Active: {selectedPreset.title}
             </span>
           )}
@@ -403,7 +403,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
               type="button"
               id="header-add-preset-btn"
               onClick={handleOpenAddModalInternal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[12.5px] font-medium hover:bg-[#433D37] transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2E2A26] dark:border-[#3D352E] bg-[#2E2A26] dark:bg-[#25211D] text-[#FDF6EE] dark:text-[#F5EFEA] text-[12.5px] font-medium hover:bg-[#433D37] dark:hover:bg-[#2E2924] transition-colors shadow-sm cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Add preset</span>
@@ -414,28 +414,28 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
       {/* Expanded Content Area */}
       {isExpanded && (
-        <div className="px-5 sm:px-6 pt-1 pb-6 border-t border-[#F2E9DE] bg-[#FFFDFC]">
-          <p className="mb-4 mt-3 text-[#8A7E73] text-[14px]">
+        <div className="px-5 sm:px-6 pt-1 pb-6 border-t border-[#F2E9DE] dark:border-[#2E2924] bg-[#FFFDFC] dark:bg-[#181512]">
+          <p className="mb-4 mt-3 text-[#8A7E73] dark:text-[#A69B90] text-[14px]">
             Select a ready-to-use recipe to instantly fill in your cast, style pack, composition prompt, and generator settings.
           </p>
 
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-[18px] animate-pulse py-2">
               {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="aspect-[16/10] bg-[#EFE6DA]/60 rounded-[20px]" />
+                <div key={n} className="aspect-[16/10] bg-[#EFE6DA]/60 dark:bg-[#25211D] rounded-[20px]" />
               ))}
             </div>
           ) : presets.length === 0 ? (
-            <div className="border border-dashed border-[#DCCFBF] rounded-[22px] px-6 py-9 text-center bg-[#FFFDFA]/60 my-2">
-              <div className="font-serif text-[22px] text-[#2E2A26]">No presets found</div>
-              <p className="mx-auto mt-2 max-w-[48ch] text-[#8A7E73] text-[14px] leading-[1.55]">
-                Create shot recipes in your <strong className="text-[#2E2A26]">Presets</strong> collection in Raindrop, or click below to save your first preset recipe.
+            <div className="border border-dashed border-[#DCCFBF] dark:border-[#3D352E] rounded-[22px] px-6 py-9 text-center bg-[#FFFDFA]/60 dark:bg-[#1C1916]/60 my-2">
+              <div className="font-serif text-[22px] text-[#2E2A26] dark:text-[#F5EFEA]">No presets found</div>
+              <p className="mx-auto mt-2 max-w-[48ch] text-[#8A7E73] dark:text-[#A69B90] text-[14px] leading-[1.55]">
+                Create shot recipes in your <strong className="text-[#2E2A26] dark:text-[#F5EFEA]">Presets</strong> collection in Raindrop, or click below to save your first preset recipe.
               </p>
               {onAddPreset && (
                 <button
                   id="add-first-preset-btn"
                   onClick={handleOpenAddModalInternal}
-                  className="mt-4 inline-flex items-center gap-2 px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] font-medium cursor-pointer shadow-sm hover:opacity-95"
+                  className="mt-4 inline-flex items-center gap-2 px-[18px] py-2.5 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer shadow-sm hover:opacity-95"
                 >
                   <Plus className="w-4 h-4" />
                   Add a preset
@@ -453,12 +453,12 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                     onClick={() => onSelectPreset(isSelected ? null : preset)}
                     className={`rounded-[20px] p-2 cursor-pointer transition-transform hover:-translate-y-0.5 flex flex-col justify-between ${
                       isSelected
-                        ? 'bg-[#FFF3EA] border-[1.5px] border-[#C4633E] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)]'
-                        : 'bg-[#FFFDFA] border-[1.5px] border-[#EFE6DA]'
+                        ? 'bg-[#FFF3EA] dark:bg-[#2C1C14] border-[1.5px] border-[#C4633E] dark:border-[#E07A52] shadow-[0_14px_28px_-20px_rgba(196,99,62,0.9)] dark:shadow-none'
+                        : 'bg-[#FFFDFA] dark:bg-[#1C1916] border-[1.5px] border-[#EFE6DA] dark:border-[#2E2924]'
                     }`}
                   >
                     <div>
-                      <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#EFE6DA]">
+                      <div className="relative aspect-[16/10] rounded-[14px] overflow-hidden bg-[#EFE6DA] dark:bg-[#25211D]">
                         {preset.preview_image ? (
                           <img
                             src={preset.preview_image}
@@ -470,14 +470,14 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-[#A08F80]">
+                          <div className="w-full h-full flex flex-col items-center justify-center text-[#A08F80] dark:text-[#7A7066]">
                             <ImageIcon className="w-7 h-7 mb-1.5 opacity-50" />
                             <span className="text-xs">No preview</span>
                           </div>
                         )}
 
                         {isSelected && (
-                          <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-[#C4633E] text-[#FFF7F1] flex items-center gap-1 shadow-sm">
+                          <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] flex items-center gap-1 shadow-sm">
                             <Check className="w-3 h-3" /> Selected
                           </div>
                         )}
@@ -489,45 +489,45 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                             setInspectPreset(preset);
                           }}
                           title="Inspect preset details"
-                          className="absolute bottom-2 right-2 p-1.5 rounded-full border border-[#E3D8CA] bg-[rgba(255,253,250,0.92)] text-[#6E6459] flex items-center justify-center hover:bg-[#F8F3ED] transition-colors shadow-sm"
+                          className="absolute bottom-2 right-2 p-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-[rgba(255,253,250,0.92)] dark:bg-[rgba(28,25,22,0.92)] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#F8F3ED] dark:hover:bg-[#2A2520] transition-colors shadow-sm"
                         >
                           <Info className="w-[18px] h-[18px]" />
                         </button>
                       </div>
 
                       <div className="px-1.5 pt-2.5 pb-1 flex flex-col gap-1">
-                        <div className="text-[16px] font-medium text-[#2E2A26] truncate" title={preset.title}>
+                        <div className="text-[16px] font-medium text-[#2E2A26] dark:text-[#F5EFEA] truncate" title={preset.title}>
                           {preset.title}
                         </div>
                         {preset.prompt && (
-                          <p className="text-[13px] text-[#8A7E73] leading-[1.45] line-clamp-2">{preset.prompt}</p>
+                          <p className="text-[13px] text-[#8A7E73] dark:text-[#A69B90] leading-[1.45] line-clamp-2">{preset.prompt}</p>
                         )}
                       </div>
                     </div>
 
                     {/* Metadata Pills / Tags */}
-                    <div className="px-1.5 pt-2 flex flex-wrap gap-1.5 mt-auto border-t border-[#F4ECE2]/80">
+                    <div className="px-1.5 pt-2 flex flex-wrap gap-1.5 mt-auto border-t border-[#F4ECE2]/80 dark:border-[#2E2924]">
                       {preset.style_pack_name && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] text-[11.5px] text-[#6E6459] max-w-[140px] truncate" title={`Style: ${preset.style_pack_name}`}>
-                          <Palette className="w-3 h-3 shrink-0 text-[#A08F80]" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] dark:bg-[#25211D] text-[11.5px] text-[#6E6459] dark:text-[#D5CCC3] max-w-[140px] truncate" title={`Style: ${preset.style_pack_name}`}>
+                          <Palette className="w-3 h-3 shrink-0 text-[#A08F80] dark:text-[#8C8074]" />
                           <span className="truncate">{preset.style_pack_name}</span>
                         </span>
                       )}
                       {preset.character_names && preset.character_names.length > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] text-[11.5px] text-[#6E6459] max-w-[140px] truncate" title={`Cast: ${preset.character_names.join(', ')}`}>
-                          <Users className="w-3 h-3 shrink-0 text-[#A08F80]" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F4EDE3] dark:bg-[#25211D] text-[11.5px] text-[#6E6459] dark:text-[#D5CCC3] max-w-[140px] truncate" title={`Cast: ${preset.character_names.join(', ')}`}>
+                          <Users className="w-3 h-3 shrink-0 text-[#A08F80] dark:text-[#8C8074]" />
                           <span className="truncate">{preset.character_names.join(', ')}</span>
                         </span>
                       )}
                       {preset.model && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] border border-[#EFE6DA] text-[11px] font-mono text-[#8A7E73]">
-                          <Cpu className="w-2.5 h-2.5 text-[#A08F80]" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] dark:bg-[#25211D] border border-[#EFE6DA] dark:border-[#332C26] text-[11px] font-mono text-[#8A7E73] dark:text-[#A69B90]">
+                          <Cpu className="w-2.5 h-2.5 text-[#A08F80] dark:text-[#8C8074]" />
                           <span>{preset.model}</span>
                         </span>
                       )}
                       {preset.aspect_ratio && preset.aspect_ratio !== 'Auto' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] border border-[#EFE6DA] text-[11px] font-mono text-[#8A7E73]">
-                          <Ratio className="w-2.5 h-2.5 text-[#A08F80]" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF5EE] dark:bg-[#25211D] border border-[#EFE6DA] dark:border-[#332C26] text-[11px] font-mono text-[#8A7E73] dark:text-[#A69B90]">
+                          <Ratio className="w-2.5 h-2.5 text-[#A08F80] dark:text-[#8C8074]" />
                           <span>{preset.aspect_ratio}</span>
                         </span>
                       )}
@@ -545,7 +545,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 <button
                   id="open-add-preset-modal-btn"
                   onClick={handleOpenAddModalInternal}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2E2A26] bg-[#2E2A26] text-[#FDF6EE] text-[13.5px] font-medium hover:bg-[#433D37] transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#2E2A26] dark:border-[#3D352E] bg-[#2E2A26] dark:bg-[#25211D] text-[#FDF6EE] dark:text-[#F5EFEA] text-[13.5px] font-medium hover:bg-[#433D37] dark:hover:bg-[#2E2924] transition-colors shadow-sm cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add preset</span>
@@ -556,7 +556,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 <button
                   id="clear-preset-selection-btn"
                   onClick={() => onSelectPreset(null)}
-                  className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] bg-transparent text-[#8A7E73] text-[13.5px] hover:text-[#2E2A26] transition-colors"
+                  className="px-3.5 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] text-[13.5px] hover:text-[#2E2A26] dark:hover:text-[#F5EFEA] transition-colors cursor-pointer"
                 >
                   Clear preset
                 </button>
@@ -564,13 +564,13 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
             </div>
 
             {isPresetChosen && selectedPreset && (
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EDF1E6] text-[#5C6B50] text-[13.5px] animate-rise">
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EDF1E6] dark:bg-[#1E281C] text-[#5C6B50] dark:text-[#8FA87F] text-[13.5px] animate-rise">
                 <span>
-                  Preset active: <strong className="font-medium text-[#384d2b]">{selectedPreset.title}</strong>
+                  Preset active: <strong className="font-medium text-[#384d2b] dark:text-[#A4C494]">{selectedPreset.title}</strong>
                 </span>
                 <button
                   onClick={scrollToCompose}
-                  className="border-none bg-transparent text-[#3F6B2F] font-medium underline underline-offset-2 hover:opacity-80"
+                  className="border-none bg-transparent text-[#3F6B2F] dark:text-[#8FA87F] font-medium underline underline-offset-2 hover:opacity-80 cursor-pointer"
                 >
                   Review composition ↓
                 </button>
@@ -585,36 +585,36 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
         createPortal(
           <div
             onClick={handleResetAddForm}
-            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-[#FFFDFA] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
+              className="w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-[#FFFDFA] dark:bg-[#1C1916] border border-transparent dark:border-[#2E2924] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
             >
               <div className="flex items-start gap-3.5 mb-1.5">
                 <div className="flex-1">
-                  <span className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#C4633E]">
+                  <span className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#C4633E] dark:text-[#E07A52]">
                     Preset Recipe
                   </span>
-                  <h3 className="font-serif text-[26px] sm:text-[28px] text-[#2E2A26]">New Preset</h3>
+                  <h3 className="font-serif text-[26px] sm:text-[28px] text-[#2E2A26] dark:text-[#F5EFEA]">New Preset</h3>
                 </div>
                 <button
                   onClick={handleResetAddForm}
-                  className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                  className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#2E2924] transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="flex items-center justify-between gap-3 flex-wrap mb-4 pb-3 border-b border-[#F4ECE2]">
-                <p className="text-[#8A7E73] text-[14px] leading-[1.5]">
+              <div className="flex items-center justify-between gap-3 flex-wrap mb-4 pb-3 border-b border-[#F4ECE2] dark:border-[#2E2924]">
+                <p className="text-[#8A7E73] dark:text-[#A69B90] text-[14px] leading-[1.5]">
                   Select a local image and configure the recipe parameters to sync to Raindrop.
                 </p>
                 {currentWorkspaceValues && (currentWorkspaceValues.prompt || currentWorkspaceValues.stylePackName || (currentWorkspaceValues.characterNames && currentWorkspaceValues.characterNames.length > 0)) && (
                   <button
                     type="button"
                     onClick={handlePrefillFromWorkspace}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E3D8CA] bg-[#FAF5EE] text-[#6E6459] text-[12.5px] hover:border-[#C4633E] hover:text-[#C4633E] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FAF5EE] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] text-[12.5px] hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:text-[#C4633E] dark:hover:text-[#E07A52] transition-colors cursor-pointer"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
                     <span>Auto-fill from workspace</span>
@@ -624,7 +624,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
               <form onSubmit={handleSavePreset} className="flex flex-col gap-4">
                 {addError && (
-                  <div className="flex items-center gap-2 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+                  <div className="flex items-center gap-2 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{addError}</span>
                   </div>
@@ -632,8 +632,8 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
                 {/* Preset Title (Required) */}
                 <label className={labelClasses}>
-                  <span className="font-medium text-[#2E2A26]">
-                    Preset title <span className="text-[#C4633E]">*</span>
+                  <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA]">
+                    Preset title <span className="text-[#C4633E] dark:text-[#E07A52]">*</span>
                   </span>
                   <input
                     type="text"
@@ -647,7 +647,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
                 {/* Local Image Upload Area */}
                 <div className={labelClasses}>
-                  <span className="font-medium text-[#2E2A26]">Local Preview Image</span>
+                  <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA]">Local Preview Image</span>
                   <div
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -655,33 +655,33 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                     onClick={() => fileInputRef.current?.click()}
                     className={`relative flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed cursor-pointer transition-colors ${
                       isDraggingFile
-                        ? 'border-[#C4633E] bg-[#FFF5EE]'
+                        ? 'border-[#C4633E] dark:border-[#E07A52] bg-[#FFF5EE] dark:bg-[#2C1C14]'
                         : previewUrl
-                        ? 'border-[#DCCFBF] bg-[#FAF5EE]'
-                        : 'border-[#DCCFBF] bg-[#FCFAF6] hover:bg-[#F8F3ED]'
+                        ? 'border-[#DCCFBF] dark:border-[#3D352E] bg-[#FAF5EE] dark:bg-[#25211D]'
+                        : 'border-[#DCCFBF] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] hover:bg-[#F8F3ED] dark:hover:bg-[#2E2924]'
                     }`}
                   >
                     {previewUrl ? (
                       <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
-                        <div className="relative w-32 h-20 sm:w-40 sm:h-24 rounded-xl overflow-hidden bg-[#EFE6DA] shadow-inner shrink-0">
+                        <div className="relative w-32 h-20 sm:w-40 sm:h-24 rounded-xl overflow-hidden bg-[#EFE6DA] dark:bg-[#25211D] shadow-inner shrink-0">
                           <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 text-center sm:text-left">
-                          <div className="text-[14.5px] font-medium text-[#2E2A26] truncate max-w-xs">
+                          <div className="text-[14.5px] font-medium text-[#2E2A26] dark:text-[#F5EFEA] truncate max-w-xs">
                             {selectedFile ? selectedFile.name : 'Selected image'}
                           </div>
-                          <p className="text-[12.5px] text-[#8A7E73] mt-0.5">
+                          <p className="text-[12.5px] text-[#8A7E73] dark:text-[#A69B90] mt-0.5">
                             {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Ready to upload'}
                           </p>
                           <div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
-                            <span className="text-xs text-[#C4633E] underline underline-offset-2">Click to replace</span>
+                            <span className="text-xs text-[#C4633E] dark:text-[#E07A52] underline underline-offset-2">Click to replace</span>
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRemoveSelectedFile();
                               }}
-                              className="px-2 py-0.5 rounded text-xs bg-[#F5EAE6] text-[#A0433A] hover:bg-[#EED5CF]"
+                              className="px-2 py-0.5 rounded text-xs bg-[#F5EAE6] dark:bg-[#381E19] text-[#A0433A] dark:text-[#F5AB88] hover:bg-[#EED5CF] dark:hover:bg-[#4D2821]"
                             >
                               Remove
                             </button>
@@ -690,14 +690,14 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-2 text-center py-2">
-                        <div className="w-10 h-10 rounded-full bg-[#F4EDE3] flex items-center justify-center text-[#8A7E73]">
+                        <div className="w-10 h-10 rounded-full bg-[#F4EDE3] dark:bg-[#25211D] flex items-center justify-center text-[#8A7E73] dark:text-[#A69B90]">
                           <Upload className="w-5 h-5" />
                         </div>
                         <div>
-                          <span className="text-[14px] font-medium text-[#2E2A26]">Choose an image file</span>
-                          <span className="text-[13px] text-[#8A7E73]"> or drag and drop here</span>
+                          <span className="text-[14px] font-medium text-[#2E2A26] dark:text-[#F5EFEA]">Choose an image file</span>
+                          <span className="text-[13px] text-[#8A7E73] dark:text-[#A69B90]"> or drag and drop here</span>
                         </div>
-                        <span className="text-[12px] text-[#A08F80]">PNG, JPG, WEBP up to 10MB</span>
+                        <span className="text-[12px] text-[#A08F80] dark:text-[#7A7066]">PNG, JPG, WEBP up to 10MB</span>
                       </div>
                     )}
                     <input
@@ -712,7 +712,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
                 {/* Composition Prompt */}
                 <label className={labelClasses}>
-                  <span className="font-medium text-[#2E2A26]">Composition Prompt / Shot Description</span>
+                  <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA]">Composition Prompt / Shot Description</span>
                   <textarea
                     value={addPrompt}
                     onChange={(e) => setAddPrompt(e.target.value)}
@@ -724,8 +724,8 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
                 {/* Style Pack Selection */}
                 <div className={labelClasses}>
-                  <span className="font-medium text-[#2E2A26] flex items-center gap-1.5">
-                    <Palette className="w-4 h-4 text-[#A08F80]" />
+                  <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA] flex items-center gap-1.5">
+                    <Palette className="w-4 h-4 text-[#A08F80] dark:text-[#8C8074]" />
                     Style Pack
                   </span>
                   {availableStyles.length > 0 ? (
@@ -762,14 +762,14 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 </div>
 
                 {/* Cast / Characters Multi-select */}
-                <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459]">
-                  <span className="font-medium text-[#2E2A26] flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-[#A08F80]" />
+                <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]">
+                  <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA] flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-[#A08F80] dark:text-[#8C8074]" />
                     Cast / Characters in Preset
                   </span>
 
                   {availableCharacters.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-[#FAF5EE] border border-[#EFE6DA] max-h-32 overflow-y-auto">
+                    <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-[#FAF5EE] dark:bg-[#25211D] border border-[#EFE6DA] dark:border-[#332C26] max-h-32 overflow-y-auto">
                       {availableCharacters.map((char) => {
                         const isIncluded = addCharacterNames.includes(char.title);
                         return (
@@ -777,10 +777,10 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                             key={char.id}
                             type="button"
                             onClick={() => handleToggleCharacterName(char.title)}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] transition-colors ${
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] transition-colors cursor-pointer ${
                               isIncluded
-                                ? 'bg-[#C4633E] text-[#FFF7F1] font-medium'
-                                : 'bg-[#FFFDFA] border border-[#E3D8CA] text-[#6E6459] hover:bg-[#F6F0E7]'
+                                ? 'bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] font-medium'
+                                : 'bg-[#FFFDFA] dark:bg-[#1C1916] border border-[#E3D8CA] dark:border-[#3D352E] text-[#6E6459] dark:text-[#D5CCC3] hover:bg-[#F6F0E7] dark:hover:bg-[#2A2520]'
                             }`}
                           >
                             <span>{char.title}</span>
@@ -797,13 +797,13 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       {addCharacterNames.map((name, idx) => (
                         <span
                           key={idx}
-                          className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] border border-[#EBE1D4] text-[13px] text-[#5B5148]"
+                          className="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-[#F6F0E7] dark:bg-[#25211D] border border-[#EBE1D4] dark:border-[#332C26] text-[13px] text-[#5B5148] dark:text-[#D5CCC3]"
                         >
                           {name}
                           <button
                             type="button"
                             onClick={() => setAddCharacterNames(addCharacterNames.filter((c) => c !== name))}
-                            className="text-[#B0A396] hover:text-[#A0433A]"
+                            className="text-[#B0A396] hover:text-[#A0433A] dark:hover:text-[#F5AB88]"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -829,7 +829,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                     <button
                       type="button"
                       onClick={handleAddCustomChar}
-                      className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] bg-[#FFFDFA] text-[#5B5148] text-[14px] hover:bg-[#F6F0E7]"
+                      className="px-4 py-2.5 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#25211D] text-[#5B5148] dark:text-[#D5CCC3] text-[14px] hover:bg-[#F6F0E7] dark:hover:bg-[#2E2924] cursor-pointer"
                     >
                       Add
                     </button>
@@ -839,8 +839,8 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 {/* Generator Parameters Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   <label className={labelClasses}>
-                    <span className="font-medium text-[#2E2A26] flex items-center gap-1">
-                      <Cpu className="w-3.5 h-3.5 text-[#A08F80]" /> Model
+                    <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA] flex items-center gap-1">
+                      <Cpu className="w-3.5 h-3.5 text-[#A08F80] dark:text-[#8C8074]" /> Model
                     </span>
                     <select
                       value={addModel}
@@ -856,8 +856,8 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                   </label>
 
                   <label className={labelClasses}>
-                    <span className="font-medium text-[#2E2A26] flex items-center gap-1">
-                      <Ratio className="w-3.5 h-3.5 text-[#A08F80]" /> Aspect Ratio
+                    <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA] flex items-center gap-1">
+                      <Ratio className="w-3.5 h-3.5 text-[#A08F80] dark:text-[#8C8074]" /> Aspect Ratio
                     </span>
                     <select
                       value={addAspectRatio}
@@ -873,8 +873,8 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                   </label>
 
                   <label className={labelClasses}>
-                    <span className="font-medium text-[#2E2A26] flex items-center gap-1">
-                      <Globe className="w-3.5 h-3.5 text-[#A08F80]" /> Text Language
+                    <span className="font-medium text-[#2E2A26] dark:text-[#F5EFEA] flex items-center gap-1">
+                      <Globe className="w-3.5 h-3.5 text-[#A08F80] dark:text-[#8C8074]" /> Text Language
                     </span>
                     <select
                       value={addTextLanguage}
@@ -891,11 +891,11 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 </div>
 
                 {/* Submit & Cancel Actions */}
-                <div className="flex items-center gap-3 pt-3 border-t border-[#F4ECE2]">
+                <div className="flex items-center gap-3 pt-3 border-t border-[#F4ECE2] dark:border-[#2E2924]">
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="flex items-center gap-2 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] font-medium cursor-pointer shadow-[0_10px_20px_-10px_rgba(196,99,62,0.9)] hover:opacity-95 disabled:opacity-70"
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer shadow-[0_10px_20px_-10px_rgba(196,99,62,0.9)] dark:shadow-none hover:opacity-95 disabled:opacity-70"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                     <span>{isSaving ? 'Creating Preset…' : 'Save preset'}</span>
@@ -904,7 +904,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                     type="button"
                     onClick={handleResetAddForm}
                     disabled={isSaving}
-                    className="px-5 py-3 rounded-xl border border-[#E3D8CA] bg-transparent text-[#6E6459] text-[14.5px] hover:bg-[#F6F0E7]"
+                    className="px-5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#6E6459] dark:text-[#D5CCC3] text-[14.5px] hover:bg-[#F6F0E7] dark:hover:bg-[#25211D] cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -920,14 +920,14 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
         createPortal(
           <div
             onClick={() => setInspectPreset(null)}
-            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xl max-h-[92vh] overflow-y-auto bg-[#FFFDFA] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
+              className="w-full max-w-xl max-h-[92vh] overflow-y-auto bg-[#FFFDFA] dark:bg-[#1C1916] border border-transparent dark:border-[#2E2924] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
             >
               <div className="flex items-start gap-3.5 mb-1.5">
-                <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">{inspectPreset.title}</h3>
+                <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">{inspectPreset.title}</h3>
                 <div className="flex items-center gap-2">
                   {typeof inspectPreset.id === 'number' || /^\d+$/.test(String(inspectPreset.id)) ? (
                     <a
@@ -935,7 +935,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Open in Raindrop.io"
-                      className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                      className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#2E2924] transition-colors"
                     >
                       <ArrowUpRight className="w-4 h-4" />
                     </a>
@@ -943,20 +943,20 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                   <button
                     onClick={() => setInspectPreset(null)}
                     title="Close"
-                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center hover:bg-[#EAE1D3] transition-colors"
+                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#2E2924] transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
+              <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
                 Preset recipe breakdown and generation parameters.
               </p>
 
               <div className="flex flex-col gap-4">
                 {inspectPreset.preview_image && (
-                  <div className="rounded-2xl overflow-hidden bg-[#EFE6DA] max-h-64">
+                  <div className="rounded-2xl overflow-hidden bg-[#EFE6DA] dark:bg-[#25211D] max-h-64">
                     <img
                       src={inspectPreset.preview_image}
                       alt={inspectPreset.title}
@@ -967,9 +967,9 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 )}
 
                 {/* Prompt Card with Copy Action */}
-                <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3.5 relative">
+                <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3.5 relative">
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80]">
+                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074]">
                       Composition Prompt
                     </div>
                     {inspectPreset.prompt && (
@@ -977,11 +977,11 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                         type="button"
                         onClick={() => handleCopyPrompt(inspectPreset.prompt)}
                         title="Copy prompt"
-                        className="p-1 rounded-md border border-[#EBE1D4] bg-[#FFFDFA] text-[#8A7E73] hover:text-[#2E2A26] hover:bg-[#F6F0E7] transition-colors text-xs flex items-center gap-1 px-2"
+                        className="p-1 rounded-md border border-[#EBE1D4] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#8A7E73] dark:text-[#D5CCC3] hover:text-[#2E2A26] dark:hover:text-[#F5EFEA] hover:bg-[#F6F0E7] dark:hover:bg-[#2A2520] transition-colors text-xs flex items-center gap-1 px-2 cursor-pointer"
                       >
                         {copiedPrompt ? (
                           <>
-                            <Check className="w-3 h-3 text-green-600" />
+                            <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
                             <span>Copied</span>
                           </>
                         ) : (
@@ -993,7 +993,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       </button>
                     )}
                   </div>
-                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] whitespace-pre-wrap">
+                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] dark:text-[#D5CCC3] whitespace-pre-wrap">
                     {inspectPreset.prompt || 'No prompt specified.'}
                   </div>
                 </div>
@@ -1001,49 +1001,49 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 {/* Configurations Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {inspectPreset.style_pack_name && (
-                    <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3">
-                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-1.5 flex items-center gap-1">
+                    <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3">
+                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-1.5 flex items-center gap-1">
                         <Palette className="w-3 h-3" /> Style Pack
                       </div>
-                      <div className="text-[14.5px] font-medium text-[#2E2A26]">{inspectPreset.style_pack_name}</div>
+                      <div className="text-[14.5px] font-medium text-[#2E2A26] dark:text-[#F5EFEA]">{inspectPreset.style_pack_name}</div>
                     </div>
                   )}
 
                   {inspectPreset.character_names && inspectPreset.character_names.length > 0 && (
-                    <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3">
-                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-1.5 flex items-center gap-1">
+                    <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3">
+                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-1.5 flex items-center gap-1">
                         <Users className="w-3 h-3" /> Cast / Characters
                       </div>
-                      <div className="text-[14.5px] font-medium text-[#2E2A26]">
+                      <div className="text-[14.5px] font-medium text-[#2E2A26] dark:text-[#F5EFEA]">
                         {inspectPreset.character_names.join(', ')}
                       </div>
                     </div>
                   )}
 
                   {inspectPreset.model && (
-                    <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3">
-                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-1.5 flex items-center gap-1">
+                    <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3">
+                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-1.5 flex items-center gap-1">
                         <Cpu className="w-3 h-3" /> AI Model
                       </div>
-                      <div className="text-[14.5px] font-medium text-[#2E2A26]">{inspectPreset.model}</div>
+                      <div className="text-[14.5px] font-medium text-[#2E2A26] dark:text-[#F5EFEA]">{inspectPreset.model}</div>
                     </div>
                   )}
 
                   {inspectPreset.aspect_ratio && (
-                    <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3">
-                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-1.5 flex items-center gap-1">
+                    <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3">
+                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-1.5 flex items-center gap-1">
                         <Ratio className="w-3 h-3" /> Aspect Ratio
                       </div>
-                      <div className="text-[14.5px] font-medium text-[#2E2A26]">{inspectPreset.aspect_ratio}</div>
+                      <div className="text-[14.5px] font-medium text-[#2E2A26] dark:text-[#F5EFEA]">{inspectPreset.aspect_ratio}</div>
                     </div>
                   )}
 
                   {inspectPreset.text_language && (
-                    <div className="rounded-2xl bg-[#FAF5EE] px-4 py-3">
-                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] mb-1.5 flex items-center gap-1">
+                    <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3">
+                      <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-1.5 flex items-center gap-1">
                         <Globe className="w-3 h-3" /> Text Language
                       </div>
-                      <div className="text-[14.5px] font-medium text-[#2E2A26]">{inspectPreset.text_language}</div>
+                      <div className="text-[14.5px] font-medium text-[#2E2A26] dark:text-[#F5EFEA]">{inspectPreset.text_language}</div>
                     </div>
                   )}
                 </div>
@@ -1054,7 +1054,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       onSelectPreset(inspectPreset);
                       setInspectPreset(null);
                     }}
-                    className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] text-[#FFF7F1] text-[14.5px] cursor-pointer shadow-[0_10px_20px_-10px_rgba(196,99,62,0.9)] hover:opacity-95"
+                    className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer shadow-[0_10px_20px_-10px_rgba(196,99,62,0.9)] dark:shadow-none hover:opacity-95"
                   >
                     {String(selectedPresetId) === String(inspectPreset.id) ? (
                       <>
@@ -1073,7 +1073,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                         setInspectPreset(null);
                         setConfirmDeletePreset(target);
                       }}
-                      className="px-4 py-3 rounded-xl border border-[#E9D5CD] bg-transparent text-[#A0433A] text-[14px] hover:bg-[#FDF2F0]"
+                      className="px-4 py-3 rounded-xl border border-[#E9D5CD] dark:border-[#4D2B1C] bg-transparent text-[#A0433A] dark:text-[#F5AB88] text-[14px] hover:bg-[#FDF2F0] dark:hover:bg-[#2C1C14] cursor-pointer"
                     >
                       Delete…
                     </button>
@@ -1090,26 +1090,26 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
         createPortal(
           <div
             onClick={() => setConfirmDeletePreset(null)}
-            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg bg-[#FFFDFA] rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
+              className="w-full max-w-lg bg-[#FFFDFA] dark:bg-[#1C1916] border border-transparent dark:border-[#2E2924] rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
             >
               <div className="flex items-start gap-3.5 mb-1.5">
-                <h3 className="font-serif text-[27px] text-[#2E2A26] flex-1">Delete this preset?</h3>
+                <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">Delete this preset?</h3>
                 <button
                   onClick={() => setConfirmDeletePreset(null)}
-                  className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] text-[#6E6459] flex items-center justify-center"
+                  className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <p className="mb-[18px] text-[#8A7E73] text-[14.5px] leading-[1.55]">
-                This removes <strong className="text-[#2E2A26]">{confirmDeletePreset.title}</strong> from your Raindrop Presets collection. There is no undo.
+              <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
+                This removes <strong className="text-[#2E2A26] dark:text-[#F5EFEA]">{confirmDeletePreset.title}</strong> from your Raindrop Presets collection. There is no undo.
               </p>
               {deleteError && (
-                <div className="mb-3.5 text-sm text-[#96402F] bg-[#FBEAE5] border border-[#F1D3C9] rounded-xl px-4 py-2.5">
+                <div className="mb-3.5 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
                   {deleteError}
                 </div>
               )}
@@ -1117,14 +1117,14 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={isDeleting}
-                  className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#A0433A] text-[#FFF3EF] text-[14.5px] cursor-pointer disabled:opacity-70"
+                  className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#A0433A] text-[#FFF3EF] text-[14.5px] font-medium cursor-pointer disabled:opacity-70"
                 >
                   {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   Delete permanently
                 </button>
                 <button
                   onClick={() => setConfirmDeletePreset(null)}
-                  className="px-5 py-3 rounded-xl border border-[#E3D8CA] bg-transparent text-[#5B5148] text-[14.5px]"
+                  className="px-5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#5B5148] dark:text-[#D5CCC3] text-[14.5px] cursor-pointer"
                 >
                   Keep it
                 </button>
