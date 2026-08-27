@@ -23,7 +23,7 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Shower Studio',
+  title: 'Shower',
   description: 'Compose image generation prompts from Raindrop character collections & style packs',
   icons: {
     icon: '/app-icon.svg',
