@@ -370,7 +370,6 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   return (
     <section>
       <div className="flex items-baseline gap-3.5 flex-wrap mb-1.5">
-        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E] dark:text-[#E07A52]">STEP 01</span>
         <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26] dark:text-[#F5EFEA]">Who&apos;s in the shot?</h2>
         <span className="font-mono text-[12.5px] text-[#8A7E73] dark:text-[#A69B90]">{charCountLabel}</span>
       </div>

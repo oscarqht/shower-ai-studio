@@ -1113,6 +1113,7 @@ export default function Home() {
         isFetchingRaindrop={isFetchingRaindrop}
         raindropStatus={raindropStatus}
         hasRaindropToken={hasToken}
+        onResetAll={handleResetAllInputs}
       />
 
       {/* Main Content Workspace */}
@@ -1234,38 +1235,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* Section 1: Characters Selection */}
-            <CharacterSelector
-              characters={characters}
-              selectedCharacterIds={selectedCharacterIds}
-              onToggleCharacter={handleToggleCharacter}
-              onSelectMultipleCharacters={handleSelectMultipleCharacters}
-              onClearSelection={handleClearCharacters}
-              isLoading={isFetchingRaindrop}
-              onAddCharacter={handleAddCharacter}
-              onDeleteCharacter={handleDeleteCharacter}
-              onUpdateCharacter={handleUpdateCharacter}
-              hasRaindropToken={hasToken}
-            />
-
-            {/* Section 2: Styles Selection */}
-            <StyleSelector
-              styles={styles}
-              selectedStyleId={selectedStyleId}
-              onSelectStyle={handleSelectStyle}
-              isLoading={isFetchingRaindrop}
-            />
-
-            {/* More Style Packs Section (Collapsed by default, caches without expiration) */}
-            <MoreStyleSelector
-              selectedStyleId={selectedStyleId}
-              onSelectStyle={handleSelectStyle}
-              raindropToken={settings.raindropToken}
-              hasRaindropToken={hasToken}
-              onStylesLoaded={(loadedStyles) => setMoreStyles(loadedStyles)}
-            />
-
-            {/* Presets Section */}
+            {/* Presets Section (First section) */}
             <PresetSelector
               presets={presets}
               selectedPresetId={selectedPresetId}
@@ -1295,6 +1265,37 @@ export default function Home() {
                 setPresetModalInitialValues(null);
               }}
               initialModalValues={presetModalInitialValues}
+            />
+
+            {/* Section 1: Characters Selection */}
+            <CharacterSelector
+              characters={characters}
+              selectedCharacterIds={selectedCharacterIds}
+              onToggleCharacter={handleToggleCharacter}
+              onSelectMultipleCharacters={handleSelectMultipleCharacters}
+              onClearSelection={handleClearCharacters}
+              isLoading={isFetchingRaindrop}
+              onAddCharacter={handleAddCharacter}
+              onDeleteCharacter={handleDeleteCharacter}
+              onUpdateCharacter={handleUpdateCharacter}
+              hasRaindropToken={hasToken}
+            />
+
+            {/* Section 2: Styles Selection */}
+            <StyleSelector
+              styles={styles}
+              selectedStyleId={selectedStyleId}
+              onSelectStyle={handleSelectStyle}
+              isLoading={isFetchingRaindrop}
+            />
+
+            {/* More Style Packs Section (Collapsed by default, caches without expiration) */}
+            <MoreStyleSelector
+              selectedStyleId={selectedStyleId}
+              onSelectStyle={handleSelectStyle}
+              raindropToken={settings.raindropToken}
+              hasRaindropToken={hasToken}
+              onStylesLoaded={(loadedStyles) => setMoreStyles(loadedStyles)}
             />
 
             {/* Section 3: Composition Controls */}

@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RefreshCw, Settings as SettingsIcon } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { RefreshCw, Settings as SettingsIcon, RotateCcw } from 'lucide-react';
 
 interface HeaderProps {
   onOpenSettings: () => void;
@@ -10,6 +9,7 @@ interface HeaderProps {
   isFetchingRaindrop: boolean;
   raindropStatus?: 'success' | 'partial' | 'error' | 'idle';
   hasRaindropToken?: boolean;
+  onResetAll?: () => void;
   characterCount?: number;
   styleCount?: number;
 }
@@ -19,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefreshRaindrop,
   isFetchingRaindrop,
   hasRaindropToken,
+  onResetAll,
 }) => {
   const statusLabel = hasRaindropToken ? 'connected · raindrop' : 'offline';
 
@@ -37,8 +38,19 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Theme Switcher Toggle */}
-      <ThemeToggle />
+      {/* Reset everything button (left to Re-sync) */}
+      {onResetAll && (
+        <button
+          id="header-reset-everything-btn"
+          type="button"
+          onClick={onResetAll}
+          title="Reset all inputs, cast, and style selections"
+          className="flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-[13.5px] font-medium cursor-pointer transition-colors hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:text-[#C4633E] dark:hover:text-[#E07A52]"
+        >
+          <RotateCcw className="w-3.5 h-3.5 opacity-60" />
+          <span>Reset everything</span>
+        </button>
+      )}
 
       {/* Status Indicators & Action Tools */}
       {hasRaindropToken && (

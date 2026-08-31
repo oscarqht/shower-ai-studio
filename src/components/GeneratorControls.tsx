@@ -386,7 +386,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       className="scroll-mt-20 rounded-[26px] p-5 sm:p-7 bg-[#FFFDFA] dark:bg-[#1C1916] border border-[#EAE0D4] dark:border-[#2E2924] shadow-[0_20px_50px_-34px_rgba(88,66,48,0.55)] dark:shadow-none transition-colors"
     >
       <div className="flex items-baseline gap-3.5 flex-wrap">
-        <span className="font-mono text-[11px] tracking-[0.16em] text-[#C4633E] dark:text-[#E07A52]">STEP 03</span>
         <h2 className="font-serif font-normal text-[26px] sm:text-[34px] text-[#2E2A26] dark:text-[#F5EFEA]">Compose &amp; hand off</h2>
       </div>
 
@@ -624,17 +623,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         >
           <BookmarkPlus className="w-4 h-4 text-[#C4633E] dark:text-[#E07A52]" />
           <span>Save as preset</span>
-        </button>
-
-        <div className="flex-1 min-w-2" />
-
-        <button
-          type="button"
-          onClick={handleReset}
-          title="Reset all inputs"
-          className="px-4 py-3 rounded-2xl border-none bg-transparent text-[#A0776A] dark:text-[#B89488] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[14px] whitespace-nowrap shrink-0 cursor-pointer underline underline-offset-[3px]"
-        >
-          Reset everything
         </button>
       </div>
 
