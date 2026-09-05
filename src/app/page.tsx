@@ -1069,6 +1069,7 @@ export default function Home() {
     } catch (e) {
       console.error('Failed to clear inputs from localStorage:', e);
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const selectedCharacters = characters.filter((c) => selectedCharacterIds.includes(c.id));
