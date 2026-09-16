@@ -16,7 +16,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { StylePack } from '../types';
-import { fetchMoreStylesData } from '../lib/raindrop';
 
 export const MORE_STYLES_CACHE_STORAGE_KEY = 'shower_studio_more_styles_cache_v1';
 
@@ -97,10 +96,22 @@ export const MoreStyleSelector: React.FC<MoreStyleSelectorProps> = ({
     setErrorMessage(null);
 
     try {
-      const token = (raindropToken && raindropToken.trim()) || '';
-      const data = await fetchMoreStylesData(token);
+      const res = await fetch('/api/raindrop/more-styles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(raindropToken && raindropToken.trim()
+            ? { Authorization: `Bearer ${raindropToken.trim()}` }
+            : {}),
+        },
+        body: JSON.stringify({
+          token: raindropToken || undefined,
+        }),
+      });
 
-      if (data.status === 'error') {
+      const data = await res.json();
+
+      if (!res.ok || data.status === 'error') {
         throw new Error(data.message || 'Failed to fetch more styles from Raindrop');
       }
 
