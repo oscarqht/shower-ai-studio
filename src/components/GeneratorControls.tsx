@@ -1,3 +1,4 @@
+import { resolveAppUrl, uploadAttachments } from '../lib/raindrop';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -254,15 +255,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setIsOpeningApp(true);
 
     try {
-      const res = await fetch('/api/raindrop/app-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: raindropToken }),
-      });
+      const data = await resolveAppUrl(raindropToken || '');
 
-      const data = await res.json();
-
-      if (res.ok && data.status === 'success' && data.imageAppUrl) {
+      if (data && data.status === 'success' && data.imageAppUrl) {
         const baseUrl = data.imageAppUrl;
         const delimiter = baseUrl.includes('?') ? '&' : '?';
         
@@ -277,7 +272,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         window.open(finalUrl, '_blank');
       } else {
         setAppError(
-          data?.message || 'Could not resolve Image Generation App URL from Raindrop ("Shower > Apps > Image generation app").'
+          (data as any)?.message || 'Could not resolve Image Generation App URL from Raindrop ("Shower > Apps > Image generation app").'
         );
       }
     } catch (e: any) {
@@ -326,22 +321,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setUploadError(null);
     setIsUploading(true);
 
-    const formData = new FormData();
-    if (raindropToken && raindropToken.trim()) {
-      formData.append('token', raindropToken.trim());
-    }
-    Array.from(files).forEach((file) => {
-      formData.append('files', file);
-    });
-
     try {
-      const res = await fetch('/api/upload-attachments', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok && data.status === 'success' && data.file_ids) {
+      const data = await uploadAttachments(raindropToken.trim(), Array.from(files));
+      if (data && data.status === 'success' && data.file_ids) {
         // Generate thumbnails
         const newThumbnails = Array.from(files).map((file, idx) => ({
           id: data.file_ids[idx],
@@ -352,7 +334,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         setFileThumbnails(prev => [...prev, ...newThumbnails]);
         setUploadedFileIds(prev => [...prev, ...data.file_ids]);
       } else {
-        setUploadError(data?.message || 'Failed to upload attachments.');
+        setUploadError((data as any)?.message || 'Failed to upload attachments.');
       }
     } catch (err: any) {
       console.error('Upload error:', err);

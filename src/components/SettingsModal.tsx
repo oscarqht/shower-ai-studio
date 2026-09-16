@@ -1,3 +1,4 @@
+import { loginWithRaindrop } from '../lib/raindrop';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -44,36 +45,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setRaindropToken(settings.raindropToken);
       setOauthError(null);
 
-      fetch('/api/auth/config')
-        .then((res) => res.json())
-        .then((data) => {
-          setOauthConfigured(Boolean(data.oauthConfigured));
-          if (data.hasEnvToken !== undefined) {
-            setHasEnvToken(Boolean(data.hasEnvToken));
-          }
-        })
-        .catch(() => setOauthConfigured(false));
+      setOauthConfigured(true);
     }
   }, [isOpen, settings]);
 
   if (!isOpen || !mounted) return null;
 
-  const handleOAuthLogin = async () => {
+  const handleOAuthLogin = () => {
     setIsLoggingInOAuth(true);
     setOauthError(null);
-    try {
-      const res = await fetch('/api/auth/login');
-      const data = await res.json();
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        setOauthError(data.message || 'Failed to start OAuth login.');
-        setIsLoggingInOAuth(false);
-      }
-    } catch (err: any) {
-      setOauthError(`Network error: ${err.message}`);
-      setIsLoggingInOAuth(false);
-    }
+    loginWithRaindrop();
   };
 
   const handleSave = (e: React.FormEvent) => {

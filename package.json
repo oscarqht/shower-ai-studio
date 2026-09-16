@@ -4,18 +4,14 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -p \"[{name}]\" -n \"VITE,API\" -c \"cyan.bold,magenta.bold\" \"vite\" \"tsx watch server/index.ts\"",
-    "dev:client": "vite",
-    "dev:server": "tsx watch server/index.ts",
+    "dev": "vite",
     "build": "vite build",
-    "start": "PORT=3000 tsx server/index.ts",
+    "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
-    "@hono/node-server": "^1.13.8",
     "dotenv": "^17.2.3",
-    "hono": "^4.7.4",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.0",
@@ -28,12 +24,10 @@
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
-    "concurrently": "^9.1.2",
     "daisyui": "^4.12.23",
     "eslint": "^8.57.0",
     "postcss": "^8.5.2",
     "tailwindcss": "^3.4.17",
-    "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "vite": "^6.1.1"
   }
