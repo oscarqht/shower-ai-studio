@@ -1,3 +1,13 @@
+import {
+  loginWithRaindrop,
+  refreshRaindropToken as clientRefreshRaindropToken,
+  fetchRaindropData as clientFetchRaindropData,
+  createCharacter as clientCreateCharacter,
+  deleteCharacter as clientDeleteCharacter,
+  updateCharacter,
+  createPreset as clientCreatePreset,
+  deletePreset as clientDeletePreset,
+} from '../lib/raindrop';
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -256,24 +266,10 @@ export default function Home() {
     setIsAddPresetModalOpen(true);
   };
 
-  const handleOAuthLogin = async () => {
+  const handleOAuthLogin = () => {
     setIsLoggingInOAuth(true);
     setRaindropMessage(null);
-    try {
-      const res = await fetch('/api/auth/login');
-      const data = await res.json();
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        setRaindropStatus('error');
-        setRaindropMessage(data.message || 'Failed to start Raindrop OAuth login.');
-        setIsLoggingInOAuth(false);
-      }
-    } catch (err: any) {
-      setRaindropStatus('error');
-      setRaindropMessage(`OAuth login error: ${formatErrorMessage(err)}`);
-      setIsLoggingInOAuth(false);
-    }
+    loginWithRaindrop();
   };
 
 
@@ -297,37 +293,20 @@ export default function Home() {
   const refreshRaindropToken = useCallback(async (): Promise<string | null> => {
     if (!settings.raindropRefreshToken) return null;
     try {
-      const res = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: settings.raindropRefreshToken }),
-      });
-      const data = await res.json();
-      if (res.ok && data.status === 'success' && data.access_token) {
-        const newAccessToken = data.access_token;
-        const newRefreshToken = data.refresh_token || settings.raindropRefreshToken;
-        const newExpiresAt = data.expires_at || (Date.now() + 14 * 86400 * 1000);
-
-        setSettings((prev) => {
-          const updated = {
-            ...prev,
-            raindropToken: newAccessToken,
-            raindropRefreshToken: newRefreshToken,
-            raindropExpiresAt: newExpiresAt,
-          };
-          try {
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated));
-          } catch (e) {
-            console.error('Failed to save refreshed token settings:', e);
-          }
-          return updated;
-        });
-
+      const refreshed = await clientRefreshRaindropToken(settings.raindropRefreshToken);
+      if (refreshed?.access_token) {
+        const newAccessToken = refreshed.access_token;
+        const newRefreshToken = refreshed.refresh_token || settings.raindropRefreshToken;
+        const newExpiresAt = refreshed.expires_at || (Date.now() + 14 * 86400 * 1000);
+        setSettings((prev) => ({
+          ...prev,
+          raindropToken: newAccessToken,
+          raindropRefreshToken: newRefreshToken,
+          raindropExpiresAt: newExpiresAt,
+        }));
         return newAccessToken;
       }
-    } catch (e) {
-      console.error('Error refreshing Raindrop token:', e);
-    }
+    } catch (e) { console.error('Refresh token error:', e); }
     return null;
   }, [settings.raindropRefreshToken]);
 
@@ -347,28 +326,13 @@ export default function Home() {
       }
 
       try {
-        const res = await fetch('/api/raindrop/fetch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token: activeToken && activeToken.trim() ? activeToken.trim() : undefined }),
-        });
+        const data = await clientFetchRaindropData(activeToken.trim());
 
-        if (res.status === 401 && !isRetry && settings.raindropRefreshToken) {
-          const refreshedToken = await refreshRaindropToken();
-          if (refreshedToken) {
-            return await fetchRaindropData(refreshedToken, true);
-          }
-        }
-
-        const data = await res.json();
-
-        if (res.ok && data.status === 'success') {
+        if (data && data.status === 'success') {
           const newChars = data.characters || [];
           const newStyles = data.styles || [];
           const newPresets = data.presets || [];
-          const newPresetsCollectionId = data.presetsCollectionId || data.debugInfo?.presetsCollectionId || null;
+          const newPresetsCollectionId = data.presetsCollectionId || null;
           const newImageAppUrl = data.imageAppUrl || '';
 
           setCharacters(newChars);
@@ -412,7 +376,7 @@ export default function Home() {
           }
         } else {
           setRaindropStatus('error');
-          setRaindropMessage(formatErrorMessage(data.message) || 'Failed to fetch from Raindrop API.');
+          setRaindropMessage((data as any)?.message || 'Failed to fetch from Raindrop API.');
         }
       } catch (err: any) {
         console.error('Error fetching Raindrop:', err);
@@ -451,21 +415,17 @@ export default function Home() {
       console.error('Failed to load settings on mount:', e);
     }
 
-    // Check if RAINDROP_TOKEN or OAuth is configured on server
-    fetch('/api/auth/config')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.hasEnvToken) {
-          setHasEnvToken(true);
-          if (!localToken.trim()) {
-            const validCache = getValidCachedRaindropData();
-            if (!validCache) {
-              fetchRaindropData('');
-            }
-          }
+    // Check for VITE_RAINDROP_TOKEN or oh-auth token
+    const envToken = (import.meta as any).env?.VITE_RAINDROP_TOKEN || '';
+    if (envToken) {
+      setHasEnvToken(true);
+      if (!localToken.trim()) {
+        const validCache = getValidCachedRaindropData();
+        if (!validCache) {
+          fetchRaindropData(envToken);
         }
-      })
-      .catch(() => {});
+      }
+    }
 
     setIsMounted(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -475,27 +435,17 @@ export default function Home() {
     setIsTestingSync(true);
     setSyncTestMessage(null);
     try {
-      const res = await fetch('/api/raindrop/fetch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tokenToTest && tokenToTest.trim() ? tokenToTest.trim() : undefined }),
-      });
-      const data = await res.json();
-      if (res.ok && data.status === 'success') {
-        setSyncTestMessage(
-          `Success! Found ${data.characters?.length || 0} characters, ${data.styles?.length || 0} styles, and ${data.presets?.length || 0} presets.`
-        );
+      const data = await clientFetchRaindropData(tokenToTest.trim());
+      if (data && data.status === 'success') {
+        setSyncTestMessage(`Success! Found ${data.characters?.length || 0} characters, ${data.styles?.length || 0} styles, and ${data.presets?.length || 0} presets.`);
         if (tokenToTest && tokenToTest.trim()) {
-          handleSaveSettings({
-            ...settings,
-            raindropToken: tokenToTest.trim(),
-          });
+          handleSaveSettings({ ...settings, raindropToken: tokenToTest.trim() });
         }
       } else {
-        setSyncTestMessage(`Status: ${formatErrorMessage(data.message) || 'Failed'}`);
+        setSyncTestMessage('Failed to fetch data from Raindrop.');
       }
     } catch (e: any) {
-      setSyncTestMessage(`Error: ${formatErrorMessage(e)}`);
+      setSyncTestMessage(`Connection test failed: ${e.message || 'Error'}`);
     } finally {
       setIsTestingSync(false);
     }
@@ -551,22 +501,13 @@ export default function Home() {
         formData.append('imageFile', charData.imageFile);
       }
 
-      const res = await fetch('/api/raindrop/character', {
-        method: 'POST',
-        body: formData,
+      const data = await clientCreateCharacter(settings.raindropToken, {
+        title: charData.title,
+        excerpt: charData.tags ? charData.tags.join(', ') : '',
+        note: charData.tags ? charData.tags.join(', ') : '',
+        cover: charData.coverDataUrl,
+        imageFile: charData.imageFile,
       });
-
-      const resText = await res.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(resText);
-      } catch (e) {
-        throw new Error(`Server endpoint error (${res.status}): ${resText.slice(0, 150)}`);
-      }
-
-      if (!res.ok || data.status !== 'success') {
-        throw new Error(formatErrorMessage(data.message) || 'Failed to save character to Raindrop');
-      }
 
       const newChar: Character = data.character;
       setCharacters((prev) => [newChar, ...prev.filter((c) => String(c.id) !== String(newChar.id))]);
@@ -646,23 +587,7 @@ export default function Home() {
         formData.append('cover', charData.coverDataUrl);
       }
 
-      const res = await fetch(`/api/raindrop/character/${characterId}`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const resText = await res.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(resText);
-      } catch (e) {
-        throw new Error(`Server endpoint error (${res.status}): ${resText.slice(0, 150)}`);
-      }
-
-      if (!res.ok || data.status !== 'success') {
-        throw new Error(formatErrorMessage(data.message) || 'Failed to update character on Raindrop');
-      }
-
+      const data = await updateCharacter(settings.raindropToken, characterId, charData);
       const updatedChar: Character = data.character;
       setCharacters((prev) => prev.map((c) => (String(c.id) === String(characterId) ? updatedChar : c)));
       setSelectedCharacterIds((prev) =>
@@ -716,24 +641,7 @@ export default function Home() {
     const isRaindropId = typeof characterId === 'number' || /^\d+$/.test(String(characterId));
 
     if (isConnected && isRaindropId) {
-      const query = settings.raindropToken && settings.raindropToken.trim()
-        ? `?token=${encodeURIComponent(settings.raindropToken.trim())}`
-        : '';
-      const res = await fetch(`/api/raindrop/character/${characterId}${query}`, {
-        method: 'DELETE',
-      });
-
-      const resText = await res.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(resText);
-      } catch (e) {
-        throw new Error(`Server endpoint error (${res.status}): ${resText.slice(0, 150)}`);
-      }
-
-      if (!res.ok || data.status !== 'success') {
-        throw new Error(formatErrorMessage(data.message) || 'Failed to delete character from Raindrop');
-      }
+      await clientDeleteCharacter(settings.raindropToken, characterId);
 
       setCharacters((prev) => prev.filter((c) => String(c.id) !== String(characterId)));
       setSelectedCharacterIds((prev) => prev.filter((id) => String(id) !== String(characterId)));
@@ -801,22 +709,17 @@ export default function Home() {
         formData.append('cover', presetData.previewImageDataUrl);
       }
 
-      const res = await fetch('/api/raindrop/preset', {
-        method: 'POST',
-        body: formData,
+      const data = await clientCreatePreset(settings.raindropToken, {
+        title: presetData.title,
+        prompt: presetData.prompt,
+        previewImageDataUrl: presetData.previewImageDataUrl,
+        previewImageFile: presetData.previewImageFile,
+        model: presetData.model,
+        aspectRatio: presetData.aspectRatio,
+        textLanguage: presetData.textLanguage,
+        stylePackName: presetData.stylePackName,
+        characterNames: presetData.characterNames,
       });
-
-      const resText = await res.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(resText);
-      } catch (e) {
-        throw new Error(`Server endpoint error (${res.status}): ${resText.slice(0, 150)}`);
-      }
-
-      if (!res.ok || data.status !== 'success') {
-        throw new Error(formatErrorMessage(data.message) || 'Failed to save preset to Raindrop');
-      }
 
       const newPreset: Preset = data.preset;
       setPresets((prev) => [newPreset, ...prev.filter((p) => String(p.id) !== String(newPreset.id))]);
@@ -867,24 +770,7 @@ export default function Home() {
     const isRaindropId = typeof presetId === 'number' || /^\d+$/.test(String(presetId));
 
     if (isConnected && isRaindropId) {
-      const query = settings.raindropToken && settings.raindropToken.trim()
-        ? `?token=${encodeURIComponent(settings.raindropToken.trim())}`
-        : '';
-      const res = await fetch(`/api/raindrop/preset/${presetId}${query}`, {
-        method: 'DELETE',
-      });
-
-      const resText = await res.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(resText);
-      } catch (e) {
-        throw new Error(`Server endpoint error (${res.status}): ${resText.slice(0, 150)}`);
-      }
-
-      if (!res.ok || data.status !== 'success') {
-        throw new Error(formatErrorMessage(data.message) || 'Failed to delete preset from Raindrop');
-      }
+      await clientDeletePreset(settings.raindropToken, presetId);
 
       setPresets((prev) => prev.filter((p) => String(p.id) !== String(presetId)));
       if (String(selectedPresetId) === String(presetId)) {

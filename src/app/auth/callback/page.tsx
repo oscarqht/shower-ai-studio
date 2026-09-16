@@ -1,15 +1,13 @@
-'use client';
-
 import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertTriangle, RefreshCw, ArrowLeft, Key } from 'lucide-react';
 
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
 const RAINDROP_CACHE_STORAGE_KEY = 'raindrop_ai_studio_cache_v1';
 
 function AuthCallbackContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState<string>('Processing Raindrop OAuth authentication...');
@@ -25,25 +23,85 @@ function AuthCallbackContent() {
       return;
     }
 
+    const saveTokensAndRedirect = (
+      accessToken: string,
+      refreshToken?: string | null,
+      expiresIn?: string | number | null
+    ) => {
+      try {
+        const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        const currentSettings = saved ? JSON.parse(saved) : {};
+        const parsedExpiresIn = expiresIn ? Number(expiresIn) : 1209600;
+        const expiresAt = Date.now() + (isNaN(parsedExpiresIn) ? 1209600 : parsedExpiresIn) * 1000;
+
+        const updatedSettings = {
+          ...currentSettings,
+          raindropToken: accessToken,
+          ...(refreshToken ? { raindropRefreshToken: refreshToken } : {}),
+          raindropExpiresAt: expiresAt,
+        };
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
+        localStorage.removeItem(RAINDROP_CACHE_STORAGE_KEY);
+
+        setStatus('success');
+        setMessage('Successfully authenticated with Raindrop.io! Redirecting to Shower Studio...');
+
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
+      } catch (err: any) {
+        console.error('Failed to save Raindrop token to localStorage:', err);
+        setStatus('error');
+        setMessage(`Failed to save authentication: ${err.message || 'Unknown error'}`);
+      }
+    };
+
+    // Check if tokens are passed directly in searchParams or hash (OAuth implicit or server redirect)
+    const hashParams = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash)
+      : new URLSearchParams();
+
+    const directAccessToken = searchParams.get('access_token') || hashParams.get('access_token') || searchParams.get('token') || hashParams.get('token');
+    const directRefreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+    const directExpiresIn = searchParams.get('expires_in') || hashParams.get('expires_in');
+
+    if (directAccessToken) {
+      saveTokensAndRedirect(directAccessToken, directRefreshToken, directExpiresIn);
+      return;
+    }
+
+    // Also check if oh-auth stored the token in localStorage
+    const ohAuthKey = 'oh-auth:provider-tokens:raindrop';
+    const ohTokenRaw = localStorage.getItem(ohAuthKey);
+    if (ohTokenRaw) {
+      try {
+        const parsed = JSON.parse(ohTokenRaw);
+        if (parsed?.accessToken) {
+          saveTokensAndRedirect(
+            parsed.accessToken,
+            parsed.refreshToken,
+            parsed.expiresIn || (parsed.expiresAt ? Math.round((parsed.expiresAt - Date.now()) / 1000) : 1209600)
+          );
+          return;
+        }
+      } catch (e) {
+        console.warn('Error reading oh-auth token:', e);
+      }
+    }
+
     if (!code) {
       setStatus('error');
-      setMessage('No authorization code found in URL query parameters.');
+      setMessage('No authorization code or access token found in URL query parameters.');
       return;
     }
 
     const state = searchParams.get('state');
 
-    // Validate the state URL properly to avoid open redirects.
-    // It must end with shower-app.vercel.app or a localhost variation,
-    // or we use a strict regex for vercel subdomains.
     const isValidVercelDomain = (urlStr: string) => {
       try {
         const url = new URL(urlStr);
-        // strict checking for valid domain targets
         if (url.hostname === 'localhost') return true;
         if (url.hostname === 'shower-app.vercel.app') return true;
-        // Vercel preview URLs usually look like: shower-app-[hash]-username.vercel.app
-        // Or something ending in vercel.app
         if (url.hostname.endsWith('.vercel.app')) return true;
         return false;
       } catch {
@@ -51,14 +109,11 @@ function AuthCallbackContent() {
       }
     };
 
-    // If state contains a valid preview URL (or localhost) and it doesn't match the current origin,
-    // bounce back to the preview URL.
     if (
       state &&
       isValidVercelDomain(state) &&
       !state.startsWith(window.location.origin)
     ) {
-      // Pass both the code and the main domain's redirectUri so the exchange works on the preview domain
       const redirectUriParam = `${window.location.origin}/auth/callback`;
       const bounceUrl = new URL(`${state}/auth/callback`);
       bounceUrl.searchParams.set('code', code);
@@ -69,8 +124,6 @@ function AuthCallbackContent() {
 
     const exchangeCode = async () => {
       try {
-        // If we received a specific redirect_uri in search params (from a bounce), use it.
-        // Otherwise use the local origin.
         const paramRedirectUri = searchParams.get('redirect_uri');
         const redirectUri = paramRedirectUri || `${window.location.origin}/auth/callback`;
 
@@ -88,34 +141,7 @@ function AuthCallbackContent() {
         const data = await res.json();
 
         if (res.ok && data.status === 'success' && data.access_token) {
-          const accessToken = data.access_token;
-          const refreshToken = data.refresh_token || '';
-          const expiresIn = data.expires_in || 1209600;
-          const expiresAt = Date.now() + expiresIn * 1000;
-
-          // Save tokens to localStorage settings
-          try {
-            const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            const currentSettings = saved ? JSON.parse(saved) : {};
-            const updatedSettings = {
-              ...currentSettings,
-              raindropToken: accessToken,
-              ...(refreshToken ? { raindropRefreshToken: refreshToken } : {}),
-              raindropExpiresAt: expiresAt,
-            };
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
-            // Clear old cache so home page refetches fresh data
-            localStorage.removeItem(RAINDROP_CACHE_STORAGE_KEY);
-          } catch (err) {
-            console.error('Failed to save Raindrop token to localStorage:', err);
-          }
-
-          setStatus('success');
-          setMessage('Successfully authenticated with Raindrop.io! Redirecting to Shower Studio...');
-
-          setTimeout(() => {
-            router.push('/');
-          }, 1200);
+          saveTokensAndRedirect(data.access_token, data.refresh_token, data.expires_in);
         } else {
           setStatus('error');
           setMessage(data.message || 'Failed to exchange authorization code for access token.');
@@ -128,12 +154,11 @@ function AuthCallbackContent() {
     };
 
     exchangeCode();
-  }, [searchParams, router]);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen bg-base-300 text-base-content flex items-center justify-center p-4 font-sans">
       <div className="card bg-base-100 border border-base-300 shadow-2xl rounded-3xl p-8 max-w-md w-full text-center relative overflow-hidden">
-        {/* Top Icon */}
         <div className="flex justify-center mb-5">
           {status === 'loading' && (
             <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border border-primary/20 shadow-inner">
@@ -152,23 +177,20 @@ function AuthCallbackContent() {
           )}
         </div>
 
-        {/* Title */}
         <h2 className="text-xl font-bold text-base-content mb-2">
           {status === 'loading' && 'Authenticating with Raindrop.io'}
           {status === 'success' && 'Login Successful!'}
           {status === 'error' && 'Authentication Failed'}
         </h2>
 
-        {/* Message */}
         <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed mb-6">
           {message}
         </p>
 
-        {/* Actions */}
         {status === 'error' && (
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => navigate('/')}
               className="btn btn-primary gap-2 w-full"
             >
               <ArrowLeft className="w-4 h-4" />
