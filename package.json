@@ -1,32 +1,40 @@
 {
-  "name": "shower-next",
+  "name": "shower-ai-studio",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev -p 3000 -H 0.0.0.0",
-    "build": "next build",
-    "start": "next start -p 3000 -H 0.0.0.0",
-    "lint": "next lint"
+    "dev": "concurrently -k -p \"[{name}]\" -n \"VITE,API\" -c \"cyan.bold,magenta.bold\" \"vite\" \"tsx watch server/index.ts\"",
+    "dev:client": "vite",
+    "dev:server": "tsx watch server/index.ts",
+    "build": "vite build",
+    "start": "PORT=3000 tsx server/index.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@hono/node-server": "^1.13.8",
     "dotenv": "^17.2.3",
+    "hono": "^4.7.4",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
-    "next": "^15.1.7",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
     "daisyui": "^4.12.23",
     "eslint": "^8.57.0",
-    "eslint-config-next": "15.1.7",
     "postcss": "^8.5.2",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.8.2"
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vite": "^6.1.1"
   }
 }
