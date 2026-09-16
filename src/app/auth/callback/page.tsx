@@ -23,6 +23,53 @@ function AuthCallbackContent() {
       return;
     }
 
+    const saveTokensAndRedirect = (
+      accessToken: string,
+      refreshToken?: string | null,
+      expiresIn?: string | number | null
+    ) => {
+      try {
+        const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        const currentSettings = saved ? JSON.parse(saved) : {};
+        const parsedExpiresIn = expiresIn ? Number(expiresIn) : 1209600;
+        const expiresAt = Date.now() + (isNaN(parsedExpiresIn) ? 1209600 : parsedExpiresIn) * 1000;
+
+        const updatedSettings = {
+          ...currentSettings,
+          raindropToken: accessToken,
+          ...(refreshToken ? { raindropRefreshToken: refreshToken } : {}),
+          raindropExpiresAt: expiresAt,
+        };
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
+        localStorage.removeItem(RAINDROP_CACHE_STORAGE_KEY);
+
+        setStatus('success');
+        setMessage('Successfully authenticated with Raindrop.io! Redirecting to Shower Studio...');
+
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
+      } catch (err: any) {
+        console.error('Failed to save Raindrop token to localStorage:', err);
+        setStatus('error');
+        setMessage(`Failed to save authentication: ${err.message || 'Unknown error'}`);
+      }
+    };
+
+    // Check if tokens are passed directly in searchParams or hash (OAuth implicit or server redirect)
+    const hashParams = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash)
+      : new URLSearchParams();
+
+    const directAccessToken = searchParams.get('access_token') || hashParams.get('access_token') || searchParams.get('token') || hashParams.get('token');
+    const directRefreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+    const directExpiresIn = searchParams.get('expires_in') || hashParams.get('expires_in');
+
+    if (directAccessToken) {
+      saveTokensAndRedirect(directAccessToken, directRefreshToken, directExpiresIn);
+      return;
+    }
+
     // Also check if oh-auth stored the token in localStorage
     const ohAuthKey = 'oh-auth:provider-tokens:raindrop';
     const ohTokenRaw = localStorage.getItem(ohAuthKey);
@@ -30,21 +77,11 @@ function AuthCallbackContent() {
       try {
         const parsed = JSON.parse(ohTokenRaw);
         if (parsed?.accessToken) {
-          const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
-          const currentSettings = saved ? JSON.parse(saved) : {};
-          const updatedSettings = {
-            ...currentSettings,
-            raindropToken: parsed.accessToken,
-            ...(parsed.refreshToken ? { raindropRefreshToken: parsed.refreshToken } : {}),
-            raindropExpiresAt: parsed.expiresAt || (Date.now() + 1209600 * 1000),
-          };
-          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
-          localStorage.removeItem(RAINDROP_CACHE_STORAGE_KEY);
-          setStatus('success');
-          setMessage('Successfully authenticated via oh-auth! Redirecting to Shower Studio...');
-          setTimeout(() => {
-            navigate('/');
-          }, 1000);
+          saveTokensAndRedirect(
+            parsed.accessToken,
+            parsed.refreshToken,
+            parsed.expiresIn || (parsed.expiresAt ? Math.round((parsed.expiresAt - Date.now()) / 1000) : 1209600)
+          );
           return;
         }
       } catch (e) {
@@ -54,7 +91,7 @@ function AuthCallbackContent() {
 
     if (!code) {
       setStatus('error');
-      setMessage('No authorization code found in URL query parameters.');
+      setMessage('No authorization code or access token found in URL query parameters.');
       return;
     }
 
@@ -104,32 +141,7 @@ function AuthCallbackContent() {
         const data = await res.json();
 
         if (res.ok && data.status === 'success' && data.access_token) {
-          const accessToken = data.access_token;
-          const refreshToken = data.refresh_token || '';
-          const expiresIn = data.expires_in || 1209600;
-          const expiresAt = Date.now() + expiresIn * 1000;
-
-          try {
-            const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            const currentSettings = saved ? JSON.parse(saved) : {};
-            const updatedSettings = {
-              ...currentSettings,
-              raindropToken: accessToken,
-              ...(refreshToken ? { raindropRefreshToken: refreshToken } : {}),
-              raindropExpiresAt: expiresAt,
-            };
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updatedSettings));
-            localStorage.removeItem(RAINDROP_CACHE_STORAGE_KEY);
-          } catch (err) {
-            console.error('Failed to save Raindrop token to localStorage:', err);
-          }
-
-          setStatus('success');
-          setMessage('Successfully authenticated with Raindrop.io! Redirecting to Shower Studio...');
-
-          setTimeout(() => {
-            navigate('/');
-          }, 1200);
+          saveTokensAndRedirect(data.access_token, data.refresh_token, data.expires_in);
         } else {
           setStatus('error');
           setMessage(data.message || 'Failed to exchange authorization code for access token.');
