@@ -32,7 +32,6 @@ interface GeneratorControlsProps {
 }
 
 const MODEL_OPTIONS = [
-  { value: 'GPT Image 2', label: 'GPT Image 2' },
   { value: 'GPT 2.5 Sunburst', label: 'GPT 2.5 Sunburst' },
   { value: 'GPT 2.5 Flare', label: 'GPT 2.5 Flare' },
   { value: 'Gemini 3.1 Flash', label: 'Gemini 3.1 Flash' },
@@ -95,7 +94,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   onSaveAsPreset,
 }) => {
   const saved = getSavedControls();
-  const [internalModel, setInternalModel] = useState<string>(saved.model || 'GPT Image 2');
+  const [internalModel, setInternalModel] = useState<string>(
+    saved.model && saved.model !== 'GPT Image 2' ? saved.model : 'GPT 2.5 Sunburst'
+  );
   const [internalCompositionPrompt, setInternalCompositionPrompt] = useState<string>(saved.compositionPrompt || '');
   const [internalAspectRatio, setInternalAspectRatio] = useState<string>(saved.aspectRatio || 'Auto');
   const [internalTextLanguage, setInternalTextLanguage] = useState<string>(saved.textLanguage || 'Auto');
@@ -167,7 +168,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   }, [model, compositionPrompt, aspectRatio, textLanguage]);
 
   const handleReset = () => {
-    setModel('GPT Image 2');
+    setModel('GPT 2.5 Sunburst');
     setCompositionPrompt('');
     setAspectRatio('Auto');
     setTextLanguage('Auto');

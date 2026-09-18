@@ -47,7 +47,6 @@ export interface ModelOption {
 }
 
 export const MODEL_OPTIONS: ModelOption[] = [
-  { value: 'GPT Image 2', label: 'GPT Image 2' },
   { value: 'GPT 2.5 Sunburst', label: 'GPT 2.5 Sunburst' },
   { value: 'GPT 2.5 Flare', label: 'GPT 2.5 Flare' },
   { value: 'Gemini 3.1 Flash', label: 'Gemini 3.1 Flash' },

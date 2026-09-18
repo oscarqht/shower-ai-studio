@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       return [String(val)];
     };
 
-    const model = bodyFields.model || 'GPT Image 2';
+    const model = bodyFields.model && bodyFields.model !== 'GPT Image 2' ? bodyFields.model : 'GPT 2.5 Sunburst';
     const aspect_ratio = bodyFields.aspect_ratio || 'Auto';
     const text_language = bodyFields.text_language || 'Auto';
     const composition_prompt = bodyFields.composition_prompt || '';

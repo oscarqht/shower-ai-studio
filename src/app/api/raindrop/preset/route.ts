@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     let token = '';
     let title = 'Untitled Preset';
     let prompt = '';
-    let model = 'GPT Image 2';
+    let model = 'GPT 2.5 Sunburst';
     let aspectRatio = 'Auto';
     let textLanguage = 'Auto';
     let stylePackName = '';

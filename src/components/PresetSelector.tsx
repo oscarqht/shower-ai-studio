@@ -27,7 +27,6 @@ import {
 import { Preset, Character, StylePack, PresetModalInitialValues } from '../types';
 
 const MODEL_OPTIONS = [
-  { value: 'GPT Image 2', label: 'GPT Image 2' },
   { value: 'GPT 2.5 Sunburst', label: 'GPT 2.5 Sunburst' },
   { value: 'GPT 2.5 Flare', label: 'GPT 2.5 Flare' },
   { value: 'Gemini 3.1 Flash', label: 'Gemini 3.1 Flash' },
@@ -116,7 +115,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
   const [addTitle, setAddTitle] = useState('');
   const [addPrompt, setAddPrompt] = useState('');
-  const [addModel, setAddModel] = useState('GPT Image 2');
+  const [addModel, setAddModel] = useState('GPT 2.5 Sunburst');
   const [addAspectRatio, setAddAspectRatio] = useState('Auto');
   const [addTextLanguage, setAddTextLanguage] = useState('Auto');
   const [addStylePackName, setAddStylePackName] = useState('');
@@ -144,14 +143,14 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
     if (isAddModalOpen) {
       if (initialModalValues) {
         setAddPrompt(initialModalValues.prompt !== undefined ? initialModalValues.prompt : '');
-        setAddModel(initialModalValues.model || 'GPT Image 2');
+        setAddModel(initialModalValues.model && initialModalValues.model !== 'GPT Image 2' ? initialModalValues.model : 'GPT 2.5 Sunburst');
         setAddAspectRatio(initialModalValues.aspectRatio || 'Auto');
         setAddTextLanguage(initialModalValues.textLanguage || 'Auto');
         setAddStylePackName(initialModalValues.stylePackName || '');
         setAddCharacterNames(initialModalValues.characterNames || []);
       } else if (currentWorkspaceValues) {
         setAddPrompt(currentWorkspaceValues.prompt !== undefined ? currentWorkspaceValues.prompt : '');
-        setAddModel(currentWorkspaceValues.model || 'GPT Image 2');
+        setAddModel(currentWorkspaceValues.model && currentWorkspaceValues.model !== 'GPT Image 2' ? currentWorkspaceValues.model : 'GPT 2.5 Sunburst');
         setAddAspectRatio(currentWorkspaceValues.aspectRatio || 'Auto');
         setAddTextLanguage(currentWorkspaceValues.textLanguage || 'Auto');
         setAddStylePackName(currentWorkspaceValues.stylePackName || '');
@@ -173,7 +172,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
     } else {
       if (currentWorkspaceValues) {
         setAddPrompt(currentWorkspaceValues.prompt !== undefined ? currentWorkspaceValues.prompt : '');
-        setAddModel(currentWorkspaceValues.model || 'GPT Image 2');
+        setAddModel(currentWorkspaceValues.model && currentWorkspaceValues.model !== 'GPT Image 2' ? currentWorkspaceValues.model : 'GPT 2.5 Sunburst');
         setAddAspectRatio(currentWorkspaceValues.aspectRatio || 'Auto');
         setAddTextLanguage(currentWorkspaceValues.textLanguage || 'Auto');
         setAddStylePackName(currentWorkspaceValues.stylePackName || '');
@@ -284,7 +283,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   const handleResetAddForm = () => {
     setAddTitle('');
     setAddPrompt('');
-    setAddModel('GPT Image 2');
+    setAddModel('GPT 2.5 Sunburst');
     setAddAspectRatio('Auto');
     setAddTextLanguage('Auto');
     setAddStylePackName('');

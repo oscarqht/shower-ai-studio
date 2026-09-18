@@ -156,15 +156,15 @@ export default function Home() {
   });
 
   const [model, setModel] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'GPT Image 2';
+    if (typeof window === 'undefined') return 'GPT 2.5 Sunburst';
     try {
       const saved = localStorage.getItem(INPUTS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.model) return parsed.model;
+        if (parsed.model && parsed.model !== 'GPT Image 2') return parsed.model;
       }
     } catch {}
-    return 'GPT Image 2';
+    return 'GPT 2.5 Sunburst';
   });
 
   const [aspectRatio, setAspectRatio] = useState<string>(() => {
@@ -1059,7 +1059,7 @@ export default function Home() {
   const handleResetAllInputs = () => {
     setSelectedPresetId(null);
     setCompositionPrompt('');
-    setModel('GPT Image 2');
+    setModel('GPT 2.5 Sunburst');
     setAspectRatio('Auto');
     setTextLanguage('Auto');
     setSelectedCharacterIds([]);
