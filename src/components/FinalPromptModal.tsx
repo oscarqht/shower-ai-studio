@@ -118,13 +118,13 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
       try {
         const [charResult, styleResult, attachResult] = await Promise.all([
           validCharItems.length > 0
-            ? combineImages(validCharItems, { showLabels: true })
+            ? combineImages(validCharItems, { showLabels: true, backgroundColor: '#FFFFFF' })
             : Promise.resolve(null),
           validStyleItems.length > 0
-            ? combineImages(validStyleItems, { showLabels: false })
+            ? combineImages(validStyleItems, { showLabels: false, backgroundColor: '#FFFFFF' })
             : Promise.resolve(null),
           validAttachmentItems.length > 0
-            ? combineImages(validAttachmentItems, { showLabels: false })
+            ? combineImages(validAttachmentItems, { showLabels: false, backgroundColor: '#FFFFFF' })
             : Promise.resolve(null),
         ]);
 
@@ -355,7 +355,7 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
                     </div>
 
                     {characterCombined ? (
-                      <div className="relative group rounded-xl overflow-hidden bg-[#161412] border border-[#2E2924] aspect-video flex items-center justify-center">
+                      <div className="relative group rounded-xl overflow-hidden bg-[#F8F5F0] dark:bg-[#1E1B18] border border-[#E2D6C3] dark:border-[#2E2924] aspect-video flex items-center justify-center">
                         <img
                           src={characterCombined.dataUrl}
                           alt="Combined character reference"
@@ -442,7 +442,7 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
                     </div>
 
                     {styleCombined ? (
-                      <div className="relative group rounded-xl overflow-hidden bg-[#161412] border border-[#2E2924] aspect-video flex items-center justify-center">
+                      <div className="relative group rounded-xl overflow-hidden bg-[#F8F5F0] dark:bg-[#1E1B18] border border-[#E2D6C3] dark:border-[#2E2924] aspect-video flex items-center justify-center">
                         <img
                           src={styleCombined.dataUrl}
                           alt="Combined style reference"
@@ -519,7 +519,7 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
                     </div>
 
                     {attachmentsCombined ? (
-                      <div className="relative group rounded-xl overflow-hidden bg-[#161412] border border-[#2E2924] aspect-video flex items-center justify-center">
+                      <div className="relative group rounded-xl overflow-hidden bg-[#F8F5F0] dark:bg-[#1E1B18] border border-[#E2D6C3] dark:border-[#2E2924] aspect-video flex items-center justify-center">
                         <img
                           src={attachmentsCombined.dataUrl}
                           alt="Combined attachments"
