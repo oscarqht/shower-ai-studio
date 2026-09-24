@@ -28,6 +28,24 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+function isLightColor(color: string): boolean {
+  if (!color) return true;
+  const hex = color.replace('#', '').trim();
+  if (hex.length === 3) {
+    const r = parseInt(hex[0] + hex[0], 16);
+    const g = parseInt(hex[1] + hex[1], 16);
+    const b = parseInt(hex[2] + hex[2], 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+  }
+  if (hex.length === 6) {
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+  }
+  return true;
+}
+
 export async function combineImages(
   items: ImageItem[],
   options?: {
@@ -71,8 +89,15 @@ export async function combineImages(
   const cellSize = options?.maxCellSize || 800;
   const gap = options?.gap ?? 24;
   const padding = options?.padding ?? 28;
-  const bgColor = options?.backgroundColor || '#161412';
+  const bgColor = options?.backgroundColor || '#FFFFFF';
   const showLabels = options?.showLabels ?? true;
+
+  const isLight = isLightColor(bgColor);
+  const cardBgColor = isLight ? '#FFFFFF' : '#221E1A';
+  const cardBorderColor = isLight ? '#E5E7EB' : null;
+  const labelBgColor = isLight ? '#F3F4F6' : '#2F2923';
+  const labelBorderColor = isLight ? '#E5E7EB' : null;
+  const labelTextColor = isLight ? '#1F2937' : '#F5EFEA';
 
   const labelHeight = showLabels && validItems.some((i) => i.label) ? 68 : 0;
   const cellHeight = cellSize + labelHeight;
@@ -116,9 +141,15 @@ export async function combineImages(
 
     // Draw card background for the slot
     ctx.save();
-    ctx.fillStyle = '#221E1A';
+    ctx.fillStyle = cardBgColor;
     roundRect(ctx, cellX, cellY, cellSize, cellHeight, 16);
     ctx.fill();
+    if (cardBorderColor) {
+      ctx.strokeStyle = cardBorderColor;
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, cellX, cellY, cellSize, cellHeight, 16);
+      ctx.stroke();
+    }
 
     // Inner image bounding box
     const imgBoxX = cellX + 12;
@@ -148,11 +179,17 @@ export async function combineImages(
       const labelH = labelHeight - 16;
       const labelX = cellX + 12;
 
-      ctx.fillStyle = '#2F2923';
+      ctx.fillStyle = labelBgColor;
       roundRect(ctx, labelX, labelY, labelW, labelH, 10);
       ctx.fill();
+      if (labelBorderColor) {
+        ctx.strokeStyle = labelBorderColor;
+        ctx.lineWidth = 1;
+        roundRect(ctx, labelX, labelY, labelW, labelH, 10);
+        ctx.stroke();
+      }
 
-      ctx.fillStyle = '#F5EFEA';
+      ctx.fillStyle = labelTextColor;
       ctx.font = '600 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
