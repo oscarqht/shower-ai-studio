@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCharacterAddOns } from '@/lib/characterNote';
 
 function getBearerToken(req: NextRequest, bodyToken?: string, envTokenName?: string): string {
   if (bodyToken && bodyToken.trim()) return bodyToken.trim();
@@ -170,6 +171,7 @@ export async function POST(req: NextRequest) {
         characters = items.map((item: any) => {
           let parsedNote: any = null;
           let parsedTags = '';
+          const addOns = getCharacterAddOns(item.note);
           let parsedIndex: number | undefined = undefined;
           try {
             if (item.note) {
@@ -198,6 +200,7 @@ export async function POST(req: NextRequest) {
             cover: item.cover || (item.media && item.media[0] ? item.media[0].link : ''),
             link: item.link || '',
             note: item.note || '',
+            addOns,
             index: parsedIndex,
           };
         });

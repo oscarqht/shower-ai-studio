@@ -47,7 +47,9 @@ interface TagItem {
 interface CharacterSelectorProps {
   characters: Character[];
   selectedCharacterIds: (string | number)[];
+  selectedAddOnsByCharacterId: Record<string, string[]>;
   onToggleCharacter: (characterId: string | number) => void;
+  onToggleAddOn: (characterId: string | number, addOn: string) => void;
   onSelectMultipleCharacters?: (characterIds: (string | number)[], mode?: 'add' | 'remove' | 'set') => void;
   onClearSelection: () => void;
   isLoading?: boolean;
@@ -55,6 +57,7 @@ interface CharacterSelectorProps {
     title: string;
     excerpt: string;
     tags: string[];
+    addOns: string[];
     coverDataUrl?: string;
     imageFile?: File;
   }) => Promise<void>;
@@ -65,6 +68,7 @@ interface CharacterSelectorProps {
       title: string;
       excerpt: string;
       tags: string[];
+      addOns: string[];
       coverDataUrl?: string;
       imageFile?: File;
     }
@@ -97,10 +101,58 @@ function ModalShell({
   );
 }
 
+function AddOnEditor({
+  values,
+  onChange,
+  inputClasses,
+}: {
+  values: string[];
+  onChange: (values: string[]) => void;
+  inputClasses: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]">
+      <span>Add-ons</span>
+      <p className="text-[12.5px] leading-[1.4] text-[#8A7E73] dark:text-[#A69B90]">
+        Optional prompt details you can check individually when using this character.
+      </p>
+      {values.map((value, index) => (
+        <div key={index} className="flex items-start gap-2">
+          <textarea
+            value={value}
+            onChange={(event) => onChange(values.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
+            rows={2}
+            aria-label={`Add-on ${index + 1}`}
+            placeholder="e.g. Wearing a red raincoat"
+            className={`${inputClasses} flex-1 min-w-0 resize-y leading-[1.5]`}
+          />
+          <button
+            type="button"
+            onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
+            aria-label={`Remove add-on ${index + 1}`}
+            className="mt-2 p-2 rounded-lg text-[#8A7E73] dark:text-[#A69B90] hover:text-[#A0433A] dark:hover:text-[#F5AB88]"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...values, ''])}
+        className="self-start flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] text-[#5B5148] dark:text-[#D5CCC3] hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
+      >
+        <Plus className="w-3.5 h-3.5" /> Add add-on
+      </button>
+    </div>
+  );
+}
+
 export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   characters,
   selectedCharacterIds,
+  selectedAddOnsByCharacterId,
   onToggleCharacter,
+  onToggleAddOn,
   onSelectMultipleCharacters,
   onClearSelection,
   isLoading = false,
@@ -121,6 +173,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   const [addExcerpt, setAddExcerpt] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [addTags, setAddTags] = useState<string[]>([]);
+  const [addOns, setAddOns] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -132,6 +185,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   const [editExcerpt, setEditExcerpt] = useState('');
   const [editTagInput, setEditTagInput] = useState('');
   const [editTags, setEditTags] = useState<string[]>([]);
+  const [editAddOns, setEditAddOns] = useState<string[]>([]);
   const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
   const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -226,6 +280,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     setAddExcerpt('');
     setTagInput('');
     setAddTags([]);
+    setAddOns([]);
     setSelectedFile(null);
     setPreviewUrl(null);
     setAddError(null);
@@ -248,6 +303,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
           title: addTitle.trim(),
           excerpt: addExcerpt.trim(),
           tags: addTags,
+          addOns: [...new Set(addOns.map((value) => value.trim()).filter(Boolean))],
           coverDataUrl: previewUrl || undefined,
           imageFile: selectedFile || undefined,
         });
@@ -266,6 +322,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     setEditTitle(char.title || '');
     setEditExcerpt(char.excerpt || '');
     setEditTags(parseTagsFromNote(char.note));
+    setEditAddOns(char.addOns || []);
     setEditTagInput('');
     setEditSelectedFile(null);
     setEditPreviewUrl(char.cover || null);
@@ -277,6 +334,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     setEditTitle('');
     setEditExcerpt('');
     setEditTags([]);
+    setEditAddOns([]);
     setEditTagInput('');
     setEditSelectedFile(null);
     setEditPreviewUrl(null);
@@ -330,6 +388,7 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
           title: editTitle.trim(),
           excerpt: editExcerpt.trim(),
           tags: editTags,
+          addOns: [...new Set(editAddOns.map((value) => value.trim()).filter(Boolean))],
           coverDataUrl: editPreviewUrl || undefined,
           imageFile: editSelectedFile || undefined,
         });
@@ -509,6 +568,26 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                   {char.excerpt && (
                     <div className="text-[13px] text-[#8A7E73] dark:text-[#A69B90] leading-[1.45] mt-1 line-clamp-2">{char.excerpt}</div>
                   )}
+                  {char.addOns && char.addOns.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-[#EBE1D4] dark:border-[#3D352E] flex flex-col gap-1 min-w-0">
+                      {char.addOns.map((addOn, index) => (
+                        <label
+                          key={`${index}-${addOn}`}
+                          title={addOn}
+                          onClick={(event) => event.stopPropagation()}
+                          className="flex items-center gap-1.5 min-w-0 cursor-pointer text-[11.5px] leading-5 text-[#6E6459] dark:text-[#D5CCC3]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={(selectedAddOnsByCharacterId[String(char.id)] || []).includes(addOn)}
+                            onChange={() => onToggleAddOn(char.id, addOn)}
+                            className="shrink-0 w-3.5 h-3.5 accent-[#C4633E] cursor-pointer"
+                          />
+                          <span className="block min-w-0 flex-1 truncate">{addOn}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -618,6 +697,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 </button>
               </div>
             </div>
+
+            <AddOnEditor values={addOns} onChange={setAddOns} inputClasses={inputClasses} />
 
             <div className="flex gap-2.5 flex-wrap pt-1.5">
               <button
@@ -743,6 +824,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 </button>
               </div>
             </div>
+
+            <AddOnEditor values={editAddOns} onChange={setEditAddOns} inputClasses={inputClasses} />
 
             <div className="flex gap-2.5 flex-wrap pt-1.5">
               <button

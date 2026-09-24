@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCharacterAddOns } from '@/lib/characterNote';
 
 function getBearerToken(req: NextRequest, bodyToken?: string, envTokenName?: string): string {
   if (bodyToken && bodyToken.trim()) return bodyToken.trim();
@@ -226,6 +227,7 @@ async function handleUpdateCharacter(req: NextRequest, { params }: { params: Pro
           excerpt: createdItem.excerpt !== undefined ? createdItem.excerpt : excerpt,
           cover: createdItem.cover || cover || (createdItem.media && createdItem.media[0] ? createdItem.media[0].link : ''),
           note: createdItem.note !== undefined ? createdItem.note : note,
+          addOns: getCharacterAddOns(createdItem.note !== undefined ? createdItem.note : note),
           link: createdItem.link || '',
         };
 
@@ -278,6 +280,7 @@ async function handleUpdateCharacter(req: NextRequest, { params }: { params: Pro
       excerpt: updatedItem.excerpt !== undefined ? updatedItem.excerpt : excerpt,
       cover: updatedItem.cover || cover || (updatedItem.media && updatedItem.media[0] ? updatedItem.media[0].link : ''),
       note: updatedItem.note !== undefined ? updatedItem.note : note,
+      addOns: getCharacterAddOns(updatedItem.note !== undefined ? updatedItem.note : note),
       link: updatedItem.link || '',
     };
 

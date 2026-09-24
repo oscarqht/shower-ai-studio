@@ -10,6 +10,7 @@ import { MoreStyleSelector, MORE_STYLES_CACHE_STORAGE_KEY } from '@/components/M
 import { GeneratorControls } from '@/components/GeneratorControls';
 import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues } from '@/types';
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
+import { getCharacterAddOns } from '@/lib/characterNote';
 
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
 const INPUTS_STORAGE_KEY = 'raindrop_ai_studio_last_inputs_v1';
@@ -39,7 +40,12 @@ const getValidCachedRaindropData = (): CachedRaindropData | null => {
     }
 
     return {
-      characters: Array.isArray(parsed.characters) ? parsed.characters : [],
+      characters: Array.isArray(parsed.characters)
+        ? parsed.characters.map((character: Character) => ({
+            ...character,
+            addOns: Array.isArray(character.addOns) ? character.addOns : getCharacterAddOns(character.note),
+          }))
+        : [],
       styles: Array.isArray(parsed.styles) ? parsed.styles : [],
       presets: Array.isArray(parsed.presets) ? parsed.presets : [],
       presetsCollectionId: parsed.presetsCollectionId || null,
@@ -205,6 +211,24 @@ export default function Home() {
       console.error('Failed to load saved character selection:', e);
     }
     return [];
+  });
+
+  const [selectedAddOnsByCharacterId, setSelectedAddOnsByCharacterId] = useState<Record<string, string[]>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const saved = localStorage.getItem(INPUTS_STORAGE_KEY);
+      const selections = saved ? JSON.parse(saved).selectedAddOnsByCharacterId : null;
+      if (selections && typeof selections === 'object' && !Array.isArray(selections)) {
+        return Object.fromEntries(
+          Object.entries(selections).filter((entry): entry is [string, string[]] =>
+            Array.isArray(entry[1]) && entry[1].every((value) => typeof value === 'string')
+          )
+        );
+      }
+    } catch (e) {
+      console.error('Failed to load saved character add-on selections:', e);
+    }
+    return {};
   });
 
   const [selectedStyleId, setSelectedStyleId] = useState<string | number | null>(() => {
@@ -507,6 +531,20 @@ export default function Home() {
     );
   };
 
+  const handleToggleAddOn = (characterId: string | number, addOn: string) => {
+    const key = String(characterId);
+    if (!(selectedAddOnsByCharacterId[key] || []).includes(addOn)) {
+      setSelectedCharacterIds((current) => current.includes(characterId) ? current : [...current, characterId]);
+    }
+    setSelectedAddOnsByCharacterId((prev) => {
+      const selected = prev[key] || [];
+      const next = selected.includes(addOn)
+        ? selected.filter((value) => value !== addOn)
+        : [...selected, addOn];
+      return { ...prev, [key]: next };
+    });
+  };
+
   const handleSelectMultipleCharacters = (
     ids: (string | number)[],
     mode: 'add' | 'remove' | 'set' = 'set'
@@ -528,12 +566,13 @@ export default function Home() {
     title: string;
     excerpt: string;
     tags: string[];
+    addOns: string[];
     coverDataUrl?: string;
     imageFile?: File;
   }) => {
     const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
     const tagsNoteStr = charData.tags.join(', ');
-    const noteObj = { tags: tagsNoteStr };
+    const noteObj = { tags: tagsNoteStr, add_ons: charData.addOns };
     const noteJson = JSON.stringify(noteObj);
 
     if (isConnected) {
@@ -582,6 +621,7 @@ export default function Home() {
         excerpt: charData.excerpt,
         cover: charData.coverDataUrl || '',
         note: noteJson,
+        addOns: charData.addOns,
       };
       setCharacters((prev) => [newChar, ...prev]);
       setRaindropStatus('success');
@@ -610,6 +650,7 @@ export default function Home() {
       title: string;
       excerpt: string;
       tags: string[];
+      addOns: string[];
       coverDataUrl?: string;
       imageFile?: File;
     }
@@ -618,13 +659,13 @@ export default function Home() {
     const isRaindropId = typeof characterId === 'number' || /^\d+$/.test(String(characterId));
     const tagsNoteStr = charData.tags.join(', ');
 
-    let noteObj: any = { tags: tagsNoteStr };
+    let noteObj: any = { tags: tagsNoteStr, add_ons: charData.addOns };
     const existingChar = characters.find((c) => String(c.id) === String(characterId));
     if (existingChar && existingChar.note) {
       try {
         const parsed = JSON.parse(existingChar.note);
         if (parsed && typeof parsed === 'object') {
-          noteObj = { ...parsed, tags: tagsNoteStr };
+          noteObj = { ...parsed, tags: tagsNoteStr, add_ons: charData.addOns };
         }
       } catch (e) {
         // Not JSON
@@ -668,6 +709,10 @@ export default function Home() {
       setSelectedCharacterIds((prev) =>
         prev.map((id) => (String(id) === String(characterId) ? updatedChar.id : id))
       );
+      setSelectedAddOnsByCharacterId((prev) => ({
+        ...prev,
+        [String(updatedChar.id)]: (prev[String(characterId)] || []).filter((value) => charData.addOns.includes(value)),
+      }));
 
       setRaindropStatus('success');
       setRaindropMessage(`Updated character "${updatedChar.title}" on Raindrop!`);
@@ -680,9 +725,14 @@ export default function Home() {
         excerpt: charData.excerpt,
         cover: charData.coverDataUrl || characters.find((c) => String(c.id) === String(characterId))?.cover || '',
         note: noteJson,
+        addOns: charData.addOns,
       };
 
       setCharacters((prev) => prev.map((c) => (String(c.id) === String(characterId) ? updatedChar : c)));
+      setSelectedAddOnsByCharacterId((prev) => ({
+        ...prev,
+        [String(characterId)]: (prev[String(characterId)] || []).filter((value) => charData.addOns.includes(value)),
+      }));
       setRaindropStatus('success');
       setRaindropMessage(`Updated character "${updatedChar.title}" in local session!`);
 
@@ -737,6 +787,11 @@ export default function Home() {
 
       setCharacters((prev) => prev.filter((c) => String(c.id) !== String(characterId)));
       setSelectedCharacterIds((prev) => prev.filter((id) => String(id) !== String(characterId)));
+      setSelectedAddOnsByCharacterId((prev) => {
+        const next = { ...prev };
+        delete next[String(characterId)];
+        return next;
+      });
       setRaindropStatus('success');
       setRaindropMessage(`Deleted character "${charTitle}".`);
 
@@ -746,6 +801,11 @@ export default function Home() {
 
     setCharacters((prev) => prev.filter((c) => String(c.id) !== String(characterId)));
     setSelectedCharacterIds((prev) => prev.filter((id) => String(id) !== String(characterId)));
+    setSelectedAddOnsByCharacterId((prev) => {
+      const next = { ...prev };
+      delete next[String(characterId)];
+      return next;
+    });
     setRaindropStatus('success');
     setRaindropMessage(`Deleted character "${charTitle}".`);
 
@@ -1040,6 +1100,7 @@ export default function Home() {
           aspectRatio,
           textLanguage,
           selectedCharacterIds,
+          selectedAddOnsByCharacterId,
           selectedStyleId,
         })
       );
@@ -1053,6 +1114,7 @@ export default function Home() {
     aspectRatio,
     textLanguage,
     selectedCharacterIds,
+    selectedAddOnsByCharacterId,
     selectedStyleId,
   ]);
 
@@ -1063,6 +1125,7 @@ export default function Home() {
     setAspectRatio('Auto');
     setTextLanguage('Auto');
     setSelectedCharacterIds([]);
+    setSelectedAddOnsByCharacterId({});
     setSelectedStyleId(null);
     try {
       localStorage.removeItem(INPUTS_STORAGE_KEY);
@@ -1272,7 +1335,9 @@ export default function Home() {
             <CharacterSelector
               characters={characters}
               selectedCharacterIds={selectedCharacterIds}
+              selectedAddOnsByCharacterId={selectedAddOnsByCharacterId}
               onToggleCharacter={handleToggleCharacter}
+              onToggleAddOn={handleToggleAddOn}
               onSelectMultipleCharacters={handleSelectMultipleCharacters}
               onClearSelection={handleClearCharacters}
               isLoading={isFetchingRaindrop}
@@ -1302,6 +1367,7 @@ export default function Home() {
             {/* Section 3: Composition Controls */}
             <GeneratorControls
               selectedCharacters={selectedCharacters}
+              selectedAddOnsByCharacterId={selectedAddOnsByCharacterId}
               selectedStyle={selectedStyle}
               selectedPreset={selectedPreset}
               compositionPrompt={compositionPrompt}

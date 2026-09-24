@@ -5,6 +5,7 @@ export interface Character {
   cover: string;
   link?: string;
   note?: string;
+  addOns?: string[];
   index?: number;
 }
 
@@ -200,4 +201,3 @@ export function formatErrorMessage(err: any): string {
   }
   return String(err);
 }
-

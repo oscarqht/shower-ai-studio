@@ -6,6 +6,7 @@ import { Character, StylePack, Preset } from '../types';
 
 interface GeneratorControlsProps {
   selectedCharacters: Character[];
+  selectedAddOnsByCharacterId: Record<string, string[]>;
   selectedStyle: StylePack | null;
   selectedPreset?: Preset | null;
   compositionPrompt?: string;
@@ -76,6 +77,7 @@ const selectClasses =
 
 export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   selectedCharacters,
+  selectedAddOnsByCharacterId,
   selectedStyle,
   selectedPreset,
   compositionPrompt: compositionPromptProp,
@@ -93,6 +95,16 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   hasUploadCapability,
   onSaveAsPreset,
 }) => {
+  const getCharactersPrompt = () => selectedCharacters
+    .map((character) => {
+      const title = (character.title || '').trim();
+      if (!title) return '';
+      const selectedAddOns = selectedAddOnsByCharacterId[String(character.id)] || [];
+      const addOns = (character.addOns || []).filter((text) => selectedAddOns.includes(text));
+      return addOns.length ? `${title} (${addOns.join('; ')})` : title;
+    })
+    .filter(Boolean)
+    .join(', ');
   const saved = getSavedControls();
   const [internalModel, setInternalModel] = useState<string>(
     saved.model && saved.model !== 'GPT Image 2' ? saved.model : 'GPT 2.5 Sunburst'
@@ -187,10 +199,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleCopyPrompt = async () => {
-    const charactersStr = selectedCharacters
-      .map((c) => (c.title || '').trim())
-      .filter(Boolean)
-      .join(', ');
+    const charactersStr = getCharactersPrompt();
 
     const styleStr = selectedStyle ? (selectedStyle.title || '').trim() : '';
 
@@ -235,10 +244,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       return;
     }
 
-    const charactersStr = selectedCharacters
-      .map((c) => (c.title || '').trim())
-      .filter(Boolean)
-      .join(', ');
+    const charactersStr = getCharactersPrompt();
 
     const styleStr = selectedStyle ? (selectedStyle.title || '').trim() : '';
 
@@ -264,18 +270,17 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       const data = await res.json();
 
       if (res.ok && data.status === 'success' && data.imageAppUrl) {
-        const baseUrl = data.imageAppUrl;
-        const delimiter = baseUrl.includes('?') ? '&' : '?';
-        
-        let finalUrl = `${baseUrl}${delimiter}instruction=${encodeURIComponent(compositionPrompt)}&json=${encodeURIComponent(jsonString)}`;
+        const appUrl = new URL(data.imageAppUrl);
+        appUrl.searchParams.set('instruction', compositionPrompt);
+        appUrl.searchParams.set('json', jsonString);
 
         if (uploadedFileIds && uploadedFileIds.length > 0) {
-          finalUrl += `&attachment_file_ids=${encodeURIComponent(uploadedFileIds.join(','))}`;
+          appUrl.searchParams.set('attachment_file_ids', uploadedFileIds.join(','));
         }
-        
-        finalUrl += `&_auto_=1`;
 
-        window.open(finalUrl, '_blank');
+        appUrl.searchParams.set('_auto_', '1');
+
+        window.open(appUrl.toString(), '_blank');
       } else {
         setAppError(
           data?.message || 'Could not resolve Image Generation App URL from Raindrop ("Shower > Apps > Image generation app").'
