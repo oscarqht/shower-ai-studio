@@ -169,21 +169,15 @@ export async function POST(req: NextRequest) {
         const charData = await charRes.json();
         const items = charData.items || [];
         characters = items.map((item: any) => {
-          let parsedNote: any = null;
-          let parsedTags = '';
           const addOns = getCharacterAddOns(item.note);
           let parsedIndex: number | undefined = undefined;
           try {
             if (item.note) {
               const parsed = JSON.parse(item.note);
-              if (parsed.tags !== undefined) {
-                parsedTags = parsed.tags;
-                parsedNote = parsed;
-                if (parsed.index !== undefined) {
-                  parsedIndex = typeof parsed.index === 'number' ? parsed.index : parseInt(parsed.index, 10);
-                  if (isNaN(parsedIndex)) {
-                     parsedIndex = undefined;
-                  }
+              if (parsed && typeof parsed === 'object' && parsed.index !== undefined) {
+                parsedIndex = typeof parsed.index === 'number' ? parsed.index : parseInt(parsed.index, 10);
+                if (isNaN(parsedIndex)) {
+                  parsedIndex = undefined;
                 }
               }
             }
@@ -191,12 +185,10 @@ export async function POST(req: NextRequest) {
             // Not JSON
           }
 
-          const resolvedNote = parsedNote ? parsedTags : (item.note || '');
-
           return {
             id: item._id,
             title: item.title || 'Untitled Character',
-            excerpt: item.excerpt || resolvedNote,
+            excerpt: item.excerpt || '',
             cover: item.cover || (item.media && item.media[0] ? item.media[0].link : ''),
             link: item.link || '',
             note: item.note || '',
