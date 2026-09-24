@@ -53,10 +53,17 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [previewEnlargedUrl, setPreviewEnlargedUrl] = useState<string | null>(null);
 
-  // Filter valid character reference items
+  // Filter valid character reference items (only characters with no description)
   const validCharItems: ImageItem[] = React.useMemo(() => {
     return characters
-      .filter((c) => c && c.cover && c.cover.trim())
+      .filter((c) => {
+        if (!c || !c.cover || !c.cover.trim()) return false;
+        const hasDescription = Boolean(
+          (c.excerpt && c.excerpt.trim()) ||
+          ((c as { description?: string }).description && (c as { description?: string }).description!.trim())
+        );
+        return !hasDescription;
+      })
       .map((c) => ({
         url: c.cover.trim(),
         label: c.title || 'Character',
