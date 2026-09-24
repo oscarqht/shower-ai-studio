@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Copy, ExternalLink, Sparkles, BookmarkPlus } from 'lucide-react';
 import { Character, StylePack, Preset } from '../types';
+import { FinalPromptModal } from './FinalPromptModal';
 
 interface GeneratorControlsProps {
   selectedCharacters: Character[];
@@ -148,6 +149,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [fileThumbnails, setFileThumbnails] = useState<{ id: string; url: string; name: string }[]>([]);
+  const [isFinalPromptModalOpen, setIsFinalPromptModalOpen] = useState(false);
 
   // Cleanup object URLs to avoid memory leaks
   useEffect(() => {
@@ -624,6 +626,17 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
 
         <button
           type="button"
+          id="generate-final-prompt-btn"
+          onClick={() => setIsFinalPromptModalOpen(true)}
+          title="Generate final prompt and combined reference images based on workflow schema"
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#C4633E] dark:border-[#E07A52] bg-[#FFF8F3] dark:bg-[#251D18] text-[#C4633E] dark:text-[#E07A52] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:bg-[#C4633E] hover:text-[#FFF7F1] dark:hover:bg-[#E07A52] dark:hover:text-[#181411] transition-all shadow-sm hover:shadow"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Generate final prompt</span>
+        </button>
+
+        <button
+          type="button"
           id="save-as-preset-btn"
           onClick={handleSaveAsPreset}
           title="Save current prompt, cast, style, and settings as a new preset recipe"
@@ -639,6 +652,18 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           {appError}
         </div>
       )}
+
+      <FinalPromptModal
+        isOpen={isFinalPromptModalOpen}
+        onClose={() => setIsFinalPromptModalOpen(false)}
+        instruction={compositionPrompt}
+        characters={selectedCharacters}
+        selectedAddOnsByCharacterId={selectedAddOnsByCharacterId}
+        style={selectedStyle}
+        uploadedFiles={fileThumbnails}
+        aspectRatio={aspectRatio}
+        textLanguage={textLanguage}
+      />
     </section>
   );
 };
