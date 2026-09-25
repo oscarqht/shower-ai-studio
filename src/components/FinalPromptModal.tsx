@@ -20,6 +20,11 @@ import {
   downloadImage,
   ImageItem,
 } from '@/lib/imageCombiner';
+import {
+  createPromptZip,
+  downloadBlob,
+  generateTimestampFilename,
+} from '@/lib/zipExporter';
 
 interface FinalPromptModalProps {
   isOpen: boolean;
@@ -52,6 +57,8 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
   const [isCombining, setIsCombining] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [previewEnlargedUrl, setPreviewEnlargedUrl] = useState<string | null>(null);
+  const [isZipping, setIsZipping] = useState(false);
+  const [isZipDownloaded, setIsZipDownloaded] = useState(false);
 
   // Filter valid character reference items (only characters with no description)
   const validCharItems: ImageItem[] = React.useMemo(() => {
@@ -202,6 +209,27 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
     downloadImage(blob, filename);
   };
 
+  const handleDownloadZip = async () => {
+    if (isZipping || isCombining) return;
+    setIsZipping(true);
+    try {
+      const zipBlob = await createPromptZip({
+        markdownPrompt: generatedPrompt,
+        characterImageBlob: characterCombined?.blob,
+        styleImageBlob: styleCombined?.blob,
+        attachmentImageBlob: attachmentsCombined?.blob,
+      });
+      const filename = generateTimestampFilename();
+      downloadBlob(zipBlob, filename);
+      setIsZipDownloaded(true);
+      setTimeout(() => setIsZipDownloaded(false), 2000);
+    } catch (err) {
+      console.error('Failed to create and download ZIP:', err);
+    } finally {
+      setIsZipping(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div
@@ -275,31 +303,71 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Quick Copy Action Banner */}
+          {/* Quick Action Banner */}
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-[#F4EFE6] dark:bg-[#25211D] border border-[#E8DFC8] dark:border-[#38322B]">
             <div className="flex items-center gap-2.5 text-sm text-[#5B5148] dark:text-[#D5CCC3]">
               <span className="w-2 h-2 rounded-full bg-[#C4633E] dark:bg-[#E07A52] animate-pulse" />
               <span>
-                <strong>Tip:</strong> Copy the prompt text, then click <strong>Copy Image</strong> on the reference cards to paste directly into your generator.
+                <strong>Tip:</strong> Copy prompt text, copy reference images, or download all assets as a ZIP bundle.
               </span>
             </div>
-            <button
-              type="button"
-              onClick={handleCopyPrompt}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-sm font-medium shadow hover:opacity-95 active:scale-95 transition-all cursor-pointer"
-            >
-              {isPromptCopied ? (
-                <>
-                  <Check className="w-4 h-4 text-white dark:text-[#181411]" />
-                  <span>Prompt Copied ✓</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  <span>Copy Prompt</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleCopyPrompt}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-sm font-medium shadow hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+              >
+                {isPromptCopied ? (
+                  <>
+                    <Check className="w-4 h-4 text-white dark:text-[#181411]" />
+                    <span>Prompt Copied ✓</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>Copy Prompt</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadZip}
+                disabled={isCombining || isZipping}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#2E2A26] dark:text-[#F5EFEA] text-sm font-medium shadow-sm transition-all ${
+                  isCombining || isZipping
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:bg-[#FAF5EE] dark:hover:bg-[#25211D] active:scale-95 cursor-pointer'
+                }`}
+                title={
+                  isCombining
+                    ? 'Preparing reference images...'
+                    : 'Download prompt text and images in a ZIP bundle'
+                }
+              >
+                {isCombining ? (
+                  <>
+                    <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                    <span>Preparing Images...</span>
+                  </>
+                ) : isZipping ? (
+                  <>
+                    <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                    <span>Creating ZIP...</span>
+                  </>
+                ) : isZipDownloaded ? (
+                  <>
+                    <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <span>Downloaded ZIP ✓</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-[#C4633E] dark:text-[#E07A52]" />
+                    <span>Download ZIP</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -605,13 +673,52 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
           <div className="text-xs text-[#7A7066] dark:text-[#A79C92]">
             Ratio: <strong>{aspectRatio || 'Auto'}</strong> · Language: <strong>{textLanguage || 'Auto'}</strong>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-sm font-medium hover:bg-[#FAF5EE] dark:hover:bg-[#25211D] transition-colors"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleDownloadZip}
+              disabled={isCombining || isZipping}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#2E2A26] dark:text-[#F5EFEA] text-sm font-medium transition-all ${
+                isCombining || isZipping
+                  ? 'opacity-60 cursor-not-allowed'
+                  : 'hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:bg-[#FAF5EE] dark:hover:bg-[#25211D] active:scale-95 cursor-pointer'
+              }`}
+              title={
+                isCombining
+                  ? 'Preparing reference images...'
+                  : 'Download prompt text and images in a ZIP bundle'
+              }
+            >
+              {isCombining ? (
+                <>
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                  <span>Preparing...</span>
+                </>
+              ) : isZipping ? (
+                <>
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                  <span>Creating ZIP...</span>
+                </>
+              ) : isZipDownloaded ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+                  <span>Downloaded ✓</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5 text-[#C4633E] dark:text-[#E07A52]" />
+                  <span>Download ZIP</span>
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-sm font-medium hover:bg-[#FAF5EE] dark:hover:bg-[#25211D] transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
 
