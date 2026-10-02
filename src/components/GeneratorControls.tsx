@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, Copy, ExternalLink, Sparkles, BookmarkPlus } from 'lucide-react';
 import { Character, StylePack, Preset } from '../types';
 import { FinalPromptModal } from './FinalPromptModal';
@@ -31,6 +31,7 @@ interface GeneratorControlsProps {
     stylePackName?: string;
     characterNames?: string[];
   }) => void;
+  resetKey?: number | string;
 }
 
 const MODEL_OPTIONS = [
@@ -95,7 +96,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   onResetAll,
   hasUploadCapability,
   onSaveAsPreset,
+  resetKey,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const getCharactersPrompt = () => selectedCharacters
     .map((character) => {
       const title = (character.title || '').trim();
@@ -188,8 +191,15 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setTextLanguage('Auto');
     setUploadedFileIds([]);
     setUploadError(null);
-    fileThumbnails.forEach((t) => URL.revokeObjectURL(t.url));
+    fileThumbnails.forEach((t) => {
+      if (t.url.startsWith('blob:')) {
+        URL.revokeObjectURL(t.url);
+      }
+    });
     setFileThumbnails([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     try {
       localStorage.removeItem(INPUTS_STORAGE_KEY);
     } catch (e) {
@@ -384,11 +394,24 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleClearAttachments = () => {
-    fileThumbnails.forEach(t => URL.revokeObjectURL(t.url));
+    fileThumbnails.forEach(t => {
+      if (t.url.startsWith('blob:')) {
+        URL.revokeObjectURL(t.url);
+      }
+    });
     setFileThumbnails([]);
     setUploadedFileIds([]);
     setUploadError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
+
+  useEffect(() => {
+    if (resetKey !== undefined && resetKey !== 0) {
+      handleClearAttachments();
+    }
+  }, [resetKey]);
 
   return (
     <section
@@ -492,6 +515,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           </div>
           <div className="flex flex-col gap-2">
             <input
+              ref={fileInputRef}
               type="file"
               multiple
               onChange={handleFileChange}

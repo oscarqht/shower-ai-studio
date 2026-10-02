@@ -260,6 +260,7 @@ export default function Home() {
   const [syncTestMessage, setSyncTestMessage] = useState<string | null>(null);
   const [isTestingSync, setIsTestingSync] = useState(false);
   const [isLoggingInOAuth, setIsLoggingInOAuth] = useState(false);
+  const [resetKey, setResetKey] = useState<number>(0);
 
   const handleSaveAsPreset = (payload: {
     prompt: string;
@@ -1127,6 +1128,7 @@ export default function Home() {
     setSelectedCharacterIds([]);
     setSelectedAddOnsByCharacterId({});
     setSelectedStyleId(null);
+    setResetKey((prev) => prev + 1);
     try {
       localStorage.removeItem(INPUTS_STORAGE_KEY);
     } catch (e) {
@@ -1366,6 +1368,8 @@ export default function Home() {
 
             {/* Section 3: Composition Controls */}
             <GeneratorControls
+              key={resetKey}
+              resetKey={resetKey}
               selectedCharacters={selectedCharacters}
               selectedAddOnsByCharacterId={selectedAddOnsByCharacterId}
               selectedStyle={selectedStyle}
