@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
           id="header-reset-everything-btn"
           type="button"
           onClick={onResetAll}
-          title="Reset all inputs, cast, and style selections"
+          title="Reset all inputs, cast, style selections, and attachments"
           className="flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-[13.5px] font-medium cursor-pointer transition-colors hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:text-[#C4633E] dark:hover:text-[#E07A52]"
         >
           <RotateCcw className="w-3.5 h-3.5 opacity-60" />
