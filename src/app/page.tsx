@@ -1073,34 +1073,20 @@ export default function Home() {
 
   const handleSelectPreset = (preset: Preset | null) => {
     if (!preset || String(selectedPresetId) === String(preset.id)) {
-      setSelectedPresetId(null);
-      return;
+      preset = null;
     }
 
-    setSelectedPresetId(preset.id);
+    // Presets replace the current recipe, including fields they leave empty.
+    setSelectedPresetId(preset?.id ?? null);
+    setCompositionPrompt(preset?.prompt || '');
+    setModel(preset?.model || 'GPT 2.5 Sunburst');
+    setAspectRatio(preset?.aspect_ratio || 'Auto');
+    setTextLanguage(preset?.text_language || 'Auto');
+    // Presets do not store add-ons, so previous selections must not carry over.
+    setSelectedAddOnsByCharacterId({});
 
-    // 1. Update Composition Prompt if preset has prompt
-    if (preset.prompt) {
-      setCompositionPrompt(preset.prompt);
-    }
-
-    // 2. Update Model if preset has model
-    if (preset.model) {
-      setModel(preset.model);
-    }
-
-    // 3. Update Aspect Ratio if preset has aspect_ratio
-    if (preset.aspect_ratio) {
-      setAspectRatio(preset.aspect_ratio);
-    }
-
-    // 4. Update Text Language if preset has text_language
-    if (preset.text_language) {
-      setTextLanguage(preset.text_language);
-    }
-
-    // 5. Match style pack if provided
-    if (preset.style_pack_name) {
+    let matchedStyleId: string | number | null = null;
+    if (preset?.style_pack_name?.trim()) {
       const allAvailableStyles = [...styles, ...moreStyles];
       const targetStyleName = preset.style_pack_name.toLowerCase().trim();
       const matchedStyle = allAvailableStyles.find(
@@ -1111,15 +1097,16 @@ export default function Home() {
             targetStyleName.includes(s.title.toLowerCase().trim()))
       );
       if (matchedStyle) {
-        setSelectedStyleId(matchedStyle.id);
+        matchedStyleId = matchedStyle.id;
       }
     }
+    setSelectedStyleId(matchedStyleId);
 
-    // 6. Match characters if provided
-    if (preset.character_names && preset.character_names.length > 0) {
-      const matchedCharIds: (string | number)[] = [];
+    const matchedCharIds: (string | number)[] = [];
+    if (preset?.character_names && preset.character_names.length > 0) {
       preset.character_names.forEach((name) => {
         const cleanName = name.toLowerCase().trim();
+        if (!cleanName) return;
         const matched = characters.find(
           (c) =>
             c.title &&
@@ -1131,10 +1118,8 @@ export default function Home() {
           matchedCharIds.push(matched.id);
         }
       });
-      if (matchedCharIds.length > 0) {
-        setSelectedCharacterIds(matchedCharIds);
-      }
     }
+    setSelectedCharacterIds(matchedCharIds);
   };
 
   useEffect(() => {
