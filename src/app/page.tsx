@@ -8,7 +8,7 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { StyleSelector } from '@/components/StyleSelector';
 import { MoreStyleSelector, MORE_STYLES_CACHE_STORAGE_KEY } from '@/components/MoreStyleSelector';
 import { GeneratorControls } from '@/components/GeneratorControls';
-import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues } from '@/types';
+import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues, PresetFormData } from '@/types';
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
 import { getCharacterAddOns } from '@/lib/characterNote';
 
@@ -829,17 +829,7 @@ export default function Home() {
     }
   };
 
-  const handleAddPreset = async (presetData: {
-    title: string;
-    prompt: string;
-    previewImageFile?: File;
-    previewImageDataUrl?: string;
-    model?: string;
-    aspectRatio?: string;
-    textLanguage?: string;
-    stylePackName?: string;
-    characterNames?: string[];
-  }) => {
+  const handleAddPreset = async (presetData: PresetFormData) => {
     const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
 
     if (isConnected) {
@@ -918,6 +908,67 @@ export default function Home() {
         console.error('Failed to update cache:', e);
       }
     }
+  };
+
+  const handleUpdatePreset = async (presetId: string | number, presetData: PresetFormData) => {
+    const target = presets.find((preset) => String(preset.id) === String(presetId));
+    if (!target) throw new Error('Preset no longer exists. Please refresh the page.');
+    let updatedPreset: Preset = {
+      ...target,
+      title: presetData.title,
+      prompt: presetData.prompt,
+      preview_image: presetData.previewImageDataUrl ?? target.preview_image,
+      model: presetData.model,
+      aspect_ratio: presetData.aspectRatio,
+      text_language: presetData.textLanguage,
+      style_pack_name: presetData.stylePackName || '',
+      character_names: presetData.characterNames || [],
+    };
+
+    if (/^\d+$/.test(String(presetId))) {
+      const formData = new FormData();
+      if (settings.raindropToken?.trim()) formData.append('token', settings.raindropToken.trim());
+      formData.append('title', presetData.title);
+      formData.append('prompt', presetData.prompt);
+      formData.append('model', presetData.model || '');
+      formData.append('aspectRatio', presetData.aspectRatio || '');
+      formData.append('textLanguage', presetData.textLanguage || '');
+      formData.append('stylePackName', presetData.stylePackName || '');
+      formData.append('characterNames', JSON.stringify(presetData.characterNames || []));
+      if (presetData.previewImageFile) {
+        let image = presetData.previewImageFile;
+        // Raindrop covers accept PNG, JPEG, and GIF; convert other browser image formats.
+        if (!['image/png', 'image/jpeg', 'image/gif'].includes(image.type)) {
+          const bitmap = await createImageBitmap(image);
+          const canvas = document.createElement('canvas');
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          const context = canvas.getContext('2d');
+          if (!context) { bitmap.close(); throw new Error('Could not prepare thumbnail.'); }
+          context.drawImage(bitmap, 0, 0);
+          bitmap.close();
+          const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+          if (!blob) throw new Error('Could not prepare thumbnail. Please choose a PNG or JPG.');
+          image = new File([blob], 'preset-thumbnail.png', { type: 'image/png' });
+        }
+        formData.append('imageFile', image);
+      } else if (presetData.previewImageDataUrl === '') formData.append('cover', '');
+      const res = await fetch(`/api/raindrop/preset/${presetId}`, { method: 'PUT', body: formData });
+      const data = await res.json();
+      if (!res.ok || data.status !== 'success') {
+        throw new Error(formatErrorMessage(data.message) || 'Failed to update preset in Raindrop');
+      }
+      updatedPreset = data.preset;
+    }
+
+    const updatedPresets = presets.map((preset) => String(preset.id) === String(presetId) ? updatedPreset : preset);
+    // Persist before closing the editor so local storage failures retain the draft.
+    const currentCache = localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY);
+    const parsed = currentCache ? JSON.parse(currentCache) : {};
+    localStorage.setItem(RAINDROP_CACHE_STORAGE_KEY, JSON.stringify({ ...parsed, presets: updatedPresets, timestamp: Date.now() }));
+    setPresets(updatedPresets);
+    setRaindropStatus('success');
+    setRaindropMessage(`Updated preset "${updatedPreset.title}".`);
   };
 
   const handleDeletePreset = async (presetId: string | number) => {
@@ -1309,6 +1360,7 @@ export default function Home() {
               onSelectPreset={handleSelectPreset}
               isLoading={isFetchingRaindrop}
               onAddPreset={handleAddPreset}
+              onUpdatePreset={handleUpdatePreset}
               onDeletePreset={handleDeletePreset}
               availableCharacters={characters}
               availableStyles={[...styles, ...moreStyles]}

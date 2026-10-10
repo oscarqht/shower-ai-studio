@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Check,
+  Pencil,
   X,
   Image as ImageIcon,
   Info,
@@ -24,7 +25,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
-import { Preset, Character, StylePack, PresetModalInitialValues } from '../types';
+import { Preset, Character, StylePack, PresetModalInitialValues, PresetFormData } from '../types';
 
 const MODEL_OPTIONS = [
   { value: 'GPT 2.5 Sunburst', label: 'GPT 2.5 Sunburst' },
@@ -57,17 +58,8 @@ interface PresetSelectorProps {
   presetCollectionId?: string | number | null;
   onSelectPreset: (preset: Preset | null) => void;
   isLoading?: boolean;
-  onAddPreset?: (presetData: {
-    title: string;
-    prompt: string;
-    previewImageFile?: File;
-    previewImageDataUrl?: string;
-    model?: string;
-    aspectRatio?: string;
-    textLanguage?: string;
-    stylePackName?: string;
-    characterNames?: string[];
-  }) => Promise<void>;
+  onAddPreset?: (presetData: PresetFormData) => Promise<void>;
+  onUpdatePreset?: (presetId: string | number, presetData: PresetFormData) => Promise<void>;
   onDeletePreset?: (presetId: string | number) => Promise<void>;
   availableCharacters?: Character[];
   availableStyles?: StylePack[];
@@ -93,6 +85,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   onSelectPreset,
   isLoading = false,
   onAddPreset,
+  onUpdatePreset,
   onDeletePreset,
   availableCharacters = [],
   availableStyles = [],
@@ -113,6 +106,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
   const isControlledAddModal = propsIsAddModalOpen !== undefined;
   const isAddModalOpen = isControlledAddModal ? propsIsAddModalOpen : internalIsAddModalOpen;
 
+  const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
   const [addTitle, setAddTitle] = useState('');
   const [addPrompt, setAddPrompt] = useState('');
   const [addModel, setAddModel] = useState('GPT 2.5 Sunburst');
@@ -138,10 +132,21 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
     setMounted(true);
   }, []);
 
-  // When modal is opened, sync initial values or workspace values
+  const workspaceValuesRef = useRef(currentWorkspaceValues);
+  workspaceValuesRef.current = currentWorkspaceValues;
+
+  // Initialize the draft only when opening a modal.
   useEffect(() => {
-    if (isAddModalOpen) {
-      if (initialModalValues) {
+    const currentWorkspaceValues = workspaceValuesRef.current;
+    if (isAddModalOpen || editingPreset) {
+      if (editingPreset) {
+        setAddPrompt(editingPreset.prompt);
+        setAddModel(editingPreset.model || 'GPT 2.5 Sunburst');
+        setAddAspectRatio(editingPreset.aspect_ratio || 'Auto');
+        setAddTextLanguage(editingPreset.text_language || 'Auto');
+        setAddStylePackName(editingPreset.style_pack_name || '');
+        setAddCharacterNames(editingPreset.character_names || []);
+      } else if (initialModalValues) {
         setAddPrompt(initialModalValues.prompt !== undefined ? initialModalValues.prompt : '');
         setAddModel(initialModalValues.model && initialModalValues.model !== 'GPT Image 2' ? initialModalValues.model : 'GPT 2.5 Sunburst');
         setAddAspectRatio(initialModalValues.aspectRatio || 'Auto');
@@ -156,15 +161,16 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
         setAddStylePackName(currentWorkspaceValues.stylePackName || '');
         setAddCharacterNames(currentWorkspaceValues.characterNames || []);
       }
-      setAddTitle('');
+      setAddTitle(editingPreset?.title || '');
+      setCustomCharInput('');
       setSelectedFile(null);
-      setPreviewUrl(null);
+      setPreviewUrl(editingPreset?.preview_image || null);
       setAddError(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
-  }, [isAddModalOpen, initialModalValues, currentWorkspaceValues]);
+  }, [isAddModalOpen, editingPreset, initialModalValues]);
 
   const handleOpenAddModalInternal = () => {
     if (onOpenAddModal) {
@@ -203,8 +209,13 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
   // Image Selection Handler
   const handleFileProcess = (file: File) => {
+    if (isSaving) return;
     if (!file.type.startsWith('image/')) {
       setAddError('Please select a valid image file (PNG, JPG, WEBP).');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setAddError('Please select an image up to 10MB.');
       return;
     }
     setSelectedFile(file);
@@ -244,7 +255,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
   const handleRemoveSelectedFile = () => {
     setSelectedFile(null);
-    setPreviewUrl(null);
+    setPreviewUrl(editingPreset?.preview_image || null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -280,7 +291,9 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
     }
   };
 
-  const handleResetAddForm = () => {
+  const handleResetAddForm = (saved = false) => {
+    if (isSaving && !saved) return;
+    setEditingPreset(null);
     setAddTitle('');
     setAddPrompt('');
     setAddModel('GPT 2.5 Sunburst');
@@ -311,12 +324,15 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
     setAddError(null);
 
     try {
-      if (onAddPreset) {
-        await onAddPreset({
+      const savePreset = editingPreset && onUpdatePreset
+        ? (data: PresetFormData) => onUpdatePreset(editingPreset.id, data)
+        : onAddPreset;
+      if (savePreset) {
+        await savePreset({
           title: addTitle.trim(),
           prompt: addPrompt.trim(),
           previewImageFile: selectedFile || undefined,
-          previewImageDataUrl: previewUrl || undefined,
+          previewImageDataUrl: previewUrl || '',
           model: addModel,
           aspectRatio: addAspectRatio,
           textLanguage: addTextLanguage,
@@ -324,7 +340,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
           characterNames: addCharacterNames.length > 0 ? addCharacterNames : undefined,
         });
       }
-      handleResetAddForm();
+      handleResetAddForm(true);
     } catch (err: any) {
       setAddError(err.message || 'Failed to save preset.');
     } finally {
@@ -483,6 +499,13 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                           </div>
                         )}
 
+                        {onUpdatePreset && (
+                          <button type="button" title="Edit preset" aria-label={`Edit ${preset.title}`}
+                            onClick={(e) => { e.stopPropagation(); setEditingPreset(preset); }}
+                            className="absolute bottom-2 left-2 p-1.5 rounded-full bg-[#FFFDFA] dark:bg-[#1C1916] text-[#6E6459] dark:text-[#D5CCC3] shadow-sm">
+                            <Pencil className="w-[18px] h-[18px]" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={(e) => {
@@ -581,15 +604,18 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
         </div>
       )}
 
-      {/* Add Preset Modal */}
-      {isAddModalOpen && mounted &&
+      {/* Create / Edit Preset Modal */}
+      {(isAddModalOpen || editingPreset) && mounted &&
         createPortal(
           <div
-            onClick={handleResetAddForm}
+            onClick={() => handleResetAddForm()}
             className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <div
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="preset-editor-title"
               className="w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-[#FFFDFA] dark:bg-[#1C1916] border border-transparent dark:border-[#2E2924] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
             >
               <div className="flex items-start gap-3.5 mb-1.5">
@@ -597,10 +623,12 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                   <span className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#C4633E] dark:text-[#E07A52]">
                     Preset Recipe
                   </span>
-                  <h3 className="font-serif text-[26px] sm:text-[28px] text-[#2E2A26] dark:text-[#F5EFEA]">New Preset</h3>
+                  <h3 id="preset-editor-title" className="font-serif text-[26px] sm:text-[28px] text-[#2E2A26] dark:text-[#F5EFEA]">{editingPreset ? 'Edit Preset' : 'New Preset'}</h3>
                 </div>
                 <button
-                  onClick={handleResetAddForm}
+                  onClick={() => handleResetAddForm()}
+                  aria-label="Close preset editor"
+                  disabled={isSaving}
                   className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#2E2924] transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
@@ -615,6 +643,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                   <button
                     type="button"
                     onClick={handlePrefillFromWorkspace}
+                    disabled={isSaving}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FAF5EE] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] text-[12.5px] hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:text-[#C4633E] dark:hover:text-[#E07A52] transition-colors cursor-pointer"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -624,6 +653,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
               </div>
 
               <form onSubmit={handleSavePreset} className="flex flex-col gap-4">
+                <fieldset disabled={isSaving} className="flex flex-col gap-4">
                 {addError && (
                   <div className="flex items-center gap-2 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
                     <AlertCircle className="w-4 h-4 shrink-0" />
@@ -669,13 +699,14 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                         </div>
                         <div className="flex-1 text-center sm:text-left">
                           <div className="text-[14.5px] font-medium text-[#2E2A26] dark:text-[#F5EFEA] truncate max-w-xs">
-                            {selectedFile ? selectedFile.name : 'Selected image'}
+                            {selectedFile ? selectedFile.name : 'Current thumbnail'}
                           </div>
                           <p className="text-[12.5px] text-[#8A7E73] dark:text-[#A69B90] mt-0.5">
-                            {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Ready to upload'}
+                            {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Keep this image or choose a replacement'}
                           </p>
                           <div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
                             <span className="text-xs text-[#C4633E] dark:text-[#E07A52] underline underline-offset-2">Click to replace</span>
+                            {(!editingPreset || selectedFile) && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -684,8 +715,9 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                               }}
                               className="px-2 py-0.5 rounded text-xs bg-[#F5EAE6] dark:bg-[#381E19] text-[#A0433A] dark:text-[#F5AB88] hover:bg-[#EED5CF] dark:hover:bg-[#4D2821]"
                             >
-                              Remove
+                              {editingPreset ? 'Undo replacement' : 'Remove'}
                             </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -848,6 +880,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       onChange={(e) => setAddModel(e.target.value)}
                       className={inputClasses}
                     >
+                      {!MODEL_OPTIONS.some((option) => option.value === addModel) && <option value={addModel}>{addModel}</option>}
                       {MODEL_OPTIONS.map((m) => (
                         <option key={m.value} value={m.value}>
                           {m.label}
@@ -865,6 +898,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       onChange={(e) => setAddAspectRatio(e.target.value)}
                       className={inputClasses}
                     >
+                      {!ASPECT_RATIO_OPTIONS.some((option) => option.value === addAspectRatio) && <option value={addAspectRatio}>{addAspectRatio}</option>}
                       {ASPECT_RATIO_OPTIONS.map((r) => (
                         <option key={r.value} value={r.value}>
                           {r.label}
@@ -882,6 +916,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                       onChange={(e) => setAddTextLanguage(e.target.value)}
                       className={inputClasses}
                     >
+                      {!TEXT_LANGUAGE_OPTIONS.some((option) => option.value === addTextLanguage) && <option value={addTextLanguage}>{addTextLanguage}</option>}
                       {TEXT_LANGUAGE_OPTIONS.map((l) => (
                         <option key={l.value} value={l.value}>
                           {l.label}
@@ -899,17 +934,18 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                     className="flex items-center gap-2 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer shadow-[0_10px_20px_-10px_rgba(196,99,62,0.9)] dark:shadow-none hover:opacity-95 disabled:opacity-70"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    <span>{isSaving ? 'Creating Preset…' : 'Save preset'}</span>
+                    <span>{isSaving ? 'Saving Preset…' : editingPreset ? 'Save changes' : 'Save preset'}</span>
                   </button>
                   <button
                     type="button"
-                    onClick={handleResetAddForm}
+                    onClick={() => handleResetAddForm()}
                     disabled={isSaving}
                     className="px-5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#6E6459] dark:text-[#D5CCC3] text-[14.5px] hover:bg-[#F6F0E7] dark:hover:bg-[#25211D] cursor-pointer"
                   >
                     Cancel
                   </button>
                 </div>
+                </fieldset>
               </form>
             </div>
           </div>,
@@ -1066,6 +1102,12 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
                     )}
                   </button>
 
+                  {onUpdatePreset && (
+                    <button type="button" onClick={() => { setEditingPreset(inspectPreset); setInspectPreset(null); }}
+                      className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] text-[#6E6459] dark:text-[#D5CCC3]">
+                      <Pencil className="w-4 h-4" /> Edit preset
+                    </button>
+                  )}
                   {onDeletePreset && (
                     <button
                       type="button"
