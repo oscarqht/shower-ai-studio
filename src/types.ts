@@ -150,13 +150,35 @@ export const DEFAULT_WORKFLOW_ID = '';
 export function extractWorkflowId(raw: string): string {
   if (!raw) return '';
   const trimmed = raw.trim();
-  const workflowMatch = trimmed.match(/workflows\/(\d+)/i);
-  if (workflowMatch) return workflowMatch[1];
+  const workflowMatch = trimmed.match(/(?:workflows|workflow)\/([a-zA-Z0-9_-]+)/i);
+  if (workflowMatch) {
+    const id = workflowMatch[1];
+    if (!['run', 'upload', 'new', 'create'].includes(id.toLowerCase())) {
+      return id;
+    }
+  }
   try {
-    const parsed = new URL(trimmed);
+    let urlStr = trimmed;
+    if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
+      urlStr = 'https://' + urlStr;
+    }
+    const parsed = new URL(urlStr);
     const pathSegments = parsed.pathname.split('/').filter(Boolean);
+
+    const wfIdx = pathSegments.findIndex((s) => /^(workflows?)$/i.test(s));
+    if (wfIdx !== -1 && pathSegments[wfIdx + 1]) {
+      return pathSegments[wfIdx + 1];
+    }
+
     for (const seg of pathSegments) {
       if (/^\d+$/.test(seg)) {
+        return seg;
+      }
+    }
+
+    for (let i = pathSegments.length - 1; i >= 0; i--) {
+      const seg = pathSegments[i];
+      if (!['app', 'apps', 'community', 'run', 'upload', 'view', 'edit'].includes(seg.toLowerCase())) {
         return seg;
       }
     }

@@ -12,6 +12,48 @@ function getBearerToken(req: NextRequest, formDataToken?: string, envTokenName?:
   return '';
 }
 
+function extractWorkflowId(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  const workflowMatch = trimmed.match(/(?:workflows|workflow)\/([a-zA-Z0-9_-]+)/i);
+  if (workflowMatch) {
+    const id = workflowMatch[1];
+    if (!['run', 'upload', 'new', 'create'].includes(id.toLowerCase())) {
+      return id;
+    }
+  }
+  try {
+    let urlStr = trimmed;
+    if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
+      urlStr = 'https://' + urlStr;
+    }
+    const parsed = new URL(urlStr);
+    const pathSegments = parsed.pathname.split('/').filter(Boolean);
+
+    const wfIdx = pathSegments.findIndex((s) => /^(workflows?)$/i.test(s));
+    if (wfIdx !== -1 && pathSegments[wfIdx + 1]) {
+      return pathSegments[wfIdx + 1];
+    }
+
+    for (const seg of pathSegments) {
+      if (/^\d+$/.test(seg)) {
+        return seg;
+      }
+    }
+
+    for (let i = pathSegments.length - 1; i >= 0; i--) {
+      const seg = pathSegments[i];
+      if (!['app', 'apps', 'community', 'run', 'upload', 'view', 'edit'].includes(seg.toLowerCase())) {
+        return seg;
+      }
+    }
+  } catch {
+    // Ignore URL parsing errors
+  }
+  const digitMatch = trimmed.match(/(\d+)/);
+  return digitMatch ? digitMatch[1] : trimmed;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -175,7 +217,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse URL to get origin; use workflow ID 0 so the upload API resolves the workflow bound to API_KEY
+    // Extract origin and workflow ID from Image generation app link or note
     let origin: string;
 
     try {
@@ -194,8 +236,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const workflowId =
+      (noteConfig.WORKFLOW_ID && String(noteConfig.WORKFLOW_ID).trim()) ||
+      (noteConfig.workflow_id && String(noteConfig.workflow_id).trim()) ||
+      (noteConfig.workflowId && String(noteConfig.workflowId).trim()) ||
+      extractWorkflowId(uploadAppItem.link);
+
+    if (!workflowId) {
+      return NextResponse.json(
+        {
+          status: 'error',
+          message: 'Could not extract workflow ID from "Image generation app" link or note.',
+        },
+        { status: 400 }
+      );
+    }
+
     const apiKey = String(noteConfig.API_KEY).trim();
-    const apiUrl = `${origin}/api/workflows/0/upload`;
+    const apiUrl = `${origin}/api/workflows/${workflowId}/upload`;
 
     try {
       // In the new API format, we need to upload files one by one to /upload,
@@ -222,10 +280,18 @@ export async function POST(req: NextRequest) {
         if (!uploadRes.ok) {
           const errorText = await uploadRes.text();
           console.error('Upload API failed:', uploadRes.status, errorText);
+          let parsedErrorMessage = '';
+          try {
+            const parsed = JSON.parse(errorText);
+            parsedErrorMessage = parsed.message || parsed.detail || parsed.error || '';
+          } catch {}
           return NextResponse.json(
             {
               status: 'error',
-              message: `Upload API returned status ${uploadRes.status}`,
+              message: parsedErrorMessage
+                ? `Upload API returned status ${uploadRes.status}: ${parsedErrorMessage}`
+                : `Upload API returned status ${uploadRes.status}`,
+              detail: errorText,
             },
             { status: uploadRes.status }
           );
@@ -233,7 +299,11 @@ export async function POST(req: NextRequest) {
 
         const uploadData = await uploadRes.json();
 
-        const fileId = uploadData?.data?.file_id;
+        const fileId =
+          uploadData?.data?.file_id ||
+          uploadData?.file_id ||
+          uploadData?.id ||
+          uploadData?.data?.id;
 
         if (!fileId) {
           return NextResponse.json(
