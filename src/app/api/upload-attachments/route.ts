@@ -12,48 +12,6 @@ function getBearerToken(req: NextRequest, formDataToken?: string, envTokenName?:
   return '';
 }
 
-function extractWorkflowId(raw: string): string {
-  if (!raw) return '';
-  const trimmed = raw.trim();
-  const workflowMatch = trimmed.match(/(?:workflows|workflow)\/([a-zA-Z0-9_-]+)/i);
-  if (workflowMatch) {
-    const id = workflowMatch[1];
-    if (!['run', 'upload', 'new', 'create'].includes(id.toLowerCase())) {
-      return id;
-    }
-  }
-  try {
-    let urlStr = trimmed;
-    if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
-      urlStr = 'https://' + urlStr;
-    }
-    const parsed = new URL(urlStr);
-    const pathSegments = parsed.pathname.split('/').filter(Boolean);
-
-    const wfIdx = pathSegments.findIndex((s) => /^(workflows?)$/i.test(s));
-    if (wfIdx !== -1 && pathSegments[wfIdx + 1]) {
-      return pathSegments[wfIdx + 1];
-    }
-
-    for (const seg of pathSegments) {
-      if (/^\d+$/.test(seg)) {
-        return seg;
-      }
-    }
-
-    for (let i = pathSegments.length - 1; i >= 0; i--) {
-      const seg = pathSegments[i];
-      if (!['app', 'apps', 'community', 'run', 'upload', 'view', 'edit'].includes(seg.toLowerCase())) {
-        return seg;
-      }
-    }
-  } catch {
-    // Ignore URL parsing errors
-  }
-  const digitMatch = trimmed.match(/(\d+)/);
-  return digitMatch ? digitMatch[1] : trimmed;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -70,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const files = formData.getAll('files');
-    if (!files || files.length === 0) {
+    if (files.length === 0 || files.some((file) => typeof file === 'string')) {
       return NextResponse.json(
         {
           status: 'error',
@@ -104,7 +62,7 @@ export async function POST(req: NextRequest) {
     const childData = await childRes.json();
     const allCollections = [...(rootData.items || []), ...(childData.items || [])];
 
-    const showerCollection = allCollections.find(
+    const showerCollection = (rootData.items || []).find(
       (c) => c.title && c.title.trim().toLowerCase() === 'shower'
     );
 
@@ -139,30 +97,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const appsRes = await fetch(
-      `https://api.raindrop.io/rest/v1/raindrops/${appsCollection._id}?perpage=50`,
-      { headers }
-    );
-
-    if (!appsRes.ok) {
-      return NextResponse.json(
-        {
-          status: 'error',
-          message: `Failed to fetch items in Apps collection (${appsRes.status})`,
-        },
-        { status: appsRes.status }
+    // Search all pages and use only the named bookmark, never a similar title.
+    let uploadAppItem: any;
+    for (let page = 0; ; page++) {
+      const appsRes = await fetch(
+        `https://api.raindrop.io/rest/v1/raindrops/${appsCollection._id}?perpage=50&page=${page}`,
+        { headers, cache: 'no-store' }
       );
+      if (!appsRes.ok) {
+        return NextResponse.json(
+          { status: 'error', message: `Failed to fetch items in Apps collection (${appsRes.status})` },
+          { status: appsRes.status }
+        );
+      }
+      const appsData = await appsRes.json();
+      const items = appsData.items || [];
+      uploadAppItem = items.find((item: any) =>
+        item.title?.trim().toLowerCase() === 'image generation app'
+      );
+      if (uploadAppItem || items.length < 50) break;
     }
-
-    const appsData = await appsRes.json();
-    const items = appsData.items || [];
-
-    // Find the "Image generation app"
-    const uploadAppItem = items.find((item: any) => {
-      if (!item.title) return false;
-      const t = item.title.trim().toLowerCase();
-      return t === 'image generation app' || t.includes('image generation app') || t.includes('image generation');
-    });
 
     if (!uploadAppItem) {
       return NextResponse.json(
@@ -207,7 +161,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!noteConfig.API_KEY) {
+    if (typeof noteConfig?.API_KEY !== 'string' || !noteConfig.API_KEY.trim()) {
       return NextResponse.json(
         {
           status: 'error',
@@ -217,15 +171,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Extract origin and workflow ID from Image generation app link or note
-    let origin: string;
+    // The bookmark URL is the only source of the upload workflow ID.
+    let appUrl: URL;
 
     try {
       let rawLink = uploadAppItem.link.trim();
       if (rawLink && !rawLink.startsWith('http://') && !rawLink.startsWith('https://')) {
         rawLink = 'https://' + rawLink;
       }
-      origin = new URL(rawLink).origin;
+      appUrl = new URL(rawLink);
+      if (!['https:', 'http:'].includes(appUrl.protocol)) throw new Error('Invalid protocol');
     } catch (e) {
       return NextResponse.json(
         {
@@ -236,33 +191,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const workflowId =
-      (noteConfig.WORKFLOW_ID && String(noteConfig.WORKFLOW_ID).trim()) ||
-      (noteConfig.workflow_id && String(noteConfig.workflow_id).trim()) ||
-      (noteConfig.workflowId && String(noteConfig.workflowId).trim()) ||
-      extractWorkflowId(uploadAppItem.link);
+    const workflowId = appUrl.pathname.match(/^\/app\/workflows\/([1-9]\d*)\/?$/)?.[1];
 
     if (!workflowId) {
       return NextResponse.json(
         {
           status: 'error',
-          message: 'Could not extract workflow ID from "Image generation app" link or note.',
+          message: 'Expected "Image generation app" URL to use /app/workflows/<workflow id>.',
         },
         { status: 400 }
       );
     }
 
     const apiKey = String(noteConfig.API_KEY).trim();
-    const apiUrl = `${origin}/api/workflows/${workflowId}/upload`;
+    const apiUrl = `${appUrl.origin}/api/workflows/${workflowId}/upload`;
 
     try {
-      // In the new API format, we need to upload files one by one to /upload,
-      // But let's check how the new format works based on instructions:
-      // curl -X POST '[origin]/api/workflows/[workflow id]/upload' \
-      //  --header 'Authorization: Bearer [API_KEY]' \
-      //  -F 'file=@/path/to/file'
-      // response: { "data": { "expired_at": ..., "file_id": "...", ... } }
-
       const fileIds: string[] = [];
 
       for (const file of files) {
@@ -279,19 +223,21 @@ export async function POST(req: NextRequest) {
 
         if (!uploadRes.ok) {
           const errorText = await uploadRes.text();
-          console.error('Upload API failed:', uploadRes.status, errorText);
+          console.error('Upload API failed:', apiUrl, uploadRes.status);
           let parsedErrorMessage = '';
           try {
             const parsed = JSON.parse(errorText);
-            parsedErrorMessage = parsed.message || parsed.detail || parsed.error || '';
+            const message = parsed.error?.message || parsed.message || parsed.detail;
+            parsedErrorMessage = typeof message === 'string' ? message : '';
           } catch {}
           return NextResponse.json(
             {
               status: 'error',
               message: parsedErrorMessage
-                ? `Upload API returned status ${uploadRes.status}: ${parsedErrorMessage}`
-                : `Upload API returned status ${uploadRes.status}`,
-              detail: errorText,
+                ? `Upload API returned status ${uploadRes.status} for workflow ${workflowId}: ${parsedErrorMessage}`
+                : `Upload API returned status ${uploadRes.status} for workflow ${workflowId}`,
+              workflow_id: workflowId,
+              upload_url: apiUrl,
             },
             { status: uploadRes.status }
           );
@@ -299,17 +245,13 @@ export async function POST(req: NextRequest) {
 
         const uploadData = await uploadRes.json();
 
-        const fileId =
-          uploadData?.data?.file_id ||
-          uploadData?.file_id ||
-          uploadData?.id ||
-          uploadData?.data?.id;
+        const fileId = uploadData?.data?.file_id;
 
-        if (!fileId) {
+        if (typeof fileId !== 'string' || !fileId) {
           return NextResponse.json(
             {
               status: 'error',
-              message: 'Upload API did not return data.file_id for an uploaded file.',
+              message: uploadData?.error?.message || 'Upload API did not return data.file_id for an uploaded file.',
             },
             { status: 500 }
           );
