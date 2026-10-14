@@ -84,7 +84,6 @@ export interface BuildFinalPromptParams {
   hasCharacterReferenceImage?: boolean;
   style: StylePack | null;
   hasStyleReferenceImage?: boolean;
-  hasAttachments?: boolean;
   aspectRatio?: string;
   textLanguage?: string;
 }
@@ -97,7 +96,6 @@ export function buildFinalPrompt(params: BuildFinalPromptParams): string {
     hasCharacterReferenceImage,
     style,
     hasStyleReferenceImage,
-    hasAttachments,
     aspectRatio,
     textLanguage,
   } = params;
@@ -111,9 +109,6 @@ export function buildFinalPrompt(params: BuildFinalPromptParams): string {
   }
   if (copyrightText) {
     contentSectionParts.push(copyrightText);
-  }
-  if (hasAttachments) {
-    contentSectionParts.push('Attachments:\n[See attached content/composition reference image(s)]');
   }
 
   const contentAuthority = contentSectionParts.length

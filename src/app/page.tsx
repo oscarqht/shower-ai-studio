@@ -400,12 +400,11 @@ export default function Home() {
           setStyles(newStyles);
           setPresets(newPresets);
           setPresetsCollectionId(newPresetsCollectionId);
-          if (newImageAppUrl || data.hasUploadCapability !== undefined) {
+          if (newImageAppUrl) {
             setSettings((prev) => {
               const updated = {
                 ...prev,
                 imageAppUrl: newImageAppUrl || prev.imageAppUrl,
-                hasUploadCapability: data.hasUploadCapability !== undefined ? data.hasUploadCapability : prev.hasUploadCapability,
               };
               try {
                 localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated));
@@ -1406,7 +1405,6 @@ export default function Home() {
             {/* Section 3: Composition Controls */}
             <GeneratorControls
               key={resetKey}
-              resetKey={resetKey}
               selectedCharacters={selectedCharacters}
               selectedAddOnsByCharacterId={selectedAddOnsByCharacterId}
               selectedStyle={selectedStyle}
@@ -1419,11 +1417,8 @@ export default function Home() {
               onAspectRatioChange={setAspectRatio}
               textLanguage={textLanguage}
               onTextLanguageChange={setTextLanguage}
-              imageAppUrl={settings.imageAppUrl}
               raindropToken={settings.raindropToken}
-              hasRaindropToken={hasToken}
               onResetAll={handleResetAllInputs}
-              hasUploadCapability={settings.hasUploadCapability}
               onSaveAsPreset={handleSaveAsPreset}
             />
           </div>
