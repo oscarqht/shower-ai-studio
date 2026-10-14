@@ -4,7 +4,6 @@ export interface ZipExportAssets {
   markdownPrompt: string;
   characterImageBlob?: Blob | null;
   styleImageBlob?: Blob | null;
-  attachmentImageBlob?: Blob | null;
 }
 
 export function generateTimestampFilename(prefix = 'prompt-bundle', ext = 'zip'): string {
@@ -31,9 +30,6 @@ export async function createPromptZip(assets: ZipExportAssets): Promise<Blob> {
   }
   if (assets.styleImageBlob) {
     zip.file('style-references.png', assets.styleImageBlob);
-  }
-  if (assets.attachmentImageBlob) {
-    zip.file('attachments.png', assets.attachmentImageBlob);
   }
 
   return await zip.generateAsync({

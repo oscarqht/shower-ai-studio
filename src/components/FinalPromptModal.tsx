@@ -7,7 +7,6 @@ import {
   Sparkles,
   Users,
   Palette,
-  Paperclip,
   Maximize2,
   ExternalLink,
 } from 'lucide-react';
@@ -33,7 +32,6 @@ interface FinalPromptModalProps {
   characters: Character[];
   selectedAddOnsByCharacterId?: Record<string, string[]>;
   style: StylePack | null;
-  uploadedFiles?: { id: string; url: string; name: string }[];
   aspectRatio: string;
   textLanguage: string;
 }
@@ -45,7 +43,6 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
   characters,
   selectedAddOnsByCharacterId = {},
   style,
-  uploadedFiles = [],
   aspectRatio,
   textLanguage,
 }) => {
@@ -53,7 +50,6 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
   const [isPromptCopied, setIsPromptCopied] = useState(false);
   const [characterCombined, setCharacterCombined] = useState<CombinedImageResult | null>(null);
   const [styleCombined, setStyleCombined] = useState<CombinedImageResult | null>(null);
-  const [attachmentsCombined, setAttachmentsCombined] = useState<CombinedImageResult | null>(null);
   const [isCombining, setIsCombining] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [previewEnlargedUrl, setPreviewEnlargedUrl] = useState<string | null>(null);
@@ -93,16 +89,6 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
     return items;
   }, [style]);
 
-  // Filter valid attachments
-  const validAttachmentItems: ImageItem[] = React.useMemo(() => {
-    return uploadedFiles
-      .filter((f) => f && f.url && f.url.trim())
-      .map((f, i) => ({
-        url: f.url.trim(),
-        label: f.name || `Attachment ${i + 1}`,
-      }));
-  }, [uploadedFiles]);
-
   // Build the prompt text dynamically
   const generatedPrompt = buildFinalPrompt({
     instruction,
@@ -111,7 +97,6 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
     hasCharacterReferenceImage: validCharItems.length > 0,
     style,
     hasStyleReferenceImage: validStyleItems.length > 0,
-    hasAttachments: validAttachmentItems.length > 0,
     aspectRatio,
     textLanguage,
   });
@@ -121,7 +106,6 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
     if (!isOpen) {
       setCharacterCombined(null);
       setStyleCombined(null);
-      setAttachmentsCombined(null);
       return;
     }
 
@@ -130,22 +114,18 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
     const processImages = async () => {
       setIsCombining(true);
       try {
-        const [charResult, styleResult, attachResult] = await Promise.all([
+        const [charResult, styleResult] = await Promise.all([
           validCharItems.length > 0
             ? combineImages(validCharItems, { showLabels: true, backgroundColor: '#FFFFFF' })
             : Promise.resolve(null),
           validStyleItems.length > 0
             ? combineImages(validStyleItems, { showLabels: false, backgroundColor: '#FFFFFF' })
             : Promise.resolve(null),
-          validAttachmentItems.length > 0
-            ? combineImages(validAttachmentItems, { showLabels: false, backgroundColor: '#FFFFFF' })
-            : Promise.resolve(null),
         ]);
 
         if (!isCancelled) {
           setCharacterCombined(charResult);
           setStyleCombined(styleResult);
-          setAttachmentsCombined(attachResult);
         }
       } catch (err) {
         console.error('Failed to combine images:', err);
@@ -161,7 +141,7 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [isOpen, validCharItems, validStyleItems, validAttachmentItems]);
+  }, [isOpen, validCharItems, validStyleItems]);
 
   // Handle escape key
   useEffect(() => {
@@ -217,7 +197,6 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
         markdownPrompt: generatedPrompt,
         characterImageBlob: characterCombined?.blob,
         styleImageBlob: styleCombined?.blob,
-        attachmentImageBlob: attachmentsCombined?.blob,
       });
       const filename = generateTimestampFilename();
       downloadBlob(zipBlob, filename);
@@ -583,82 +562,8 @@ export const FinalPromptModal: React.FC<FinalPromptModalProps> = ({
                   </div>
                 )}
 
-                {/* 3. Attachments Card */}
-                {validAttachmentItems.length > 0 && (
-                  <div className="rounded-2xl border border-[#E2D6C3] dark:border-[#352F29] bg-[#FFFDFA] dark:bg-[#1A1714] p-4 flex flex-col gap-3 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#7A7066] dark:text-[#A79C92]">
-                        <Paperclip className="w-3.5 h-3.5 text-[#C4633E] dark:text-[#E07A52]" />
-                        <span>Composition Attachments ({validAttachmentItems.length})</span>
-                      </div>
-                    </div>
-
-                    {attachmentsCombined ? (
-                      <div className="relative group rounded-xl overflow-hidden bg-[#F8F5F0] dark:bg-[#1E1B18] border border-[#E2D6C3] dark:border-[#2E2924] aspect-video flex items-center justify-center">
-                        <img
-                          src={attachmentsCombined.dataUrl}
-                          alt="Combined attachments"
-                          className="w-full h-full object-contain cursor-pointer transition-transform group-hover:scale-[1.02]"
-                          onClick={() => setPreviewEnlargedUrl(attachmentsCombined.dataUrl)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setPreviewEnlargedUrl(attachmentsCombined.dataUrl)}
-                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
-                          title="Enlarge image"
-                        >
-                          <Maximize2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="aspect-video rounded-xl bg-[#F0E8DC] dark:bg-[#25211D] flex items-center justify-center text-xs text-[#7A7066] dark:text-[#A79C92]">
-                        {isCombining ? 'Generating composite...' : 'No image preview available'}
-                      </div>
-                    )}
-
-                    {attachmentsCombined && (
-                      <div className="flex items-center gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleCopyImage(attachmentsCombined.blob, 'attachments-reference')
-                          }
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FAF5EE] dark:bg-[#26211D] border border-[#D6C8B8] dark:border-[#3D352E] text-[#2E2A26] dark:text-[#F5EFEA] text-xs font-medium hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
-                        >
-                          {copiedKey === 'attachments-reference' ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-green-600" />
-                              <span>Copied PNG!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5" />
-                              <span>Copy Image</span>
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDownloadImage(
-                              attachmentsCombined.blob,
-                              'attachments-reference.png'
-                            )
-                          }
-                          className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#FAF5EE] dark:bg-[#26211D] border border-[#D6C8B8] dark:border-[#3D352E] text-[#2E2A26] dark:text-[#F5EFEA] text-xs font-medium hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Download</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {validCharItems.length === 0 &&
-                  validStyleItems.length === 0 &&
-                  validAttachmentItems.length === 0 && (
+                  validStyleItems.length === 0 && (
                     <div className="p-6 rounded-2xl border border-dashed border-[#D6C8B8] dark:border-[#3D352E] text-center text-xs text-[#7A7066] dark:text-[#A79C92]">
                       No character or style reference images are currently selected.
                     </div>

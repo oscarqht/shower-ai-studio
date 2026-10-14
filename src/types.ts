@@ -80,7 +80,6 @@ export interface RaindropFetchResult {
   presets?: Preset[];
   presetsCollectionId?: string | number;
   imageAppUrl?: string;
-  hasUploadCapability?: boolean;
   status: 'success' | 'partial' | 'error' | 'demo';
   message?: string;
   debugInfo?: any;
@@ -135,7 +134,6 @@ export interface AppSettings {
   raindropRefreshToken?: string;
   raindropExpiresAt?: number;
   imageAppUrl?: string;
-  hasUploadCapability?: boolean;
   imageApiKey?: string;
   imageWorkflowId?: string;
   imageApiEndpoint?: string;

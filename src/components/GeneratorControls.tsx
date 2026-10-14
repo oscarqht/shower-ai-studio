@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, Copy, ExternalLink, Sparkles, BookmarkPlus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, Copy, ExternalLink, Sparkles, BookmarkPlus } from 'lucide-react';
 import { Character, StylePack, Preset } from '../types';
 import { FinalPromptModal } from './FinalPromptModal';
 
@@ -18,11 +18,8 @@ interface GeneratorControlsProps {
   onAspectRatioChange?: (value: string) => void;
   textLanguage?: string;
   onTextLanguageChange?: (value: string) => void;
-  imageAppUrl?: string;
   raindropToken?: string;
-  hasRaindropToken?: boolean;
   onResetAll?: () => void;
-  hasUploadCapability?: boolean;
   onSaveAsPreset?: (payload: {
     prompt: string;
     model: string;
@@ -31,7 +28,6 @@ interface GeneratorControlsProps {
     stylePackName?: string;
     characterNames?: string[];
   }) => void;
-  resetKey?: number | string;
 }
 
 const MODEL_OPTIONS = [
@@ -90,15 +86,10 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   onAspectRatioChange,
   textLanguage: textLanguageProp,
   onTextLanguageChange,
-  imageAppUrl,
   raindropToken,
-  hasRaindropToken,
   onResetAll,
-  hasUploadCapability,
   onSaveAsPreset,
-  resetKey,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const getCharactersPrompt = () => selectedCharacters
     .map((character) => {
       const title = (character.title || '').trim();
@@ -148,22 +139,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [isOpeningApp, setIsOpeningApp] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
   const [isStyleCopied, setIsStyleCopied] = useState(false);
-  const [uploadedFileIds, setUploadedFileIds] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [fileThumbnails, setFileThumbnails] = useState<{ id: string; url: string; name: string }[]>([]);
   const [isFinalPromptModalOpen, setIsFinalPromptModalOpen] = useState(false);
-
-  // Cleanup object URLs to avoid memory leaks
-  useEffect(() => {
-    return () => {
-      fileThumbnails.forEach((t) => {
-        if (t.url.startsWith('blob:')) {
-          URL.revokeObjectURL(t.url);
-        }
-      });
-    };
-  }, [fileThumbnails]);
 
   // Persist controls state changes to localStorage
   useEffect(() => {
@@ -189,17 +165,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     setCompositionPrompt('');
     setAspectRatio('Auto');
     setTextLanguage('Auto');
-    setUploadedFileIds([]);
-    setUploadError(null);
-    fileThumbnails.forEach((t) => {
-      if (t.url.startsWith('blob:')) {
-        URL.revokeObjectURL(t.url);
-      }
-    });
-    setFileThumbnails([]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
     try {
       localStorage.removeItem(INPUTS_STORAGE_KEY);
     } catch (e) {
@@ -286,11 +251,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         appUrl.searchParams.set('instruction', compositionPrompt);
         appUrl.searchParams.set('json', jsonString);
 
-        if (uploadedFileIds && uploadedFileIds.length > 0) {
-          appUrl.searchParams.set('attachment_file_ids', uploadedFileIds.join(','));
-        }
-
-        appUrl.searchParams.set('_auto_', '1');
+        appUrl.searchParams.delete('attachment_file_ids');
+        appUrl.searchParams.delete('_auto_');
 
         window.open(appUrl.toString(), '_blank');
       } else {
@@ -330,88 +292,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       console.error('Failed to copy style name:', err);
     }
   };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const isConnected = Boolean((raindropToken && raindropToken.trim()) || hasRaindropToken);
-    if (!isConnected) {
-      setUploadError('No valid connection — configure Raindrop in settings or RAINDROP_TOKEN environment variable.');
-      return;
-    }
-
-    setUploadError(null);
-    setIsUploading(true);
-
-    const formData = new FormData();
-    if (raindropToken && raindropToken.trim()) {
-      formData.append('token', raindropToken.trim());
-    }
-    Array.from(files).forEach((file) => {
-      formData.append('files', file);
-    });
-
-    try {
-      const res = await fetch('/api/upload-attachments', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok && data.status === 'success' && data.file_ids) {
-        // Generate thumbnails
-        const newThumbnails = Array.from(files).map((file, idx) => ({
-          id: data.file_ids[idx],
-          url: URL.createObjectURL(file),
-          name: file.name,
-        }));
-
-        setFileThumbnails(prev => [...prev, ...newThumbnails]);
-        setUploadedFileIds(prev => [...prev, ...data.file_ids]);
-      } else {
-        setUploadError(data?.message || 'Failed to upload attachments.');
-      }
-    } catch (err: any) {
-      console.error('Upload error:', err);
-      setUploadError(`Failed to upload: ${err.message || 'Network error'}`);
-    } finally {
-      setIsUploading(false);
-      // Clear input so same file can be selected again if needed
-      e.target.value = '';
-    }
-  };
-
-  const handleRemoveAttachment = (idToRemove: string) => {
-    setUploadedFileIds(prev => prev.filter(id => id !== idToRemove));
-    setFileThumbnails(prev => {
-      const itemToRemove = prev.find(t => t.id === idToRemove);
-      if (itemToRemove) {
-        URL.revokeObjectURL(itemToRemove.url);
-      }
-      return prev.filter(t => t.id !== idToRemove);
-    });
-  };
-
-  const handleClearAttachments = () => {
-    fileThumbnails.forEach(t => {
-      if (t.url.startsWith('blob:')) {
-        URL.revokeObjectURL(t.url);
-      }
-    });
-    setFileThumbnails([]);
-    setUploadedFileIds([]);
-    setUploadError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  useEffect(() => {
-    if (resetKey !== undefined && resetKey !== 0) {
-      handleClearAttachments();
-    }
-  }, [resetKey]);
 
   return (
     <section
@@ -495,75 +375,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         )}
         <span className="font-mono text-[11.5px] text-[#A08F80] dark:text-[#7A7066]">⌘↵ opens the app</span>
       </div>
-
-      {/* Upload Attachments */}
-      {hasUploadCapability && (
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-[#2E2A26] dark:text-[#F5EFEA]">
-              Upload attachments
-            </label>
-            {uploadedFileIds.length > 0 && (
-              <button
-                type="button"
-                onClick={handleClearAttachments}
-                className="text-[12.5px] text-[#8A7E73] dark:text-[#A69B90] hover:text-[#2E2A26] dark:hover:text-[#F5EFEA] transition-colors cursor-pointer"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              disabled={isUploading}
-              className="block w-full text-sm text-[#6E6459] dark:text-[#D5CCC3] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#F6F0E7] dark:file:bg-[#2A2520] file:text-[#4F4740] dark:file:text-[#D5CCC3] hover:file:bg-[#EAE0D4] dark:hover:file:bg-[#332C26] transition-colors cursor-pointer disabled:opacity-50"
-            />
-            {isUploading && (
-              <div className="text-[13px] text-[#C4633E] dark:text-[#E07A52] flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                Uploading...
-              </div>
-            )}
-            {uploadError && (
-              <div className="text-[13px] text-[#96402F] dark:text-[#E07A52]">
-                {uploadError}
-              </div>
-            )}
-            {!isUploading && !uploadError && uploadedFileIds.length > 0 && (
-              <div className="text-[13px] text-[#4F4740] dark:text-[#D5CCC3] flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-green-600 dark:text-[#8FA87F]" />
-                <span>{uploadedFileIds.length} file{uploadedFileIds.length > 1 ? 's' : ''} uploaded successfully</span>
-              </div>
-            )}
-
-            {fileThumbnails.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-2">
-                {fileThumbnails.map((thumb) => (
-                  <div key={thumb.id} className="relative w-16 h-16 rounded-lg border border-[#E3D8CA] dark:border-[#3D352E] bg-[#FAF5EE] dark:bg-[#25211D] group">
-                    <img
-                      src={thumb.url}
-                      alt={thumb.name}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveAttachment(thumb.id)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center bg-white dark:bg-[#2A2520] rounded-full border border-[#E3D8CA] dark:border-[#3D352E] shadow-sm text-[#8A7E73] dark:text-[#D5CCC3] hover:text-[#96402F] dark:hover:text-[#E07A52] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      title="Remove attachment"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Select Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-[22px]">
@@ -684,7 +495,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         characters={selectedCharacters}
         selectedAddOnsByCharacterId={selectedAddOnsByCharacterId}
         style={selectedStyle}
-        uploadedFiles={fileThumbnails}
         aspectRatio={aspectRatio}
         textLanguage={textLanguage}
       />
