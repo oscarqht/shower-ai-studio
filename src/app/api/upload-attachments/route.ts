@@ -175,31 +175,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse URL to get origin and workflow id
+    // Parse URL to get origin; use workflow ID 0 so the upload API resolves the workflow bound to API_KEY
     let origin: string;
-    let workflowId: string;
 
     try {
-      const parsedUrl = new URL(uploadAppItem.link);
-      origin = parsedUrl.origin;
-      const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
-      // Example: https://alpha.sea.com/workflows/475
-      // Or: https://alpha.sea.com/app/workflows/475
-      if (pathParts.length >= 2 && pathParts[0] === 'app') {
-        workflowId = pathParts[2]; // /app/<type>/<id> -> ['', 'app', 'workflows', '475'] -> split by '/' filter boolean -> ['app', 'workflows', '475'] => pathParts[2] is ID
-      } else if (pathParts.length >= 2) {
-        workflowId = pathParts[1]; // /<type>/<id> -> ['workflows', '475'] => pathParts[1] is ID
+      let rawLink = uploadAppItem.link.trim();
+      if (rawLink && !rawLink.startsWith('http://') && !rawLink.startsWith('https://')) {
+        rawLink = 'https://' + rawLink;
       }
-
-      if (!workflowId) {
-         return NextResponse.json(
-          {
-            status: 'error',
-            message: 'Could not extract workflow ID from the link. Expected format: origin/<type>/<id> or origin/app/<type>/<id>',
-          },
-          { status: 400 }
-        );
-      }
+      origin = new URL(rawLink).origin;
     } catch (e) {
       return NextResponse.json(
         {
@@ -210,7 +194,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiUrl = `${origin}/api/workflows/${workflowId}/upload`;
+    const apiKey = String(noteConfig.API_KEY).trim();
+    const apiUrl = `${origin}/api/workflows/0/upload`;
 
     try {
       // In the new API format, we need to upload files one by one to /upload,
@@ -229,7 +214,7 @@ export async function POST(req: NextRequest) {
         const uploadRes = await fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${noteConfig.API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
           },
           body: singleFileFormData,
         });
