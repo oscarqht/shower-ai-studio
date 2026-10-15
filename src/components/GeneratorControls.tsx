@@ -252,7 +252,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         appUrl.searchParams.set('json', jsonString);
 
         appUrl.searchParams.delete('attachment_file_ids');
-        appUrl.searchParams.delete('_auto_');
+        appUrl.searchParams.set('_auto_', appUrl.searchParams.get('_auto_') || 'true');
 
         window.open(appUrl.toString(), '_blank');
       } else {
