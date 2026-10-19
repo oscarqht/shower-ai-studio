@@ -22,13 +22,22 @@
 
 ### Prerequisites
 
-- Node.js 18+ or Bun
+- Node.js 20+
+- pnpm 12.14.0 (pinned in `package.json`)
+
+Install the pinned pnpm version on macOS/Linux with the standalone installer:
+
+```bash
+curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=12.14.0 sh -
+```
+
+Follow the installer's instructions to make `pnpm` available in your shell, then check `pnpm --version` reports `12.14.0`. See the [pnpm installation guide](https://pnpm.io/installation) for Windows setup. The standalone executable works with Node.js 20; installation through npm requires Node.js 22.13 or newer.
 
 ### Setup & Installation
 
 1. **Install dependencies**:
    ```bash
-   npm install
+   pnpm install --frozen-lockfile
    ```
 
 2. **Configure environment variables**:
@@ -43,7 +52,19 @@
 
 3. **Start development server**:
    ```bash
-   npm run dev
+   pnpm dev
    ```
    Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+### Checks & Production Build
+
+```bash
+pnpm lint
+pnpm build
+pnpm start
+```
+
+Commit `pnpm-lock.yaml` when dependencies change. Use `pnpm add <package>` or `pnpm add -D <package>` to add dependencies, and `pnpm install --frozen-lockfile` for reproducible installs in CI and deployment environments.
+
+`pnpm-workspace.yaml` records the install scripts approved for the current dependencies. If a dependency update requires another install script, review it with `pnpm approve-builds` and commit the resulting configuration change.
 

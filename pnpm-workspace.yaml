@@ -1,0 +1,5 @@
+# Install scripts used by the existing dependency graph.
+allowBuilds:
+  '@google/genai': true
+  protobufjs: true
+  unrs-resolver: true
