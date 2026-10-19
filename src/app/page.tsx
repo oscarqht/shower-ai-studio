@@ -565,11 +565,13 @@ export default function Home() {
   const saveStyle: SaveStyle = async (source, mode, fields) => {
     const connected = Boolean(settings.raindropToken?.trim() || hasEnvToken);
     if (!connected) throw new Error('Connect Raindrop in Settings before saving a style.');
-    const send = (token: string) => fetch('/api/raindrop/style', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token || undefined, source, mode, ...fields }),
-    });
+    const { imageFiles, ...payload } = fields;
+    const send = (token: string) => {
+      const formData = new FormData();
+      formData.set('payload', JSON.stringify({ token: token || undefined, source, mode, ...payload }));
+      for (const [key, file] of Object.entries(imageFiles || {})) formData.append(key, file);
+      return fetch('/api/raindrop/style', { method: 'POST', body: formData });
+    };
     let response = await send(settings.raindropToken);
     if (response.status === 401 && settings.raindropRefreshToken && (await response.clone().json()).retrySafe !== false) {
       const token = await refreshRaindropToken();
@@ -580,6 +582,9 @@ export default function Home() {
       throw new Error(formatErrorMessage(data.message) || 'Could not save style to Raindrop.');
     }
     const saved: StylePack = data.style;
+    if (mode === 'edit' && String(saved.id) !== String(source.id)) {
+      setSelectedStyleId(current => String(current) === String(source.id) ? saved.id : current);
+    }
     setRaindropStatus('success');
     setRaindropMessage(`${mode === 'copy' ? 'Copied' : 'Updated'} style "${saved.title}" in Raindrop.`);
     return saved;
@@ -609,10 +614,19 @@ export default function Home() {
     addOns: string[];
     coverDataUrl?: string;
     imageFile?: File;
+    sourceId?: string | number;
   }) => {
     const isConnected = Boolean((settings.raindropToken && settings.raindropToken.trim()) || hasEnvToken);
     const tagsNoteStr = charData.tags.join(', ');
-    const noteObj = { tags: tagsNoteStr, add_ons: charData.addOns };
+    const source = charData.sourceId !== undefined
+      ? characters.find(character => String(character.id) === String(charData.sourceId))
+      : undefined;
+    let originalNote: Record<string, unknown> = {};
+    try {
+      const parsed = JSON.parse(source?.note || '{}');
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) originalNote = parsed;
+    } catch { /* Legacy notes contain comma-separated tags. */ }
+    const noteObj = { ...originalNote, tags: tagsNoteStr, add_ons: charData.addOns };
     const noteJson = JSON.stringify(noteObj);
 
     if (isConnected) {
@@ -623,6 +637,9 @@ export default function Home() {
       formData.append('title', charData.title);
       formData.append('excerpt', charData.excerpt);
       formData.append('note', noteJson);
+      if (charData.sourceId !== undefined && /^\d+$/.test(String(charData.sourceId))) {
+        formData.append('sourceId', String(charData.sourceId));
+      }
       if (charData.coverDataUrl) {
         formData.append('cover', charData.coverDataUrl);
       }
@@ -660,6 +677,7 @@ export default function Home() {
         title: charData.title,
         excerpt: charData.excerpt,
         cover: charData.coverDataUrl || '',
+        link: source?.link,
         note: noteJson,
         addOns: charData.addOns,
       };

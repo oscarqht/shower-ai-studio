@@ -148,16 +148,19 @@ export async function POST(req: NextRequest) {
         const chunk = moreStylePackCollections.slice(i, i + chunkSize);
         const chunkPromises = chunk.map(async (spCol) => {
           try {
-            const spRes = await fetch(
-              `https://api.raindrop.io/rest/v1/raindrops/${spCol._id}?perpage=50`,
-              { headers }
-            );
-            if (!spRes.ok) return null;
-            const spData = await spRes.json();
-            return {
-              col: spCol,
-              items: spData.items || [],
-            };
+            const items: any[] = [];
+            for (let page = 0; ; page++) {
+              const spRes = await fetch(
+                `https://api.raindrop.io/rest/v1/raindrops/${spCol._id}?perpage=50&page=${page}`,
+                { headers }
+              );
+              if (!spRes.ok) return null;
+              const spData = await spRes.json();
+              const batch = spData.items || [];
+              items.push(...batch);
+              if (batch.length < 50) break;
+            }
+            return { col: spCol, items };
           } catch (e) {
             console.error(`Failed to fetch items for more style collection ${spCol.title}:`, e);
             return null;
@@ -183,7 +186,7 @@ export async function POST(req: NextRequest) {
             (title.endsWith('.jpg') ||
               title.endsWith('.jpeg') ||
               title.endsWith('.png') ||
-              title.endsWith('.webp') ||
+              title.endsWith('.webp') || title.endsWith('.gif') ||
               !title.includes('.'))
           );
         });
@@ -197,7 +200,7 @@ export async function POST(req: NextRequest) {
         const style_prompt_raindrop_id = previewItem ? String(previewItem._id) : '';
         const style_prompt = previewItem ? previewItem.excerpt || previewItem.title || '' : '';
         const extra_style_instruction = previewItem ? previewItem.note || '' : '';
-        const preview_cover = previewItem
+        const preview_cover = previewItem?.tags?.includes('shower:no-cover') ? '' : previewItem
           ? previewItem.cover || (previewItem.media && previewItem.media[0] ? previewItem.media[0].link : '')
           : '';
 
@@ -215,27 +218,27 @@ export async function POST(req: NextRequest) {
           style_reference_links,
         };
       });
-    } else {
-      // Fallback in case raindrops were added directly into "More styles" collection
+    }
+
+    // Keep legacy loose styles visible alongside packs created from loose styles.
+    for (let page = 0; ; page++) {
       const directRes = await fetch(
-        `https://api.raindrop.io/rest/v1/raindrops/${moreStylesId}?perpage=50`,
+        `https://api.raindrop.io/rest/v1/raindrops/${moreStylesId}?perpage=50&page=${page}`,
         { headers }
       );
-      if (directRes.ok) {
-        const directData = await directRes.json();
-        const items = directData.items || [];
-        if (items.length > 0) {
-          styles = items.map((item: any) => ({
-            id: item._id,
-            title: item.title || 'Untitled Style',
-            style_prompt_raindrop_id: String(item._id),
-            style_prompt: item.excerpt || item.title || '',
-            extra_style_instruction: item.note || '',
-            preview_cover: item.cover || (item.media && item.media[0] ? item.media[0].link : ''),
-            style_reference_links: [],
-          }));
-        }
-      }
+      if (!directRes.ok) throw new Error('Could not read individual styles from More styles.');
+      const directData = await directRes.json();
+      const items = directData.items || [];
+      styles.push(...items.map((item: any) => ({
+        id: item._id,
+        title: item.title || 'Untitled Style',
+        style_prompt_raindrop_id: String(item._id),
+        style_prompt: item.excerpt || item.title || '',
+        extra_style_instruction: item.note || '',
+        preview_cover: item.tags?.includes('shower:no-cover') ? '' : item.cover || item.media?.[0]?.link || '',
+        style_reference_links: [],
+      })));
+      if (items.length < 50) break;
     }
 
     return NextResponse.json({
