@@ -25,14 +25,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
-import { Preset, Character, StylePack, PresetModalInitialValues, PresetFormData } from '../types';
-
-const MODEL_OPTIONS = [
-  { value: 'GPT 2.5 Sunburst', label: 'GPT 2.5 Sunburst' },
-  { value: 'GPT 2.5 Flare', label: 'GPT 2.5 Flare' },
-  { value: 'Gemini 3.1 Flash', label: 'Gemini 3.1 Flash' },
-  { value: 'Gemini 3.1 Flash Lite', label: 'Gemini 3.1 Flash Lite' },
-];
+import { Preset, Character, StylePack, PresetModalInitialValues, PresetFormData, MODEL_OPTIONS } from '../types';
 
 const ASPECT_RATIO_OPTIONS = [
   { value: 'Auto', label: 'Auto' },

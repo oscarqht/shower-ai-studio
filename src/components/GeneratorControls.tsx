@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Check, Copy, ExternalLink, Sparkles, BookmarkPlus } from 'lucide-react';
-import { Character, StylePack, Preset } from '../types';
+import { Character, StylePack, Preset, MODEL_OPTIONS } from '../types';
 import { FinalPromptModal } from './FinalPromptModal';
 
 interface GeneratorControlsProps {
@@ -29,13 +29,6 @@ interface GeneratorControlsProps {
     characterNames?: string[];
   }) => void;
 }
-
-const MODEL_OPTIONS = [
-  { value: 'GPT 2.5 Sunburst', label: 'GPT 2.5 Sunburst' },
-  { value: 'GPT 2.5 Flare', label: 'GPT 2.5 Flare' },
-  { value: 'Gemini 3.1 Flash', label: 'Gemini 3.1 Flash' },
-  { value: 'Gemini 3.1 Flash Lite', label: 'Gemini 3.1 Flash Lite' },
-];
 
 const ASPECT_RATIOS = [
   { value: 'Auto', label: 'Auto' },

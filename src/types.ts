@@ -70,8 +70,7 @@ export interface ModelOption {
 export const MODEL_OPTIONS: ModelOption[] = [
   { value: 'GPT 2.5 Sunburst', label: 'GPT 2.5 Sunburst' },
   { value: 'GPT 2.5 Flare', label: 'GPT 2.5 Flare' },
-  { value: 'Gemini 3.1 Flash', label: 'Gemini 3.1 Flash' },
-  { value: 'Gemini 3.1 Flash Lite', label: 'Gemini 3.1 Flash Lite' },
+  { value: 'Nano banana 2.1', label: 'Nano banana 2.1' },
 ];
 
 export interface WorkflowInfo {
