@@ -11,6 +11,7 @@ import { GeneratorControls } from '@/components/GeneratorControls';
 import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues, PresetFormData, SaveStyle } from '@/types';
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
 import { getCharacterAddOns } from '@/lib/characterNote';
+import { saveStyle as persistStyle } from '@/lib/saveStyle';
 
 const SETTINGS_STORAGE_KEY = 'raindrop_ai_studio_settings_v1';
 const INPUTS_STORAGE_KEY = 'raindrop_ai_studio_last_inputs_v1';
@@ -565,23 +566,10 @@ export default function Home() {
   const saveStyle: SaveStyle = async (source, mode, fields) => {
     const connected = Boolean(settings.raindropToken?.trim() || hasEnvToken);
     if (!connected) throw new Error('Connect Raindrop in Settings before saving a style.');
-    const { imageFiles, ...payload } = fields;
-    const send = (token: string) => {
-      const formData = new FormData();
-      formData.set('payload', JSON.stringify({ token: token || undefined, source, mode, ...payload }));
-      for (const [key, file] of Object.entries(imageFiles || {})) formData.append(key, file);
-      return fetch('/api/raindrop/style', { method: 'POST', body: formData });
-    };
-    let response = await send(settings.raindropToken);
-    if (response.status === 401 && settings.raindropRefreshToken && (await response.clone().json()).retrySafe !== false) {
-      const token = await refreshRaindropToken();
-      if (token) response = await send(token);
-    }
-    const data = await response.json();
-    if (!response.ok || data.status !== 'success' || !data.style) {
-      throw new Error(formatErrorMessage(data.message) || 'Could not save style to Raindrop.');
-    }
-    const saved: StylePack = data.style;
+    const saved = await persistStyle(source, mode, fields, {
+      token: settings.raindropToken || '',
+      refreshToken: settings.raindropRefreshToken ? refreshRaindropToken : undefined,
+    });
     if (mode === 'edit' && String(saved.id) !== String(source.id)) {
       setSelectedStyleId(current => String(current) === String(source.id) ? saved.id : current);
     }
