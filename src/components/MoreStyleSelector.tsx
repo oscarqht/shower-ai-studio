@@ -1,25 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { StyleDetailsModal } from './StyleDetailsModal';
 import {
   ChevronDown,
   ChevronRight,
   RotateCw,
-  Check,
-  X,
   Image as ImageIcon,
   Info,
-  Copy,
-  ArrowUpRight,
   Sparkles,
   AlertCircle,
 } from 'lucide-react';
-import { StylePack } from '../types';
+import { StylePack, SaveStyle } from '../types';
 
 export const MORE_STYLES_CACHE_STORAGE_KEY = 'shower_studio_more_styles_cache_v1';
 
 interface MoreStyleSelectorProps {
+  onSaveStyle: SaveStyle;
   selectedStyleId: string | number | null;
   onSelectStyle: (styleId: string | number | null) => void;
   raindropToken?: string;
@@ -28,6 +25,7 @@ interface MoreStyleSelectorProps {
 }
 
 export const MoreStyleSelector: React.FC<MoreStyleSelectorProps> = ({
+  onSaveStyle,
   selectedStyleId,
   onSelectStyle,
   raindropToken,
@@ -66,25 +64,13 @@ export const MoreStyleSelector: React.FC<MoreStyleSelectorProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [inspectStyle, setInspectStyle] = useState<StylePack | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [copiedTitle, setCopiedTitle] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Inform parent of current more styles so it can resolve selectedStyle & presets
   useEffect(() => {
-    if (styles.length > 0 && onStylesLoaded) {
+    if (onStylesLoaded) {
       onStylesLoaded(styles);
     }
   }, [styles, onStylesLoaded]);
-
-  const handleCopyTitle = (title: string) => {
-    navigator.clipboard.writeText(title);
-    setCopiedTitle(true);
-    setTimeout(() => setCopiedTitle(false), 2000);
-  };
 
   const fetchMoreStyles = async (force: boolean = false) => {
     if (!hasRaindropToken) {
@@ -345,121 +331,33 @@ export const MoreStyleSelector: React.FC<MoreStyleSelectorProps> = ({
         </div>
       )}
 
-      {/* Style Inspection Modal */}
-      {inspectStyle && mounted &&
-        createPortal(
-          <div
-            onClick={() => setInspectStyle(null)}
-            className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#FFFDFA] dark:bg-[#1C1916] border border-transparent dark:border-[#2E2924] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto"
-            >
-              <div className="flex items-start gap-3.5 mb-1.5">
-                <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">{inspectStyle.title}</h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleCopyTitle(inspectStyle.title)}
-                    title="Copy style pack name"
-                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#2E2924] transition-colors cursor-pointer"
-                  >
-                    {copiedTitle ? <Check className="w-4 h-4 text-[#3F6B2F] dark:text-[#8FA87F]" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                  <a
-                    href={`https://app.raindrop.io/my/${inspectStyle.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Open in Raindrop.io"
-                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#2E2924] transition-colors"
-                  >
-                    <ArrowUpRight className="w-4 h-4" />
-                  </a>
-                  <button
-                    onClick={() => setInspectStyle(null)}
-                    title="Close"
-                    className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#25211D] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center hover:bg-[#EAE1D3] dark:hover:bg-[#2E2924] transition-colors cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
-                Browsing here never changes your current selection.
-              </p>
-
-              <div className="flex flex-col gap-4">
-                {inspectStyle.preview_cover && (
-                  <div className="rounded-2xl overflow-hidden bg-[#EFE6DA] dark:bg-[#25211D] max-h-56">
-                    <img
-                      src={inspectStyle.preview_cover}
-                      alt={inspectStyle.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-
-                {inspectStyle.style_reference_links && inspectStyle.style_reference_links.length > 0 && (
-                  <div>
-                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">
-                      Reference images
-                    </div>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {inspectStyle.style_reference_links.map((link, idx) => (
-                        <div key={idx} className="aspect-square rounded-xl overflow-hidden bg-[#EFE6DA] dark:bg-[#25211D]">
-                          <img
-                            src={link}
-                            alt={`Reference ${idx + 1}`}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3.5">
-                  <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">
-                    Style prompt
-                  </div>
-                  <div className="text-[14.5px] leading-[1.6] text-[#4F4740] dark:text-[#D5CCC3] whitespace-pre-wrap">
-                    {inspectStyle.style_prompt || 'No style prompt defined.'}
-                  </div>
-                </div>
-
-                {inspectStyle.extra_style_instruction && (
-                  <div className="rounded-2xl bg-[#FAF5EE] dark:bg-[#25211D] border border-transparent dark:border-[#2E2924] px-4 py-3.5">
-                    <div className="font-mono text-[10.5px] tracking-[0.14em] uppercase text-[#A08F80] dark:text-[#8C8074] mb-2">
-                      Extra instructions
-                    </div>
-                    <div className="text-[14.5px] leading-[1.6] text-[#4F4740] dark:text-[#D5CCC3]">
-                      {inspectStyle.extra_style_instruction}
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => {
-                    onSelectStyle(inspectStyle.id);
-                    setInspectStyle(null);
-                  }}
-                  className="self-start flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer"
-                >
-                  {selectedStyleId === inspectStyle.id ? (
-                    <>
-                      <Check className="w-4 h-4" /> Already selected
-                    </>
-                  ) : (
-                    'Use this style'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {inspectStyle && (
+        <StyleDetailsModal
+          key={inspectStyle.id}
+          style={inspectStyle}
+          selectedStyleId={selectedStyleId}
+          onClose={() => setInspectStyle(null)}
+          onSelectStyle={onSelectStyle}
+          onSave={async (source, mode, fields) => {
+            const saved = await onSaveStyle(source, mode, fields);
+            const updated = mode === 'copy'
+              ? [...styles, saved]
+              : styles.map((item) => String(item.id) === String(source.id) ? saved : item);
+            setStyles(updated);
+            setHasFetchedOnce(true);
+            onStylesLoaded?.(updated);
+            try {
+              localStorage.setItem(MORE_STYLES_CACHE_STORAGE_KEY, JSON.stringify({
+                styles: updated, hasFetchedOnce: true, savedAt: Date.now(),
+              }));
+            } catch (error) {
+              console.error('Failed to cache saved style:', error);
+            }
+            setInspectStyle(saved);
+            return saved;
+          }}
+        />
+      )}
     </section>
   );
 };
