@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const { File } = require('node:buffer');
 
-const sourceCode = ts.transpileModule(fs.readFileSync('src/app/api/raindrop/style/route.ts', 'utf8'), {
+const sourceCode = ts.transpileModule(fs.readFileSync('src/lib/saveRaindropStyle.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const collections = [{ _id: 1, title: 'Shower' }, { _id: 2, title: 'Styles', parent: { $id: 1 } },
@@ -18,8 +18,10 @@ function harness(overrides = {}) {
   const exports = {};
   const fetch = async (url, init) => {
     const path = url.replace('https://api.raindrop.io/rest/v1', '');
-    const call = { path, method: init.method, body: init.body instanceof FormData ? init.body : init.body ? JSON.parse(init.body) : undefined };
+    const call = { path, method: init.method, headers: init.headers, body: init.body instanceof FormData ? init.body : init.body ? JSON.parse(init.body) : undefined };
     calls.push(call);
+    const customResponse = overrides.response?.(call, calls);
+    if (customResponse) return customResponse;
     let data = overrides.reply?.(call, calls);
     if (data === undefined) {
       if (path === '/collections') data = { items: collections };
@@ -33,10 +35,7 @@ function harness(overrides = {}) {
     }
     return { ok: !data.httpError, status: data.httpError || 200, json: async () => data };
   };
-  vm.runInNewContext(sourceCode, { exports, require: name => {
-    assert.equal(name, 'next/server');
-    return { NextResponse: { json: (data, options = {}) => ({ data, status: options.status || 200 }) } };
-  }, fetch, FormData, URL, process: { env: {} }, console });
+  vm.runInNewContext(sourceCode, { exports, fetch: () => { throw new Error('Use injected fetch'); }, FormData, URL, Response, console });
   return { calls, save: async (fields = {}, uploads) => {
     const body = {
       token: 'test-only', source: { id: 4, style_prompt_raindrop_id: 10 }, mode: 'copy',
@@ -48,8 +47,12 @@ function harness(overrides = {}) {
       form.set('payload', JSON.stringify(body));
       for (const [key, file] of Object.entries(uploads)) form.set(key, file);
     }
-    return exports.POST({ json: async () => body, formData: async () => form,
-      headers: new Headers(form ? { 'content-type': 'multipart/form-data; boundary=test' } : {}) });
+    const req = new Request('https://studio.test/api/raindrop/style', {
+      method: 'POST', body: form || JSON.stringify(body),
+      ...(!form ? { headers: { 'Content-Type': 'application/json' } } : {}),
+    });
+    const response = await exports.saveRaindropStyle(req, fetch, overrides.fallbackToken);
+    return { status: response.status, data: await response.json() };
   } };
 }
 
@@ -294,4 +297,89 @@ test('failed legacy conversion retains old loose bookmark and cleans only new co
   const result = await save({ mode: 'edit', source: { id: 30 }, references: ['https://images.test/new-reference'] });
   assert.equal(result.status, 429);
   assert.deepEqual(calls.filter(call => call.method === 'DELETE').map(call => call.path), ['/collection/100']);
+});
+
+test('universal service uploads 6 MB image through injected upstream fetch without framework globals', async () => {
+  const { save, calls } = harness();
+  const coverFile = new File([new Uint8Array(6 * 1024 * 1024)], 'large.png', { type: 'image/png' });
+  const result = await save({ mode: 'edit', cover: { fileKey: 'large' } }, { large: coverFile });
+  assert.equal(result.status, 200);
+  const upload = calls.find(call => call.path === '/raindrop/file');
+  assert.equal(upload.body.get('file').size, coverFile.size);
+  assert.equal(upload.headers.Authorization, 'Bearer test-only');
+});
+
+test('explicit fallback token supports server requests without body token', async () => {
+  const { save, calls } = harness({ fallbackToken: ' server-token ' });
+  assert.equal((await save({ token: undefined, mode: 'edit' })).status, 200);
+  assert.equal(calls.every(call => call.headers.Authorization === 'Bearer server-token'), true);
+});
+
+test('browser service without a token returns actionable error before upstream fetch', async () => {
+  const { save, calls } = harness();
+  const result = await save({ token: undefined });
+  assert.equal(result.status, 400);
+  assert.match(result.data.message, /token is missing/i);
+  assert.equal(calls.length, 0);
+});
+
+test('authorization failure before mutation retains status and safe token refresh retry', async () => {
+  const { save, calls } = harness({ reply: call => call.path === '/collections'
+    ? { result: false, httpError: 401, errorMessage: 'Do not echo secret test-only' } : undefined });
+  const result = await save();
+  assert.equal(result.status, 401);
+  assert.equal(result.data.retrySafe, true);
+  assert.equal(calls.every(call => call.method === 'GET'), true);
+  assert.equal(result.data.message.includes('test-only'), false);
+});
+
+test('server route passes request, fetch and environment token to universal service', async () => {
+  const wrapperCode = ts.transpileModule(fs.readFileSync('src/app/api/raindrop/style/route.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const exports = {};
+  const req = new Request('https://studio.test/api/raindrop/style', { method: 'POST', body: '{}' });
+  const upstream = async () => { throw new Error('Unused'); };
+  const response = Response.json({ status: 'success' });
+  vm.runInNewContext(wrapperCode, { exports, fetch: upstream, process: { env: { RAINDROP_TOKEN: 'server-only' } },
+    require: name => {
+      assert.equal(name, '@/lib/saveRaindropStyle');
+      return { saveRaindropStyle: (input, injectedFetch, fallbackToken) => {
+        assert.equal(input, req);
+        assert.equal(injectedFetch, upstream);
+        assert.equal(fallbackToken, 'server-only');
+        return response;
+      } };
+    } });
+  assert.equal(await exports.POST(req), response);
+});
+
+test('plain text 413 upload error preserves status and gives clear message without source mutation', async () => {
+  const { save, calls } = harness({ response: call => call.path === '/raindrop/file'
+    ? new Response('Request Entity Too Large: private upstream details', { status: 413 }) : undefined });
+  const result = await save({ mode: 'edit', cover: { fileKey: 'coverFile' } }, { coverFile: png() });
+  assert.equal(result.status, 413);
+  assert.equal(result.data.message, 'Raindrop rejected this image upload as too large.');
+  assert.equal(result.data.retrySafe, false);
+  assert.equal(calls.some(call => call.method === 'DELETE'), false);
+  assert.equal(calls.some(call => ['/raindrop/10', '/raindrop/11'].includes(call.path)), false);
+});
+
+test('plain text unauthorized response allows refresh before any mutation without echoing response text', async () => {
+  const { save } = harness({ response: call => call.path === '/collections'
+    ? new Response('Unauthorized token test-only', { status: 401 }) : undefined });
+  const result = await save();
+  assert.equal(result.status, 401);
+  assert.equal(result.data.retrySafe, true);
+  assert.equal(result.data.message.includes('test-only'), false);
+});
+
+test('HTML success response is rejected with generic 502 error and no HTML or secret text', async () => {
+  const { save } = harness({ response: call => call.path === '/collections'
+    ? new Response('<html>private upstream token test-only</html>', { status: 200 }) : undefined });
+  const result = await save();
+  assert.equal(result.status, 502);
+  assert.equal(result.data.retrySafe, true);
+  assert.equal(result.data.message.includes('test-only'), false);
+  assert.equal(result.data.message.includes('<html>'), false);
 });
