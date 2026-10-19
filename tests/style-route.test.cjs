@@ -15,6 +15,13 @@ const reference = { _id: 11, title: 'reference-1.png', link: 'https://images.tes
 function harness(overrides = {}) {
   const calls = [];
   let nextId = 100;
+  const savedCollections = new Map(collections.map(item => [item._id, structuredClone(item)]));
+  const savedItems = new Map([
+    [10, { ...preview, collection: { $id: 4 } }],
+    [11, { ...reference, collection: { $id: 4 } }],
+    [30, { ...preview, _id: 30, title: 'Loose', collection: { $id: 3 } }],
+  ]);
+  const loadedCollections = new Set();
   const exports = {};
   const fetch = async (url, init) => {
     const path = url.replace('https://api.raindrop.io/rest/v1', '');
@@ -22,16 +29,59 @@ function harness(overrides = {}) {
     calls.push(call);
     const customResponse = overrides.response?.(call, calls);
     if (customResponse) return customResponse;
-    let data = overrides.reply?.(call, calls);
+    const listing = path.match(/^\/raindrops\/(\d+)\?/);
+    const listingId = listing ? Number(listing[1]) : undefined;
+    let data = listing && loadedCollections.has(listingId) ? undefined : overrides.reply?.(call, calls);
+    if (data && listing && !data.httpError) {
+      const page = Number(new URL(url).searchParams.get('page') || 0);
+      if (page === 0) for (const [id, item] of savedItems) if (item.collection.$id === listingId) savedItems.delete(id);
+      for (const item of data.items) savedItems.set(item._id, { ...item, collection: { $id: listingId } });
+      if (data.items.length < 50) loadedCollections.add(listingId);
+    }
     if (data === undefined) {
-      if (path === '/collections') data = { items: collections };
+      if (path === '/collections') data = { items: [...savedCollections.values()] };
       else if (path === '/collections/childrens') data = { items: [] };
-      else if (path.startsWith('/raindrops/4?')) data = { items: [preview, reference] };
-      else if (path.startsWith('/raindrops/3?')) data = { items: [{ ...preview, _id: 30, title: 'Loose', collection: { $id: 3 } }] };
-      else if (path === '/raindrop/file') data = { result: true, item: { _id: nextId++, link: 'https://images.test/upload', cover: 'https://images.test/upload', collection: { $id: Number(call.body.get('collectionId')) } } };
-      else if (call.method === 'POST' || call.method === 'PUT') data = { result: true, item: { _id: call.method === 'PUT' ? Number(path.split('/').pop()) : nextId++, ...call.body } };
-      else if (call.method === 'DELETE') data = { result: true };
-      else throw new Error(`Unexpected request ${path}`);
+      else if (listing) {
+        const page = Number(new URL(url).searchParams.get('page') || 0);
+        const items = [...savedItems.values()].filter(item => item.collection.$id === listingId).slice(page * 50, page * 50 + 50);
+        data = { items };
+        if (items.length < 50) loadedCollections.add(listingId);
+      } else if (path === '/raindrop/file') {
+        const item = { _id: nextId++, link: 'https://images.test/upload', cover: 'https://images.test/upload', collection: { $id: Number(call.body.get('collectionId')) } };
+        savedItems.set(item._id, item);
+        data = { result: true, item };
+      } else if (path === '/raindrop' && call.method === 'POST') {
+        const item = { _id: nextId++, ...call.body };
+        savedItems.set(item._id, item);
+        data = { result: true, item };
+      } else if (path === '/collection' && call.method === 'POST') {
+        const item = { _id: nextId++, ...call.body };
+        savedCollections.set(item._id, item);
+        data = { result: true, item };
+      } else if (path.startsWith('/raindrop/')) {
+        const id = Number(path.split('/').pop());
+        if (call.method === 'GET') data = { result: true, item: savedItems.get(id) };
+        else if (call.method === 'PUT') {
+          const item = { ...savedItems.get(id), ...call.body };
+          savedItems.set(id, item);
+          data = { result: true, item };
+        } else if (call.method === 'DELETE') {
+          savedItems.delete(id);
+          data = { result: true };
+        }
+      } else if (path.startsWith('/collection/')) {
+        const id = Number(path.split('/').pop());
+        if (call.method === 'GET') data = { result: true, item: savedCollections.get(id) };
+        else if (call.method === 'PUT') {
+          const item = { ...savedCollections.get(id), ...call.body };
+          savedCollections.set(id, item);
+          data = { result: true, item };
+        } else if (call.method === 'DELETE') {
+          savedCollections.delete(id);
+          for (const [key, item] of savedItems) if (item.collection.$id === id) savedItems.delete(key);
+          data = { result: true };
+        }
+      } else throw new Error(`Unexpected request ${path}`);
     }
     return { ok: !data.httpError, status: data.httpError || 200, json: async () => data };
   };
@@ -77,7 +127,7 @@ test('copy creates independent bookmarks and retains references and preview meta
 test('copy fetches all pages before writing', async () => {
   const firstPage = Array.from({ length: 50 }, (_, i) => ({ ...reference, _id: 10 + i, title: i ? `reference-${i}.png` : 'preview' }));
   const { save, calls } = harness({ reply: call => call.path.startsWith('/raindrops/4?')
-    ? { items: call.path.endsWith('page=0') ? firstPage : [reference] } : undefined });
+    ? { items: call.path.endsWith('page=0') ? firstPage : [{ ...reference, _id: 1000 }] } : undefined });
   assert.equal((await save()).status, 200);
   assert.equal(calls.filter(call => call.path === '/raindrop' && call.method === 'POST').length, 51);
   assert.equal(calls.some(call => call.path.endsWith('page=1')), true);
@@ -228,8 +278,8 @@ test('legacy reference edit converts into collection and deletes loose item only
   assert.equal(result.data.style.style_prompt_raindrop_id, '101');
   assert.deepEqual(Array.from(result.data.style.style_reference_links), ['https://images.test/new-reference']);
   assert.equal(calls.find(call => call.path === '/collection').body.parent.$id, 3);
-  assert.equal(calls.at(-1).method, 'DELETE');
-  assert.equal(calls.at(-1).path, '/raindrop/30');
+  assert.equal(calls.filter(call => call.method !== 'GET').at(-1).method, 'DELETE');
+  assert.equal(calls.filter(call => call.method !== 'GET').at(-1).path, '/raindrop/30');
 });
 
 test('fallback reference-as-preview remains a reference when replacing the cover', async () => {
@@ -286,8 +336,8 @@ test('loose cover file edit returns new bookmark ID and removes old only after s
   assert.equal(result.status, 200);
   assert.equal(result.data.style.id, 100);
   assert.equal(calls.find(call => call.path === '/raindrop/file').body.get('collectionId'), '3');
-  assert.equal(calls.at(-1).path, '/raindrop/30');
-  assert.equal(calls.at(-1).method, 'DELETE');
+  assert.equal(calls.filter(call => call.method !== 'GET').at(-1).path, '/raindrop/30');
+  assert.equal(calls.filter(call => call.method !== 'GET').at(-1).method, 'DELETE');
   assert.equal(calls.some(call => call.path === '/collection'), false);
 });
 
