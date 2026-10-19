@@ -205,16 +205,19 @@ export async function POST(req: NextRequest) {
         const chunk = stylePackCollections.slice(i, i + chunkSize);
         const chunkPromises = chunk.map(async (spCol) => {
           try {
-            const spRes = await fetch(
-              `https://api.raindrop.io/rest/v1/raindrops/${spCol._id}?perpage=50`,
-              { headers }
-            );
-            if (!spRes.ok) return null;
-            const spData = await spRes.json();
-            return {
-              col: spCol,
-              items: spData.items || [],
-            };
+            const items: any[] = [];
+            for (let page = 0; ; page++) {
+              const spRes = await fetch(
+                `https://api.raindrop.io/rest/v1/raindrops/${spCol._id}?perpage=50&page=${page}`,
+                { headers }
+              );
+              if (!spRes.ok) return null;
+              const spData = await spRes.json();
+              const batch = spData.items || [];
+              items.push(...batch);
+              if (batch.length < 50) break;
+            }
+            return { col: spCol, items };
           } catch (e) {
             console.error(`Failed to fetch items for style collection ${spCol.title}:`, e);
             return null;
@@ -236,7 +239,7 @@ export async function POST(req: NextRequest) {
         const refItems = items.filter((item: any) => {
           if (!item.title) return false;
           const title = item.title.trim().toLowerCase();
-          return title.startsWith('reference-') && (title.endsWith('.jpg') || title.endsWith('.jpeg') || title.endsWith('.png') || title.endsWith('.webp') || !title.includes('.'));
+          return title.startsWith('reference-') && (title.endsWith('.jpg') || title.endsWith('.jpeg') || title.endsWith('.png') || title.endsWith('.webp') || title.endsWith('.gif') || !title.includes('.'));
         });
 
         refItems.sort((a: any, b: any) => {
@@ -248,7 +251,7 @@ export async function POST(req: NextRequest) {
         const style_prompt_raindrop_id = previewItem ? String(previewItem._id) : '';
         const style_prompt = previewItem ? (previewItem.excerpt || previewItem.title || '') : '';
         const extra_style_instruction = previewItem ? (previewItem.note || '') : '';
-        const preview_cover = previewItem
+        const preview_cover = previewItem?.tags?.includes('shower:no-cover') ? '' : previewItem
           ? (previewItem.cover || (previewItem.media && previewItem.media[0] ? previewItem.media[0].link : ''))
           : '';
 

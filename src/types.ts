@@ -19,7 +19,12 @@ export interface StylePack {
   style_reference_links: string[];
 }
 
-export type StyleEditFields = Pick<StylePack, 'title' | 'style_prompt' | 'extra_style_instruction'>;
+export type StyleImageInput = string | { fileKey: string };
+export type StyleEditFields = Pick<StylePack, 'title' | 'style_prompt' | 'extra_style_instruction'> & {
+  cover?: StyleImageInput | null;
+  references?: StyleImageInput[];
+  imageFiles?: Record<string, File>;
+};
 export type SaveStyle = (source: StylePack, mode: 'copy' | 'edit', fields: StyleEditFields) => Promise<StylePack>;
 
 export interface Preset {

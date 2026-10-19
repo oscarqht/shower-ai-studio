@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
+const { File } = require('node:buffer');
 
 const sourceCode = ts.transpileModule(fs.readFileSync('src/app/api/raindrop/style/route.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -17,7 +18,7 @@ function harness(overrides = {}) {
   const exports = {};
   const fetch = async (url, init) => {
     const path = url.replace('https://api.raindrop.io/rest/v1', '');
-    const call = { path, method: init.method, body: init.body ? JSON.parse(init.body) : undefined };
+    const call = { path, method: init.method, body: init.body instanceof FormData ? init.body : init.body ? JSON.parse(init.body) : undefined };
     calls.push(call);
     let data = overrides.reply?.(call, calls);
     if (data === undefined) {
@@ -25,6 +26,7 @@ function harness(overrides = {}) {
       else if (path === '/collections/childrens') data = { items: [] };
       else if (path.startsWith('/raindrops/4?')) data = { items: [preview, reference] };
       else if (path.startsWith('/raindrops/3?')) data = { items: [{ ...preview, _id: 30, title: 'Loose', collection: { $id: 3 } }] };
+      else if (path === '/raindrop/file') data = { result: true, item: { _id: nextId++, link: 'https://images.test/upload', cover: 'https://images.test/upload', collection: { $id: Number(call.body.get('collectionId')) } } };
       else if (call.method === 'POST' || call.method === 'PUT') data = { result: true, item: { _id: call.method === 'PUT' ? Number(path.split('/').pop()) : nextId++, ...call.body } };
       else if (call.method === 'DELETE') data = { result: true };
       else throw new Error(`Unexpected request ${path}`);
@@ -34,11 +36,21 @@ function harness(overrides = {}) {
   vm.runInNewContext(sourceCode, { exports, require: name => {
     assert.equal(name, 'next/server');
     return { NextResponse: { json: (data, options = {}) => ({ data, status: options.status || 200 }) } };
-  }, fetch, process: { env: {} }, console });
-  return { calls, save: async (fields = {}) => exports.POST({ json: async () => ({
-    token: 'test-only', source: { id: 4, style_prompt_raindrop_id: 10 }, mode: 'copy',
-    title: 'Changed', style_prompt: 'New', extra_style_instruction: '', ...fields,
-  }), headers: new Headers() }) };
+  }, fetch, FormData, URL, process: { env: {} }, console });
+  return { calls, save: async (fields = {}, uploads) => {
+    const body = {
+      token: 'test-only', source: { id: 4, style_prompt_raindrop_id: 10 }, mode: 'copy',
+      title: 'Changed', style_prompt: 'New', extra_style_instruction: '', ...fields,
+    };
+    let form;
+    if (uploads) {
+      form = new FormData();
+      form.set('payload', JSON.stringify(body));
+      for (const [key, file] of Object.entries(uploads)) form.set(key, file);
+    }
+    return exports.POST({ json: async () => body, formData: async () => form,
+      headers: new Headers(form ? { 'content-type': 'multipart/form-data; boundary=test' } : {}) });
+  } };
 }
 
 test('copy creates independent bookmarks and retains references and preview metadata', async () => {
@@ -114,4 +126,172 @@ test('rejects blank prompt and oversized name before accessing Raindrop', async 
   assert.equal((await save({ style_prompt: '  ' })).status, 400);
   assert.equal((await save({ title: 'x'.repeat(256) })).status, 400);
   assert.equal(calls.length, 0);
+});
+
+const png = () => new File([Buffer.from([137, 80, 78, 71])], 'cover.png', { type: 'image/png' });
+
+test('cover upload is saved before original preview deletion and preserves prompt and tags', async () => {
+  const { save, calls } = harness();
+  const result = await save({ mode: 'edit', cover: { fileKey: 'coverFile' } }, { coverFile: png() });
+  assert.equal(result.status, 200);
+  assert.equal(result.data.style.style_prompt_raindrop_id, '100');
+  assert.equal(result.data.style.preview_cover, 'https://images.test/upload');
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), [reference.cover]);
+  const uploadIndex = calls.findIndex(call => call.path === '/raindrop/file');
+  const metadataIndex = calls.findIndex(call => call.path === '/raindrop/100');
+  const deleteIndex = calls.findIndex(call => call.path === '/raindrop/10' && call.method === 'DELETE');
+  assert.ok(uploadIndex >= 0 && metadataIndex > uploadIndex && deleteIndex > metadataIndex);
+  assert.equal(calls[uploadIndex].body.get('collectionId'), '4');
+  assert.deepEqual(calls[metadataIndex].body.tags, ['original']);
+  assert.equal(calls[metadataIndex].body.excerpt, 'New');
+});
+
+test('cover removal persists marker and clears cover and media while retaining references', async () => {
+  const { save, calls } = harness();
+  const result = await save({ mode: 'edit', cover: null });
+  assert.equal(result.status, 200);
+  assert.equal(result.data.style.preview_cover, '');
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), [reference.cover]);
+  const metadata = calls.find(call => call.path === '/raindrop/10').body;
+  assert.deepEqual(metadata.tags, ['original', 'shower:no-cover']);
+  assert.equal(metadata.cover, '');
+  assert.deepEqual(metadata.media, []);
+});
+
+test('URL cover replacement clears no-cover marker and preserves other tags', async () => {
+  const { save, calls } = harness({ reply: call => call.path.startsWith('/raindrops/4?')
+    ? { items: [{ ...preview, tags: ['original', 'shower:no-cover'] }, reference] } : undefined });
+  const result = await save({ mode: 'edit', cover: 'https://images.test/replaced' });
+  assert.equal(result.status, 200);
+  assert.equal(result.data.style.preview_cover, 'https://images.test/replaced');
+  assert.deepEqual(calls.find(call => call.path === '/raindrop/10').body.tags, ['original']);
+});
+
+test('reference replacement retains matched bookmark and uploads before deleting removed bookmark', async () => {
+  const secondRef = { ...reference, _id: 12, title: 'reference-2.jpg', cover: 'https://images.test/second' };
+  const { save, calls } = harness({ reply: call => call.path.startsWith('/raindrops/4?')
+    ? { items: [preview, reference, secondRef] } : undefined });
+  const result = await save({ mode: 'edit', references: [secondRef.cover, { fileKey: 'added' }] }, { added: png() });
+  assert.equal(result.status, 200);
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), [secondRef.cover, 'https://images.test/upload']);
+  assert.ok(calls.findIndex(call => call.path === '/raindrop/file') < calls.findIndex(call => call.path === '/raindrop/11' && call.method === 'DELETE'));
+  assert.equal(calls.some(call => call.path === '/raindrop/12' && call.method === 'DELETE'), false);
+  assert.equal(calls.find(call => call.path === '/raindrop/12').body.title, 'reference-1.jpg');
+});
+
+test('clearing references deletes references but preserves unrelated bookmarks and preview', async () => {
+  const { save, calls } = harness({ reply: call => call.path.startsWith('/raindrops/4?')
+    ? { items: [preview, reference, { _id: 13, title: 'Extra context', link: 'https://context.test' }] } : undefined });
+  const result = await save({ mode: 'edit', references: [] });
+  assert.equal(result.status, 200);
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), []);
+  assert.deepEqual(calls.filter(call => call.method === 'DELETE').map(call => call.path), ['/raindrop/11']);
+});
+
+test('copy with uploaded cover and references never updates or deletes source bookmarks', async () => {
+  const { save, calls } = harness();
+  const result = await save({ cover: { fileKey: 'coverFile' }, references: [{ fileKey: 'refFile' }] },
+    { coverFile: png(), refFile: png() });
+  assert.equal(result.status, 200);
+  assert.equal(result.data.style.id, 100);
+  assert.equal(calls.some(call => ['/raindrop/10', '/raindrop/11', '/collection/4'].includes(call.path) && call.method !== 'GET'), false);
+  assert.equal(calls.filter(call => call.path === '/raindrop/file').every(call => call.body.get('collectionId') === '100'), true);
+});
+
+test('failed upload leaves original cover and references intact', async () => {
+  const { save, calls } = harness({ reply: call => call.path === '/raindrop/file'
+    ? { result: false, httpError: 429 } : undefined });
+  const result = await save({ mode: 'edit', cover: { fileKey: 'coverFile' }, references: [] }, { coverFile: png() });
+  assert.equal(result.status, 429);
+  assert.equal(calls.some(call => call.method === 'DELETE'), false);
+  assert.equal(calls.some(call => ['/raindrop/10', '/raindrop/11'].includes(call.path)), false);
+});
+
+test('invalid image input is refused before any external requests', async () => {
+  const { save, calls } = harness();
+  assert.equal((await save({ references: [null] })).status, 400);
+  assert.equal((await save({ cover: 'data:image/png;base64,bad' })).status, 400);
+  assert.equal((await save({ cover: { fileKey: 'missing' } }, {})).status, 400);
+  assert.equal((await save({ cover: { fileKey: 'bad' } }, { bad: new File(['x'], 'text.txt', { type: 'text/plain' }) })).status, 400);
+  assert.equal((await save({ references: Array(51).fill('https://images.test/ref') })).status, 400);
+  assert.equal(calls.length, 0);
+});
+
+test('legacy reference edit converts into collection and deletes loose item only after completed writes', async () => {
+  const { save, calls } = harness();
+  const result = await save({ mode: 'edit', source: { id: 30 }, references: ['https://images.test/new-reference'] });
+  assert.equal(result.status, 200);
+  assert.equal(result.data.style.id, 100);
+  assert.equal(result.data.style.style_prompt_raindrop_id, '101');
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), ['https://images.test/new-reference']);
+  assert.equal(calls.find(call => call.path === '/collection').body.parent.$id, 3);
+  assert.equal(calls.at(-1).method, 'DELETE');
+  assert.equal(calls.at(-1).path, '/raindrop/30');
+});
+
+test('fallback reference-as-preview remains a reference when replacing the cover', async () => {
+  const { save, calls } = harness({ reply: call => call.path.startsWith('/raindrops/4?')
+    ? { items: [reference] } : undefined });
+  const result = await save({ mode: 'edit', cover: { fileKey: 'coverFile' }, source: { id: 4 } }, { coverFile: png() });
+  assert.equal(result.status, 200);
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), [reference.cover]);
+  assert.equal(calls.some(call => call.path === '/raindrop/11' && call.method === 'DELETE'), false);
+});
+
+test('fallback reference-as-preview can be removed without recreating a removed reference', async () => {
+  const { save, calls } = harness({ reply: call => call.path.startsWith('/raindrops/4?')
+    ? { items: [reference] } : undefined });
+  const result = await save({ mode: 'edit', references: [], source: { id: 4 } });
+  assert.equal(result.status, 200);
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), []);
+  assert.equal(calls.find(call => call.path === '/raindrop' && call.method === 'POST').body.title, 'preview');
+  assert.equal(calls.some(call => call.path === '/raindrop/11' && call.method === 'DELETE'), true);
+});
+
+test('copy preserves fallback reference-as-preview as independent reference when cover is replaced', async () => {
+  const { save, calls } = harness({ reply: call => call.path.startsWith('/raindrops/4?')
+    ? { items: [reference] } : undefined });
+  const result = await save({ cover: { fileKey: 'coverFile' }, source: { id: 4 } }, { coverFile: png() });
+  assert.equal(result.status, 200);
+  assert.deepEqual(Array.from(result.data.style.style_reference_links), [reference.cover]);
+  assert.equal(calls.some(call => call.path === '/raindrop/11' && call.method !== 'GET'), false);
+});
+
+test('oversized uploads are refused before external requests', async () => {
+  const { save, calls } = harness();
+  const result = await save({ cover: { fileKey: 'large' } }, {
+    large: new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' }),
+  });
+  assert.equal(result.status, 400);
+  assert.equal(calls.length, 0);
+});
+
+test('later reference upload failure cleans staged cover without deleting original images', async () => {
+  let uploadCount = 0;
+  const { save, calls } = harness({ reply: call => call.path === '/raindrop/file' && ++uploadCount === 2
+    ? { result: false, httpError: 429 } : undefined });
+  const result = await save({ mode: 'edit', cover: { fileKey: 'coverFile' }, references: [{ fileKey: 'refFile' }] },
+    { coverFile: png(), refFile: png() });
+  assert.equal(result.status, 429);
+  assert.deepEqual(calls.filter(call => call.method === 'DELETE').map(call => call.path), ['/raindrop/100']);
+  assert.equal(calls.some(call => ['/raindrop/10', '/raindrop/11', '/collection/4'].includes(call.path) && call.method !== 'GET'), false);
+});
+
+test('loose cover file edit returns new bookmark ID and removes old only after save', async () => {
+  const { save, calls } = harness();
+  const result = await save({ mode: 'edit', source: { id: 30 }, cover: { fileKey: 'coverFile' } }, { coverFile: png() });
+  assert.equal(result.status, 200);
+  assert.equal(result.data.style.id, 100);
+  assert.equal(calls.find(call => call.path === '/raindrop/file').body.get('collectionId'), '3');
+  assert.equal(calls.at(-1).path, '/raindrop/30');
+  assert.equal(calls.at(-1).method, 'DELETE');
+  assert.equal(calls.some(call => call.path === '/collection'), false);
+});
+
+test('failed legacy conversion retains old loose bookmark and cleans only new collection', async () => {
+  const { save, calls } = harness({ reply: call => call.path === '/raindrop' && call.body.title.startsWith('reference-')
+    ? { result: false, httpError: 429 } : undefined });
+  const result = await save({ mode: 'edit', source: { id: 30 }, references: ['https://images.test/new-reference'] });
+  assert.equal(result.status, 429);
+  assert.deepEqual(calls.filter(call => call.method === 'DELETE').map(call => call.path), ['/collection/100']);
 });

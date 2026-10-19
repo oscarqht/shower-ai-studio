@@ -11,8 +11,10 @@ import {
   AlertCircle,
   Loader2,
   Pencil,
+  Copy,
 } from 'lucide-react';
 import { Character } from '../types';
+import { getCharacterAddOns } from '@/lib/characterNote';
 
 export function parseTagsFromNote(note?: string): string[] {
   if (!note || typeof note !== 'string') return [];
@@ -60,6 +62,7 @@ interface CharacterSelectorProps {
     addOns: string[];
     coverDataUrl?: string;
     imageFile?: File;
+    sourceId?: string | number;
   }) => Promise<void>;
   onDeleteCharacter?: (characterId: string | number) => Promise<void>;
   onUpdateCharacter?: (
@@ -168,6 +171,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   }, []);
 
   // Add Character Modal State
+  const [copySource, setCopySource] = useState<Character | null>(null);
+  const addSavingRef = useRef(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addTitle, setAddTitle] = useState('');
   const [addExcerpt, setAddExcerpt] = useState('');
@@ -261,6 +266,10 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (copySource && (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || !file.size || file.size > 10 * 1024 * 1024)) {
+      setAddError('Choose a PNG, JPEG, WebP, or GIF image up to 10 MB.');
+      return;
+    }
     if (!file.type.startsWith('image/')) {
       setAddError('Please select a valid image file (PNG, JPG, WEBP).');
       return;
@@ -276,6 +285,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   };
 
   const handleResetAddForm = () => {
+    if (addSavingRef.current) return;
+    setCopySource(null);
     setAddTitle('');
     setAddExcerpt('');
     setTagInput('');
@@ -287,13 +298,28 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
     setIsAddModalOpen(false);
   };
 
+  const handleOpenCopyModal = (char: Character) => {
+    setCopySource(char);
+    setAddTitle(`${char.title} (copy)`);
+    setAddExcerpt(char.excerpt || '');
+    setAddTags(parseTagsFromNote(char.note));
+    setAddOns([...(char.addOns || getCharacterAddOns(char.note))]);
+    setTagInput('');
+    setSelectedFile(null);
+    setPreviewUrl(char.cover || null);
+    setAddError(null);
+    setIsAddModalOpen(true);
+  };
+
   const handleSaveCharacter = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (addSavingRef.current) return;
     if (!addTitle.trim()) {
       setAddError('A name is required.');
       return;
     }
 
+    addSavingRef.current = true;
     setIsSaving(true);
     setAddError(null);
 
@@ -306,12 +332,15 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
           addOns: [...new Set(addOns.map((value) => value.trim()).filter(Boolean))],
           coverDataUrl: previewUrl || undefined,
           imageFile: selectedFile || undefined,
+          sourceId: copySource?.id,
         });
       }
+      addSavingRef.current = false;
       handleResetAddForm();
     } catch (err: any) {
       setAddError(err.message || 'Failed to save character.');
     } finally {
+      addSavingRef.current = false;
       setIsSaving(false);
     }
   };
@@ -561,6 +590,17 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                   >
                     <Pencil className="w-3 h-3" />
                   </button>
+                  {onAddCharacter && (
+                    <button
+                      type="button"
+                      onClick={(event) => { event.stopPropagation(); handleOpenCopyModal(char); }}
+                      title="Copy & edit character"
+                      aria-label={`Copy character ${char.title}`}
+                      className="absolute bottom-2 right-2 w-[26px] h-[26px] rounded-full bg-[rgba(255,253,250,0.92)] dark:bg-[rgba(28,25,22,0.92)] text-[#5B5148] dark:text-[#D5CCC3] flex items-center justify-center shadow-sm hover:opacity-80"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
 
                 <div className="px-1.5 pt-2.5 pb-1">
@@ -599,19 +639,22 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       {isAddModalOpen && mounted && (
         <ModalShell onClose={handleResetAddForm}>
           <div className="flex items-start gap-3.5 mb-1.5">
-            <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">New character</h3>
+            <h3 className="font-serif text-[27px] text-[#2E2A26] dark:text-[#F5EFEA] flex-1">{copySource ? 'Copy & edit character' : 'New character'}</h3>
             <button
               onClick={handleResetAddForm}
+              disabled={isSaving}
+              aria-label="Close character form"
               className="w-8 h-8 rounded-full border-none bg-[#F4EDE3] dark:bg-[#2A2520] text-[#6E6459] dark:text-[#D5CCC3] flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
           <p className="mb-[18px] text-[#8A7E73] dark:text-[#A69B90] text-[14.5px] leading-[1.55]">
-            Name is required. Everything else is optional and editable later.
+            {copySource ? 'Save a separate character with your changes. The original stays unchanged.' : 'Name is required. Everything else is optional and editable later.'}
           </p>
 
           <form onSubmit={handleSaveCharacter} className="flex flex-col gap-3.5">
+            <fieldset disabled={isSaving} className="contents">
             {addError && (
               <div className="flex items-center gap-2 text-sm text-[#96402F] dark:text-[#F5AB88] bg-[#FBEAE5] dark:bg-[#2C1C14] border border-[#F1D3C9] dark:border-[#4D2B1C] rounded-xl px-4 py-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -650,13 +693,13 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-[#DCCFBF] dark:border-[#3D352E] bg-[#FCFAF6] dark:bg-[#25211D] text-left cursor-pointer hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
               >
                 <span className="w-11 h-11 rounded-[10px] bg-[repeating-linear-gradient(135deg,#F1E7DA_0_6px,#EADFCF_6px_12px)] dark:bg-[repeating-linear-gradient(135deg,#2E2924_0_6px,#24201C_6px_12px)] overflow-hidden shrink-0">
-                  {previewUrl && <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />}
+                  {previewUrl && <img src={previewUrl} alt="Preview" referrerPolicy="no-referrer" className="w-full h-full object-cover" />}
                 </span>
                 <span className="text-[14px] text-[#6E6459] dark:text-[#D5CCC3]">
-                  {selectedFile ? selectedFile.name : 'Upload a reference image'}
+                  {selectedFile ? selectedFile.name : previewUrl ? 'Replace reference image' : 'Upload a reference image'}
                 </span>
               </button>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+              <input ref={fileInputRef} type="file" accept={copySource ? "image/png,image/jpeg,image/webp,image/gif" : "image/*"} onChange={handleFileSelect} className="hidden" />
             </div>
 
             <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]">
@@ -707,9 +750,11 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 className="flex items-center gap-1.5 px-5 py-3 rounded-xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[14.5px] font-medium cursor-pointer disabled:opacity-70 shadow-[0_10px_22px_-12px_rgba(196,99,62,0.9)] dark:shadow-none transition-transform hover:-translate-y-0.5"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                Save character
+                {copySource ? 'Save copy' : 'Save character'}
               </button>
+              <button type="button" disabled={isSaving} onClick={handleResetAddForm} className="px-5 py-3 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] text-[14.5px] hover:border-[#C4633E] disabled:opacity-50">Cancel</button>
             </div>
+            </fieldset>
           </form>
         </ModalShell>
       )}

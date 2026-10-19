@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowUpRight, Check, Copy, Loader2, Pencil, X } from 'lucide-react';
-import { SaveStyle, StyleEditFields, StylePack } from '@/types';
+import { StyleImageEditor, StyleImageDraft, StyleImagesDraft } from './StyleImageEditor';
+import { SaveStyle, StyleEditFields, StylePack, StyleImageInput } from '@/types';
 
 interface Props {
   style: StylePack;
@@ -16,9 +17,17 @@ interface Props {
 const buttonClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-[#DCCFBF] dark:border-[#3D352E] px-4 py-2.5 text-sm hover:bg-[#F4EDE3] dark:hover:bg-[#2A2520] disabled:opacity-50';
 const inputClass = 'mt-2 w-full rounded-xl border border-[#DCCFBF] dark:border-[#3D352E] bg-[#FAF5EE] dark:bg-[#25211D] px-3 py-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#C4633E]';
 
+const initialImages = (style: StylePack): StyleImagesDraft => ({
+  cover: style.preview_cover ? { key: 'cover', url: style.preview_cover } : null,
+  references: style.style_reference_links.map((url, index) => ({ key: `reference-${index}`, url })),
+  coverChanged: false,
+  referencesChanged: false,
+});
+
 export function StyleDetailsModal({ style, selectedStyleId, onClose, onSelectStyle, onSave }: Props) {
   const [mode, setMode] = useState<'copy' | 'edit' | null>(null);
   const [fields, setFields] = useState<StyleEditFields>(style);
+  const [images, setImages] = useState(() => initialImages(style));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -57,6 +66,7 @@ export function StyleDetailsModal({ style, selectedStyleId, onClose, onSelectSty
 
   const startEditing = (nextMode: 'copy' | 'edit') => {
     setFields({ ...style, title: nextMode === 'copy' ? `${style.title} (copy)` : style.title });
+    setImages(initialImages(style));
     setError('');
     setMode(nextMode);
   };
@@ -72,7 +82,18 @@ export function StyleDetailsModal({ style, selectedStyleId, onClose, onSelectSty
     setSaving(true);
     setError('');
     try {
+      const imageFiles: Record<string, File> = {};
+      const imageInput = (image: StyleImageDraft): StyleImageInput => {
+        if (!image.file) return image.url;
+        imageFiles[image.key] = image.file;
+        return { fileKey: image.key };
+      };
+      const imageFields: Partial<StyleEditFields> = {};
+      if (images.coverChanged) imageFields.cover = images.cover ? imageInput(images.cover) : null;
+      if (images.referencesChanged) imageFields.references = images.references.map(imageInput);
       await onSave(style, mode, {
+        ...imageFields,
+        imageFiles,
         title: fields.title.trim(),
         style_prompt: fields.style_prompt.trim(),
         extra_style_instruction: fields.extra_style_instruction.trim(),
@@ -103,13 +124,14 @@ export function StyleDetailsModal({ style, selectedStyleId, onClose, onSelectSty
           </>}
           <button type="button" aria-label="Close style details" disabled={saving} onClick={onClose} className="p-2 rounded-full hover:bg-[#C4633E]/10 disabled:opacity-50"><X size={18} /></button>
         </div>
-        <p className="text-sm text-[#8A7E73] dark:text-[#A69B90] mb-5">{mode === 'copy' ? 'Create a separate style with the same preview and references.' : mode === 'edit' ? 'Update this style’s name and instructions. Preview and references are kept.' : 'Browse details, modify this style, or make your own copy.'}</p>
+        <p className="text-sm text-[#8A7E73] dark:text-[#A69B90] mb-5">{mode === 'copy' ? 'Create a separate style and customize its images and instructions.' : mode === 'edit' ? 'Update this style’s name, instructions, and images.' : 'Browse details, modify this style, or make your own copy.'}</p>
         {mode ? (
           <form onSubmit={save} className="flex flex-col gap-4">
             <fieldset disabled={saving} className="flex flex-col gap-4">
               <label className="text-sm">Style name<input autoFocus required maxLength={255} className={inputClass} value={fields.title} onChange={(e) => setFields({ ...fields, title: e.target.value })} /></label>
               <label className="text-sm">Style prompt<textarea required rows={6} className={inputClass} value={fields.style_prompt} onChange={(e) => setFields({ ...fields, style_prompt: e.target.value })} /></label>
               <label className="text-sm">Extra instructions<textarea rows={4} className={inputClass} value={fields.extra_style_instruction} onChange={(e) => setFields({ ...fields, extra_style_instruction: e.target.value })} /></label>
+              <StyleImageEditor value={images} onChange={setImages} onError={setError} />
             </fieldset>
             {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             <div className="flex flex-wrap gap-2">
