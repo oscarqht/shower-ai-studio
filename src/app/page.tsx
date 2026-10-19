@@ -8,7 +8,7 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { StyleSelector } from '@/components/StyleSelector';
 import { MoreStyleSelector, MORE_STYLES_CACHE_STORAGE_KEY } from '@/components/MoreStyleSelector';
 import { GeneratorControls } from '@/components/GeneratorControls';
-import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues, PresetFormData } from '@/types';
+import { Character, StylePack, Preset, AppSettings, extractWorkflowId, composeWorkflowEndpoint, formatErrorMessage, PresetModalInitialValues, PresetFormData, SaveStyle } from '@/types';
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react';
 import { getCharacterAddOns } from '@/lib/characterNote';
 
@@ -561,6 +561,46 @@ export default function Home() {
   const handleClearCharacters = () => {
     setSelectedCharacterIds([]);
   };
+
+  const saveStyle: SaveStyle = async (source, mode, fields) => {
+    const connected = Boolean(settings.raindropToken?.trim() || hasEnvToken);
+    if (!connected) throw new Error('Connect Raindrop in Settings before saving a style.');
+    const send = (token: string) => fetch('/api/raindrop/style', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token || undefined, source, mode, ...fields }),
+    });
+    let response = await send(settings.raindropToken);
+    if (response.status === 401 && settings.raindropRefreshToken && (await response.clone().json()).retrySafe !== false) {
+      const token = await refreshRaindropToken();
+      if (token) response = await send(token);
+    }
+    const data = await response.json();
+    if (!response.ok || data.status !== 'success' || !data.style) {
+      throw new Error(formatErrorMessage(data.message) || 'Could not save style to Raindrop.');
+    }
+    const saved: StylePack = data.style;
+    setRaindropStatus('success');
+    setRaindropMessage(`${mode === 'copy' ? 'Copied' : 'Updated'} style "${saved.title}" in Raindrop.`);
+    return saved;
+  };
+
+  const handleSaveStyle: SaveStyle = async (source, mode, fields) => {
+    const saved = await saveStyle(source, mode, fields);
+    const updated = mode === 'copy'
+      ? [...styles, saved]
+      : styles.map((style) => String(style.id) === String(source.id) ? saved : style);
+    setStyles(updated);
+    try {
+      const cached = JSON.parse(localStorage.getItem(RAINDROP_CACHE_STORAGE_KEY) || '{}');
+      localStorage.setItem(RAINDROP_CACHE_STORAGE_KEY, JSON.stringify({ ...cached, styles: updated, timestamp: Date.now() }));
+    } catch (error) {
+      console.error('Failed to cache saved style:', error);
+    }
+    return saved;
+  };
+
+  const handleMoreStylesLoaded = useCallback((loadedStyles: StylePack[]) => setMoreStyles(loadedStyles), []);
 
   const handleAddCharacter = async (charData: {
     title: string;
@@ -1388,6 +1428,7 @@ export default function Home() {
             {/* Section 2: Styles Selection */}
             <StyleSelector
               styles={styles}
+              onSaveStyle={handleSaveStyle}
               selectedStyleId={selectedStyleId}
               onSelectStyle={handleSelectStyle}
               isLoading={isFetchingRaindrop}
@@ -1399,7 +1440,8 @@ export default function Home() {
               onSelectStyle={handleSelectStyle}
               raindropToken={settings.raindropToken}
               hasRaindropToken={hasToken}
-              onStylesLoaded={(loadedStyles) => setMoreStyles(loadedStyles)}
+              onStylesLoaded={handleMoreStylesLoaded}
+              onSaveStyle={saveStyle}
             />
 
             {/* Section 3: Composition Controls */}

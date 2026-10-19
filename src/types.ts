@@ -19,6 +19,9 @@ export interface StylePack {
   style_reference_links: string[];
 }
 
+export type StyleEditFields = Pick<StylePack, 'title' | 'style_prompt' | 'extra_style_instruction'>;
+export type SaveStyle = (source: StylePack, mode: 'copy' | 'edit', fields: StyleEditFields) => Promise<StylePack>;
+
 export interface Preset {
   id: string | number;
   collection_id?: string | number;
