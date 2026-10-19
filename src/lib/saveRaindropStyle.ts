@@ -40,6 +40,7 @@ export async function saveRaindropStyle(
   let createdCollection: number | undefined;
   let rollback: ((path: string, method?: string, body?: unknown) => Promise<Item>) | undefined;
   const stagedItems: number[] = [];
+  const sourceItemIds = new Set<string>();
   let mutationStarted = false;
   let existingChanged = false;
   try {
@@ -116,15 +117,34 @@ export async function saveRaindropStyle(
       if (!data.item || !data.item._id) throw new StyleError('Raindrop did not return the saved item.');
       return data.item;
     };
+    const readSavedItem = async (id: string | number, expected: Item): Promise<Item> => {
+      const { item } = await request(`/raindrop/${id}`);
+      if (!item || String(item._id) !== String(id)) throw new StyleError('Raindrop did not confirm the saved bookmark.');
+      if (expected.collection && String(item.collection?.$id ?? item.collection) !== String(expected.collection.$id)) {
+        throw new StyleError('Raindrop did not save the image in the style collection.');
+      }
+      for (const key of ['title', 'excerpt', 'note', 'link']) {
+        if (expected[key] !== undefined && item[key] !== expected[key]) throw new StyleError(`Raindrop did not persist the bookmark ${key}.`);
+      }
+      if (expected.tags !== undefined && (expected.tags.includes(NO_COVER) !== Boolean(item.tags?.includes(NO_COVER)))) {
+        throw new StyleError('Raindrop did not persist the cover visibility.');
+      }
+      if (expected.cover && !expected.tags?.includes(NO_COVER) && image(item) !== expected.cover) {
+        throw new StyleError('Raindrop did not persist the image cover.');
+      }
+      return item;
+    };
     const createItem = async (payload: Item): Promise<Item> => {
       const saved = await itemRequest('/raindrop', 'POST', payload);
+      if (sourceItemIds.has(String(saved._id))) throw new StyleError('Raindrop did not create an independent style bookmark.');
       stagedItems.push(saved._id);
-      return { ...payload, ...saved };
+      return readSavedItem(saved._id, payload);
     };
     const updateItem = async (item: Item, payload: Item, original = false): Promise<Item> => {
       if (original) existingChanged = true;
       const saved = await itemRequest(`/raindrop/${item._id}`, 'PUT', payload);
-      return { ...item, ...saved, ...payload };
+      if (String(saved._id) !== String(item._id)) throw new StyleError('Raindrop updated an unexpected bookmark.');
+      return readSavedItem(item._id, { collection: item.collection, ...payload });
     };
     const [roots, children] = await Promise.all([request('/collections'), request('/collections/childrens')]);
     if (!Array.isArray(roots.items) || !Array.isArray(children.items)) throw new StyleError('Could not read Raindrop collections.');
@@ -156,6 +176,7 @@ export async function saveRaindropStyle(
       if (!loose) throw new StyleError('Style was not found under Shower / Styles or More styles. Re-sync and try again.', 404);
       items = [loose];
     }
+    for (const item of items) sourceItemIds.add(String(item._id));
     const name = title.trim();
     const metadata = { excerpt: style_prompt, note: extra_style_instruction };
     const originalPreview = loose || previewOf(items, source.style_prompt_raindrop_id);
@@ -170,6 +191,7 @@ export async function saveRaindropStyle(
       const collection = await itemRequest('/collection', 'POST', {
         title: name, parent: { $id: Number(pack ? parentId(pack) : looseCollectionId) },
       });
+      if (collections.some(item => String(item._id) === String(collection._id))) throw new StyleError('Raindrop did not create an independent style collection.');
       createdCollection = collection._id;
       collectionId = collection._id;
     }
@@ -182,11 +204,15 @@ export async function saveRaindropStyle(
     };
     const upload = async (file: File, payload: Item): Promise<Item> => {
       const uploadForm = new FormData();
-      uploadForm.append('file', file, file.name);
+      // Raindrop reads destination fields before the multipart file stream.
       uploadForm.append('collectionId', String(collectionId));
+      uploadForm.append('file', file, file.name);
       const uploaded = await itemRequest('/raindrop/file', 'PUT', uploadForm);
+      if (sourceItemIds.has(String(uploaded._id))) throw new StyleError('Raindrop did not create an independent image upload.');
       stagedItems.push(uploaded._id);
-      return updateItem(uploaded, payload);
+      const cover = uploaded.cover || uploaded.media?.[0]?.link || uploaded.link;
+      if (!cover) throw new StyleError('Raindrop did not return the uploaded image URL.');
+      return updateItem(uploaded, { ...payload, collection: { $id: Number(collectionId) }, cover, media: [{ link: cover }] });
     };
     const coverMetadata = (): Item => {
       const payload: Item = { ...metadata };
@@ -256,6 +282,14 @@ export async function saveRaindropStyle(
         }
       }
     }
+    // Confirm replacements are visible in the destination before touching existing bookmarks.
+    if (!looseOutput && stagedItems.length) {
+      const persistedItems = await getItems(collectionId);
+      const expectedNewItems = [...savedItems, ...desiredRefs].filter(item => stagedItems.includes(item._id));
+      if (expectedNewItems.some(item => !persistedItems.some(saved => String(saved._id) === String(item._id)))) {
+        throw new StyleError('Uploaded images are not visible in the Raindrop style collection.');
+      }
+    }
     // All replacements now exist. Only now change existing metadata and remove old images.
     if (!preview) {
       preview = await updateItem(originalPreview!, { ...coverMetadata(), ...(looseOutput ? { title: name } : {}) }, true);
@@ -289,10 +323,23 @@ export async function saveRaindropStyle(
         await request(`/raindrop/${id}`, 'DELETE');
       }
     }
-    savedItems = savedItems.filter(item => !removeIds.has(String(item._id)));
+    // Build the success response from persisted state, never optimistic write payloads.
+    if (looseOutput) preview = await readSavedItem(preview._id, { title: name, ...metadata, collection: { $id: Number(collectionId) } });
+    else {
+      const { item: finalCollection } = await request(`/collection/${collectionId}`);
+      if (!finalCollection || String(finalCollection._id) !== String(collectionId) || finalCollection.title !== name) {
+        throw new StyleError('Raindrop did not persist the style collection name.');
+      }
+      const expectedItems = savedItems.filter(item => !removeIds.has(String(item._id)));
+      savedItems = await getItems(collectionId);
+      if (expectedItems.some(item => !savedItems.some(saved => String(saved._id) === String(item._id)))) {
+        throw new StyleError('Some style images are missing from the saved Raindrop collection. Re-sync before retrying.');
+      }
+      const savedPreview = savedItems.find(item => String(item._id) === String(preview!._id));
+      if (!savedPreview) throw new StyleError('The saved preview is missing from the Raindrop style collection.');
+      preview = savedPreview;
+    }
     const style = toStyle(looseOutput ? preview._id : collectionId, name, looseOutput ? [] : savedItems, preview);
-    style.style_prompt = style_prompt;
-    style.extra_style_instruction = extra_style_instruction;
     return Response.json({ status: 'success', style });
   } catch (error) {
     let cleanupFailed = false;
