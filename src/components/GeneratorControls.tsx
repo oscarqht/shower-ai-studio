@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Check, Copy, ExternalLink, Sparkles, BookmarkPlus } from 'lucide-react';
+import { Check, Copy, ExternalLink, Sparkles, BookmarkPlus, History, X } from 'lucide-react';
 import { Character, StylePack, Preset, MODEL_OPTIONS } from '../types';
 import { FinalPromptModal } from './FinalPromptModal';
 
@@ -49,6 +49,26 @@ const TEXT_LANGUAGES = [
 ];
 
 const INPUTS_STORAGE_KEY = 'raindrop_ai_studio_last_inputs_v1';
+const RECENT_PROMPTS_STORAGE_KEY = 'raindrop_ai_studio_recent_prompts_v1';
+const MAX_RECENT_PROMPTS = 10;
+
+const getSavedRecentPrompts = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem(RECENT_PROMPTS_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+          .slice(0, MAX_RECENT_PROMPTS);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse recent prompts:', e);
+  }
+  return [];
+};
 
 const getSavedControls = () => {
   if (typeof window === 'undefined') return {};
@@ -134,6 +154,60 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [isStyleCopied, setIsStyleCopied] = useState(false);
   const [isFinalPromptModalOpen, setIsFinalPromptModalOpen] = useState(false);
 
+  // Recent Prompts State (max 10 prompts, persisted in localStorage)
+  const [recentPrompts, setRecentPrompts] = useState<string[]>([]);
+
+  useEffect(() => {
+    setRecentPrompts(getSavedRecentPrompts());
+  }, []);
+
+  const addRecentPrompt = (text: string) => {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return;
+    setRecentPrompts((prev) => {
+      const filtered = prev.filter((p) => p !== trimmed);
+      const updated = [trimmed, ...filtered].slice(0, MAX_RECENT_PROMPTS);
+      try {
+        localStorage.setItem(RECENT_PROMPTS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save recent prompt:', e);
+      }
+      return updated;
+    });
+  };
+
+  const handleDeleteRecentPrompt = (promptToDelete: string) => {
+    setRecentPrompts((prev) => {
+      const updated = prev.filter((p) => p !== promptToDelete);
+      try {
+        localStorage.setItem(RECENT_PROMPTS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to update recent prompts after deletion:', e);
+      }
+      return updated;
+    });
+  };
+
+  const handleClearAllRecentPrompts = () => {
+    setRecentPrompts([]);
+    try {
+      localStorage.removeItem(RECENT_PROMPTS_STORAGE_KEY);
+    } catch (e) {
+      console.error('Failed to clear recent prompts:', e);
+    }
+  };
+
+  const handleApplyRecentPrompt = (promptText: string) => {
+    setCompositionPrompt(promptText);
+    addRecentPrompt(promptText);
+  };
+
+  const handlePromptBlur = () => {
+    if (compositionPrompt && compositionPrompt.trim().length >= 3) {
+      addRecentPrompt(compositionPrompt);
+    }
+  };
+
   // Persist controls state changes to localStorage
   useEffect(() => {
     try {
@@ -169,6 +243,10 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleCopyPrompt = async () => {
+    if (compositionPrompt?.trim()) {
+      addRecentPrompt(compositionPrompt);
+    }
+
     const charactersStr = getCharactersPrompt();
 
     const styleStr = selectedStyle ? (selectedStyle.title || '').trim() : '';
@@ -194,6 +272,10 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleSaveAsPreset = () => {
+    if (compositionPrompt?.trim()) {
+      addRecentPrompt(compositionPrompt);
+    }
+
     if (onSaveAsPreset) {
       onSaveAsPreset({
         prompt: compositionPrompt,
@@ -207,6 +289,9 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleOpenApp = async () => {
+    if (compositionPrompt?.trim()) {
+      addRecentPrompt(compositionPrompt);
+    }
     setAppError(null);
 
     if (!raindropToken || !raindropToken.trim()) {
@@ -342,13 +427,21 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       </div>
 
       {/* Composition Prompt Entry */}
-      <label htmlFor="composition-prompt-textarea" className="block text-sm font-medium text-[#2E2A26] dark:text-[#F5EFEA] mb-2">
-        Composition
-      </label>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <label htmlFor="composition-prompt-textarea" className="block text-sm font-medium text-[#2E2A26] dark:text-[#F5EFEA]">
+          Composition
+        </label>
+        {compositionPrompt && (
+          <span className="text-[12px] font-mono text-[#A79C92] dark:text-[#7A7066]">
+            {compositionPrompt.length} chars
+          </span>
+        )}
+      </div>
       <textarea
         id="composition-prompt-textarea"
         value={compositionPrompt}
         onChange={(e) => setCompositionPrompt(e.target.value)}
+        onBlur={handlePromptBlur}
         onKeyDown={handleKeyDown}
         rows={4}
         placeholder="Golden hour on a rooftop, the two of them mid-laugh, shot from below…"
@@ -361,13 +454,87 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             type="button"
             id="clear-composition-prompt-btn"
             onClick={() => setCompositionPrompt('')}
-            className="px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[12.5px] cursor-pointer"
+            className="px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[12.5px] cursor-pointer transition-colors"
           >
             Clear text
           </button>
         )}
-        <span className="font-mono text-[11.5px] text-[#A08F80] dark:text-[#7A7066]">⌘↵ opens the app</span>
+        {compositionPrompt.trim().length > 0 && recentPrompts[0] !== compositionPrompt.trim() && (
+          <button
+            type="button"
+            id="remember-prompt-btn"
+            onClick={() => addRecentPrompt(compositionPrompt)}
+            title="Save to recent prompts"
+            className="px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[12.5px] cursor-pointer flex items-center gap-1.5 transition-colors"
+          >
+            <BookmarkPlus className="w-3.5 h-3.5 text-[#C4633E] dark:text-[#E07A52]" />
+            <span>Remember prompt</span>
+          </button>
+        )}
+        <span className="font-mono text-[11.5px] text-[#A08F80] dark:text-[#7A7066] ml-auto">⌘↵ opens the app</span>
       </div>
+
+      {/* Recent 10 Prompts Section */}
+      {recentPrompts.length > 0 && (
+        <div className="mt-3.5 pt-3 border-t border-[#F0E7DA] dark:border-[#2E2924]" id="recent-prompts-container">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-mono tracking-[0.1em] uppercase text-[#A08F80] dark:text-[#8C8074]">
+              <History className="w-3.5 h-3.5 text-[#C4633E] dark:text-[#E07A52]" />
+              <span>Recent prompts ({recentPrompts.length}/10)</span>
+            </div>
+            <button
+              type="button"
+              id="clear-all-recents-btn"
+              onClick={handleClearAllRecentPrompts}
+              className="text-[11px] font-mono text-[#A79C92] dark:text-[#7A7066] hover:text-[#C4633E] dark:hover:text-[#E07A52] transition-colors cursor-pointer"
+            >
+              Clear history
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2" role="region" aria-label="Recent prompts list">
+            {recentPrompts.map((promptText, idx) => {
+              const isActive = compositionPrompt.trim() === promptText.trim();
+              return (
+                <div
+                  key={`${promptText}-${idx}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleApplyRecentPrompt(promptText)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleApplyRecentPrompt(promptText);
+                    }
+                  }}
+                  title={`Click to apply: "${promptText}"`}
+                  className={`group max-w-full sm:max-w-[420px] inline-flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-xl border text-[13px] leading-snug cursor-pointer transition-all select-none ${
+                    isActive
+                      ? 'bg-[#FFEADA] dark:bg-[#3D2518] border-[#C4633E] dark:border-[#E07A52] text-[#C4633E] dark:text-[#E07A52] font-medium shadow-sm'
+                      : 'bg-[#FAF5EE] dark:bg-[#25211D] border-[#E8DEC9] dark:border-[#352D26] text-[#4F4740] dark:text-[#D5CCC3] hover:border-[#C4633E] dark:hover:border-[#E07A52] hover:bg-[#FFFDF9] dark:hover:bg-[#2C2621]'
+                  }`}
+                >
+                  <span className="truncate flex-1 min-w-0" title={promptText}>
+                    {promptText}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`Delete prompt: ${promptText}`}
+                    title="Delete prompt"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteRecentPrompt(promptText);
+                    }}
+                    className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[#A79C92] dark:text-[#7A7066] hover:text-[#C4633E] dark:hover:text-[#F5AB88] hover:bg-[#F2E8DC] dark:hover:bg-[#382D24] transition-colors cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Select Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-[22px]">
@@ -455,7 +622,12 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         <button
           type="button"
           id="generate-final-prompt-btn"
-          onClick={() => setIsFinalPromptModalOpen(true)}
+          onClick={() => {
+            if (compositionPrompt?.trim()) {
+              addRecentPrompt(compositionPrompt);
+            }
+            setIsFinalPromptModalOpen(true);
+          }}
           title="Generate final prompt and combined reference images based on workflow schema"
           className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#C4633E] dark:border-[#E07A52] bg-[#FFF8F3] dark:bg-[#251D18] text-[#C4633E] dark:text-[#E07A52] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:bg-[#C4633E] hover:text-[#FFF7F1] dark:hover:bg-[#E07A52] dark:hover:text-[#181411] transition-all shadow-sm hover:shadow"
         >
