@@ -202,12 +202,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     addRecentPrompt(promptText);
   };
 
-  const handlePromptBlur = () => {
-    if (compositionPrompt && compositionPrompt.trim().length >= 3) {
-      addRecentPrompt(compositionPrompt);
-    }
-  };
-
   // Persist controls state changes to localStorage
   useEffect(() => {
     try {
@@ -441,7 +435,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         id="composition-prompt-textarea"
         value={compositionPrompt}
         onChange={(e) => setCompositionPrompt(e.target.value)}
-        onBlur={handlePromptBlur}
         onKeyDown={handleKeyDown}
         rows={4}
         placeholder="Golden hour on a rooftop, the two of them mid-laugh, shot from below…"
@@ -457,18 +450,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
             className="px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[12.5px] cursor-pointer transition-colors"
           >
             Clear text
-          </button>
-        )}
-        {compositionPrompt.trim().length > 0 && recentPrompts[0] !== compositionPrompt.trim() && (
-          <button
-            type="button"
-            id="remember-prompt-btn"
-            onClick={() => addRecentPrompt(compositionPrompt)}
-            title="Save to recent prompts"
-            className="px-3 py-1.5 rounded-full border border-[#E3D8CA] dark:border-[#3D352E] bg-transparent text-[#8A7E73] dark:text-[#A69B90] hover:text-[#C4633E] dark:hover:text-[#E07A52] text-[12.5px] cursor-pointer flex items-center gap-1.5 transition-colors"
-          >
-            <BookmarkPlus className="w-3.5 h-3.5 text-[#C4633E] dark:text-[#E07A52]" />
-            <span>Remember prompt</span>
           </button>
         )}
         <span className="font-mono text-[11.5px] text-[#A08F80] dark:text-[#7A7066] ml-auto">⌘↵ opens the app</span>

@@ -12,6 +12,16 @@ assert.ok(fileContent.includes('handleApplyRecentPrompt'), 'Has handleApplyRecen
 assert.ok(fileContent.includes('handleDeleteRecentPrompt'), 'Has handleDeleteRecentPrompt handler');
 assert.ok(fileContent.includes('recent-prompts-container'), 'Has recent prompts container in JSX');
 
+// Ensure prompt input DOES NOT save on blur / losing focus
+assert.ok(!fileContent.includes('handlePromptBlur'), 'Must NOT save prompts on blur (no handlePromptBlur)');
+assert.ok(!fileContent.includes('onBlur='), 'Textarea must NOT have onBlur event handler');
+
+// Ensure action buttons save the prompt to recent prompts on click
+assert.ok(fileContent.includes('handleOpenApp'), 'Has handleOpenApp');
+assert.ok(fileContent.includes('handleCopyPrompt'), 'Has handleCopyPrompt');
+assert.ok(fileContent.includes('generate-final-prompt-btn'), 'Has generate-final-prompt-btn');
+assert.ok(fileContent.includes('handleSaveAsPreset'), 'Has handleSaveAsPreset');
+
 // Test the recent prompts array logic
 const MAX_RECENT = 10;
 function addPrompt(list, text) {
