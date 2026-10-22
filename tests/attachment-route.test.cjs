@@ -132,6 +132,7 @@ test('server route injects upstream transport and environment token', async () =
   const response = Response.json({ status: 'success' });
   const upstream = async () => { throw new Error('Unused'); };
   vm.runInNewContext(wrapper, { exports, fetch: upstream, process: { env: { RAINDROP_TOKEN: 'server-only' } }, require: name => {
+    if (name === '@/lib/raindropAttachments') return {};
     assert.equal(name, '@/lib/uploadRaindropAttachment');
     return { uploadRaindropAttachment: (input, injectedFetch, fallbackToken) => {
       assert.equal(input, req);
