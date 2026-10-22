@@ -10,3 +10,4 @@ coverage/
 # Next.js
 .next/
 .worktrees
+.raft
