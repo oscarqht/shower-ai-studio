@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, Copy, ExternalLink, Sparkles, BookmarkPlus, History, X } from 'lucide-react';
 import { Character, StylePack, Preset, MODEL_OPTIONS } from '../types';
 import { FinalPromptModal } from './FinalPromptModal';
+import { AttachmentUploader } from './AttachmentUploader';
 
 interface GeneratorControlsProps {
   selectedCharacters: Character[];
@@ -19,6 +20,8 @@ interface GeneratorControlsProps {
   textLanguage?: string;
   onTextLanguageChange?: (value: string) => void;
   raindropToken?: string;
+  hasRaindropToken?: boolean;
+  refreshRaindropToken?: () => Promise<string | null>;
   onResetAll?: () => void;
   onSaveAsPreset?: (payload: {
     prompt: string;
@@ -100,6 +103,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   textLanguage: textLanguageProp,
   onTextLanguageChange,
   raindropToken,
+  hasRaindropToken,
+  refreshRaindropToken,
   onResetAll,
   onSaveAsPreset,
 }) => {
@@ -148,6 +153,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
     if (!isControlledLang) setInternalTextLanguage(val);
   };
 
+  const [attachmentUrls, setAttachmentUrls] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isOpeningApp, setIsOpeningApp] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
@@ -237,6 +244,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleCopyPrompt = async () => {
+    if (isUploading) return;
     if (compositionPrompt?.trim()) {
       addRecentPrompt(compositionPrompt);
     }
@@ -252,6 +260,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       ratio: aspectRatio,
       language: textLanguage,
       instruction: compositionPrompt,
+      attachment_file_urls: attachmentUrls.join(','),
     };
 
     const jsonString = JSON.stringify(promptData, null, 2);
@@ -283,12 +292,13 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   };
 
   const handleOpenApp = async () => {
+    if (isUploading) return;
     if (compositionPrompt?.trim()) {
       addRecentPrompt(compositionPrompt);
     }
     setAppError(null);
 
-    if (!raindropToken || !raindropToken.trim()) {
+    if (!raindropToken?.trim() && !hasRaindropToken) {
       setAppError('No valid connection — add a token to continue.');
       return;
     }
@@ -323,6 +333,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         appUrl.searchParams.set('instruction', compositionPrompt);
         appUrl.searchParams.set('json', jsonString);
 
+        appUrl.searchParams.set('attachment_file_urls', attachmentUrls.join(','));
+        appUrl.searchParams.delete('image_urls');
         appUrl.searchParams.delete('attachment_file_ids');
         appUrl.searchParams.set('_auto_', appUrl.searchParams.get('_auto_') || 'true');
 
@@ -455,6 +467,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         <span className="font-mono text-[11.5px] text-[#A08F80] dark:text-[#7A7066] ml-auto">⌘↵ opens the app</span>
       </div>
 
+      <AttachmentUploader token={raindropToken || ''} refreshToken={refreshRaindropToken} onChange={setAttachmentUrls} onBusyChange={setIsUploading} />
+
       {/* Recent 10 Prompts Section */}
       {recentPrompts.length > 0 && (
         <div className="mt-3.5 pt-3 border-t border-[#F0E7DA] dark:border-[#2E2924]" id="recent-prompts-container">
@@ -569,7 +583,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           type="button"
           id="open-app-btn"
           onClick={handleOpenApp}
-          disabled={isOpeningApp}
+          disabled={isOpeningApp || isUploading}
           title="Open Image Generation App with prompt parameters"
           className="flex items-center justify-center gap-2 px-[22px] py-3.5 rounded-2xl border-none bg-[#C4633E] dark:bg-[#E07A52] text-[#FFF7F1] dark:text-[#181411] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer shadow-[0_12px_24px_-14px_rgba(196,99,62,0.95)] dark:shadow-none transition-transform hover:-translate-y-0.5 disabled:opacity-70"
         >
@@ -584,6 +598,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         <button
           type="button"
           id="copy-prompt-btn"
+          disabled={isUploading}
           onClick={handleCopyPrompt}
           className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#D6C8B8] dark:border-[#3D352E] bg-[#FFFDFA] dark:bg-[#1C1916] text-[#5B5148] dark:text-[#D5CCC3] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:bg-[#FAF5EE] dark:hover:bg-[#25211D] hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
         >
