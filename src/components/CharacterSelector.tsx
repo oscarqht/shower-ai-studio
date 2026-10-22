@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, Reorder, useDragControls } from 'motion/react';
 import {
   Check,
   X,
@@ -12,6 +13,7 @@ import {
   Loader2,
   Pencil,
   Copy,
+  GripVertical,
 } from 'lucide-react';
 import { Character } from '../types';
 import { getCharacterAddOns } from '@/lib/characterNote';
@@ -93,14 +95,71 @@ function ModalShell({
       onClick={onClose}
       className="fixed inset-0 z-[999] bg-[rgba(46,36,28,0.42)] dark:bg-[rgba(0,0,0,0.65)] backdrop-blur-sm flex items-end sm:items-center justify-center transition-colors"
     >
-      <div
+      <motion.div
+        layoutScroll
         onClick={(e) => e.stopPropagation()}
         className={`w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[92vh] overflow-y-auto bg-[#FFFDFA] dark:bg-[#1C1916] text-[#2E2A26] dark:text-[#F5EFEA] border border-[#EBE1D4] dark:border-[#2E2924] rounded-t-[26px] sm:rounded-[26px] p-5 sm:p-7 animate-rise mx-auto shadow-2xl`}
       >
         {children}
-      </div>
+      </motion.div>
     </div>,
     document.body
+  );
+}
+
+function AddOnRow({ id, index, value, inputClasses, onChange, onRemove, onMove }: {
+  id: number;
+  index: number;
+  value: string;
+  inputClasses: string;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+  onMove: (direction: number) => void;
+}) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={id}
+      dragListener={false}
+      dragControls={dragControls}
+      className="relative flex items-start gap-2 rounded-xl bg-[#FFFDFA] dark:bg-[#1C1916]"
+      whileDrag={{ zIndex: 1, boxShadow: '0 6px 18px rgba(46,36,28,0.15)' }}
+    >
+      <button
+        type="button"
+        aria-label={`Reorder add-on ${index + 1}`}
+        title="Drag to reorder, or use the Up and Down arrow keys"
+        onPointerDown={(event) => {
+          if (!event.currentTarget.disabled) dragControls.start(event);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            event.preventDefault();
+            onMove(event.key === 'ArrowUp' ? -1 : 1);
+          }
+        }}
+        className="mt-2 touch-none cursor-grab active:cursor-grabbing p-2 rounded-lg text-[#8A7E73] dark:text-[#A69B90] hover:text-[#C4633E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C4633E]"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={2}
+        aria-label={`Add-on ${index + 1}`}
+        placeholder="e.g. Wearing a red raincoat"
+        className={`${inputClasses} flex-1 min-w-0 resize-y leading-[1.5]`}
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove add-on ${index + 1}`}
+        className="mt-2 p-2 rounded-lg text-[#8A7E73] dark:text-[#A69B90] hover:text-[#A0433A] dark:hover:text-[#F5AB88]"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </Reorder.Item>
   );
 }
 
@@ -113,35 +172,50 @@ function AddOnEditor({
   onChange: (values: string[]) => void;
   inputClasses: string;
 }) {
+  // Keep row identity independent of its text and position, including blank or duplicate add-ons.
+  const [rowIds, setRowIds] = useState(() => values.map((_, index) => index));
+  const nextRowId = useRef(values.length);
+  const reorder = (nextIds: number[]) => {
+    onChange(nextIds.map((id) => values[rowIds.indexOf(id)]));
+    setRowIds(nextIds);
+  };
+
   return (
     <div className="flex flex-col gap-2 text-[13.5px] text-[#6E6459] dark:text-[#A69B90]">
       <span>Add-ons</span>
       <p className="text-[12.5px] leading-[1.4] text-[#8A7E73] dark:text-[#A69B90]">
         Optional prompt details you can check individually when using this character.
+        {' '}Drag the handles to reorder, or focus a handle and use the Up and Down arrow keys.
       </p>
-      {values.map((value, index) => (
-        <div key={index} className="flex items-start gap-2">
-          <textarea
+      <Reorder.Group axis="y" values={rowIds} onReorder={reorder} aria-label="Character add-ons" className="flex flex-col gap-2">
+        {values.map((value, index) => (
+          <AddOnRow
+            key={rowIds[index]}
+            id={rowIds[index]}
+            index={index}
             value={value}
-            onChange={(event) => onChange(values.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
-            rows={2}
-            aria-label={`Add-on ${index + 1}`}
-            placeholder="e.g. Wearing a red raincoat"
-            className={`${inputClasses} flex-1 min-w-0 resize-y leading-[1.5]`}
+            inputClasses={inputClasses}
+            onChange={(text) => onChange(values.map((item, itemIndex) => itemIndex === index ? text : item))}
+            onRemove={() => {
+              setRowIds(rowIds.filter((_, itemIndex) => itemIndex !== index));
+              onChange(values.filter((_, itemIndex) => itemIndex !== index));
+            }}
+            onMove={(direction) => {
+              const target = index + direction;
+              if (target < 0 || target >= rowIds.length) return;
+              const nextIds = [...rowIds];
+              nextIds.splice(target, 0, nextIds.splice(index, 1)[0]);
+              reorder(nextIds);
+            }}
           />
-          <button
-            type="button"
-            onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
-            aria-label={`Remove add-on ${index + 1}`}
-            className="mt-2 p-2 rounded-lg text-[#8A7E73] dark:text-[#A69B90] hover:text-[#A0433A] dark:hover:text-[#F5AB88]"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ))}
+        ))}
+      </Reorder.Group>
       <button
         type="button"
-        onClick={() => onChange([...values, ''])}
+        onClick={() => {
+          setRowIds([...rowIds, nextRowId.current++]);
+          onChange([...values, '']);
+        }}
         className="self-start flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#E3D8CA] dark:border-[#3D352E] text-[#5B5148] dark:text-[#D5CCC3] hover:border-[#C4633E] dark:hover:border-[#E07A52] transition-colors"
       >
         <Plus className="w-3.5 h-3.5" /> Add add-on
