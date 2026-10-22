@@ -1466,6 +1466,8 @@ export default function Home() {
               textLanguage={textLanguage}
               onTextLanguageChange={setTextLanguage}
               raindropToken={settings.raindropToken}
+              hasRaindropToken={hasToken}
+              refreshRaindropToken={settings.raindropRefreshToken ? refreshRaindropToken : undefined}
               onResetAll={handleResetAllInputs}
               onSaveAsPreset={handleSaveAsPreset}
             />
