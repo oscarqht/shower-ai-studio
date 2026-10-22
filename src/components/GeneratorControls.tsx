@@ -260,7 +260,7 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
       ratio: aspectRatio,
       language: textLanguage,
       instruction: compositionPrompt,
-      image_urls: attachmentUrls.join(','),
+      attachment_file_urls: attachmentUrls.join(','),
     };
 
     const jsonString = JSON.stringify(promptData, null, 2);
@@ -333,7 +333,8 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
         appUrl.searchParams.set('instruction', compositionPrompt);
         appUrl.searchParams.set('json', jsonString);
 
-        appUrl.searchParams.set('image_urls', attachmentUrls.join(','));
+        appUrl.searchParams.set('attachment_file_urls', attachmentUrls.join(','));
+        appUrl.searchParams.delete('image_urls');
         appUrl.searchParams.delete('attachment_file_ids');
         appUrl.searchParams.set('_auto_', appUrl.searchParams.get('_auto_') || 'true');
 
