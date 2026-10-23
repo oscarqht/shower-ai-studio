@@ -19,7 +19,6 @@ assert.ok(!fileContent.includes('onBlur='), 'Textarea must NOT have onBlur event
 // Ensure action buttons save the prompt to recent prompts on click
 assert.ok(fileContent.includes('handleOpenApp'), 'Has handleOpenApp');
 assert.ok(fileContent.includes('handleCopyPrompt'), 'Has handleCopyPrompt');
-assert.ok(fileContent.includes('generate-final-prompt-btn'), 'Has generate-final-prompt-btn');
 assert.ok(fileContent.includes('handleSaveAsPreset'), 'Has handleSaveAsPreset');
 
 // Test the recent prompts array logic

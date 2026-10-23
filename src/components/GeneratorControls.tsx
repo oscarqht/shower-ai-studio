@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Copy, ExternalLink, Sparkles, BookmarkPlus, History, X } from 'lucide-react';
 import { Character, StylePack, Preset, MODEL_OPTIONS } from '../types';
-import { FinalPromptModal } from './FinalPromptModal';
 import { AttachmentUploader } from './AttachmentUploader';
 
 interface GeneratorControlsProps {
@@ -159,7 +158,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
   const [isOpeningApp, setIsOpeningApp] = useState(false);
   const [appError, setAppError] = useState<string | null>(null);
   const [isStyleCopied, setIsStyleCopied] = useState(false);
-  const [isFinalPromptModalOpen, setIsFinalPromptModalOpen] = useState(false);
 
   // Recent Prompts State (max 10 prompts, persisted in localStorage)
   const [recentPrompts, setRecentPrompts] = useState<string[]>([]);
@@ -617,22 +615,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
 
         <button
           type="button"
-          id="generate-final-prompt-btn"
-          onClick={() => {
-            if (compositionPrompt?.trim()) {
-              addRecentPrompt(compositionPrompt);
-            }
-            setIsFinalPromptModalOpen(true);
-          }}
-          title="Generate final prompt and combined reference images based on workflow schema"
-          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-[#C4633E] dark:border-[#E07A52] bg-[#FFF8F3] dark:bg-[#251D18] text-[#C4633E] dark:text-[#E07A52] text-[15px] font-medium whitespace-nowrap shrink-0 w-auto cursor-pointer hover:bg-[#C4633E] hover:text-[#FFF7F1] dark:hover:bg-[#E07A52] dark:hover:text-[#181411] transition-all shadow-sm hover:shadow"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Generate final prompt</span>
-        </button>
-
-        <button
-          type="button"
           id="save-as-preset-btn"
           onClick={handleSaveAsPreset}
           title="Save current prompt, cast, style, and settings as a new preset recipe"
@@ -648,17 +630,6 @@ export const GeneratorControls: React.FC<GeneratorControlsProps> = ({
           {appError}
         </div>
       )}
-
-      <FinalPromptModal
-        isOpen={isFinalPromptModalOpen}
-        onClose={() => setIsFinalPromptModalOpen(false)}
-        instruction={compositionPrompt}
-        characters={selectedCharacters}
-        selectedAddOnsByCharacterId={selectedAddOnsByCharacterId}
-        style={selectedStyle}
-        aspectRatio={aspectRatio}
-        textLanguage={textLanguage}
-      />
     </section>
   );
 };
