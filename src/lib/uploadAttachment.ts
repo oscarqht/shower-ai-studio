@@ -1,6 +1,6 @@
 import { uploadRaindropAttachment } from './uploadRaindropAttachment';
 
-export type SavedAttachment = { id: string; name: string; url: string };
+export type SavedAttachment = { id: string; name: string; url: string; previewUrl?: string };
 
 export async function uploadAttachment(file: File, token: string, refreshToken?: () => Promise<string | null>): Promise<SavedAttachment> {
   // Keep file bytes outside the hosting proxy's body limit when a browser token is available.
@@ -29,7 +29,7 @@ export async function uploadAttachment(file: File, token: string, refreshToken?:
     }
   }
   if (!response.ok || data.status !== 'success' || !data.url || !data.id) throw new Error(data.message || 'Failed to upload attachment to Raindrop.');
-  return { id: data.id, name: file.name, url: data.url };
+  return { id: data.id, name: file.name, url: data.url, ...(data.previewUrl ? { previewUrl: data.previewUrl } : {}) };
 }
 
 export async function attachmentLibraryRequest(

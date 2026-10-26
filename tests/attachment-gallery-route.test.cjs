@@ -6,13 +6,17 @@ const ts = require('typescript');
 const code = ts.transpileModule(fs.readFileSync('src/lib/raindropAttachments.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
+const uploadExports = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/uploadRaindropAttachment.ts', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: uploadExports, URL });
 const image = { _id: 123, type: 'image', file: { name: 'saved.png', type: 'image/png' },
   link: 'https://up.raindrop.io/original.png', cover: 'https://up.raindrop.io/thumb.png', collection: { $id: 76326590 } };
 function harness(reply) {
   const exports = {};
   vm.runInNewContext(code, { exports, Response, URL, require: name => {
     assert.equal(name, './uploadRaindropAttachment');
-    return { ATTACHMENT_COLLECTION_ID: '76326590' };
+    return uploadExports;
   } });
   const calls = [];
   return { calls, call: async (method = 'GET', body, page = '0', token = 'Bearer header-token', fallbackToken) => {
@@ -31,7 +35,7 @@ test('lists original uploaded image links, with paginated fixed collection reque
   const { call, calls } = harness();
   const result = await call('GET', undefined, '2');
   assert.equal(result.status, 200);
-  assert.deepEqual(result.data, { status: 'success', attachments: [{ id: '123', name: 'saved.png', url: image.link }], hasMore: false });
+  assert.deepEqual(result.data, { status: 'success', attachments: [{ id: '123', name: 'saved.png', url: image.link, previewUrl: image.cover }], hasMore: false });
   assert.equal(calls[0].url, 'https://api.raindrop.io/rest/v1/raindrops/76326590?perpage=50&page=2&sort=-created');
   assert.equal(calls[0].headers.Authorization, 'Bearer header-token');
 });
@@ -116,5 +120,18 @@ test('DELETE requires explicit upstream success confirmation', async () => {
     assert.equal(result.status, 502);
     assert.equal(result.data.status, 'error');
     assert.match(result.data.message, /did not confirm.*deletion/);
+  }
+});
+
+test('gallery falls back from missing or invalid covers to media and original links', async () => {
+  for (const [fields, expected] of [
+    [{ cover: '', media: [{ link: 'https://files.test/media.png' }] }, 'https://files.test/media.png'],
+    [{ cover: 'javascript:bad', media: [null, { link: 'https://token:secret@files.test/a.png' }] }, image.link],
+    [{ cover: null, media: {} }, image.link],
+  ]) {
+    const { call } = harness(() => Response.json({ items: [{ ...image, ...fields }] }));
+    const item = (await call()).data.attachments[0];
+    assert.equal(item.url, image.link);
+    assert.equal(item.previewUrl, expected);
   }
 });

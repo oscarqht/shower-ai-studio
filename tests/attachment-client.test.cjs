@@ -73,3 +73,13 @@ test('gallery deletion sends ID only and reports failed deletion', async () => {
   }, undefined, 'attachmentLibraryRequest');
   await assert.rejects(request('', {id:'123'}), /Deletion failed/);
 });
+
+test('upload preserves separate preview URL for small and direct large uploads', async () => {
+  const reply = () => Response.json({ status: 'success', id: '1', url: 'https://files.test/original.png', previewUrl: 'https://files.test/cover.png' });
+  const upload = load(reply, reply);
+  for (const size of [3, 4_000_000]) {
+    const item = await upload(new File([new Uint8Array(size)], 'a.png', { type: 'image/png' }), 'token');
+    assert.equal(item.url, 'https://files.test/original.png');
+    assert.equal(item.previewUrl, 'https://files.test/cover.png');
+  }
+});

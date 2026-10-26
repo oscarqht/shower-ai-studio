@@ -33,7 +33,7 @@ test('uploads original file into fixed collection and returns original public li
   const { upload, calls } = harness();
   const result = await upload();
   assert.equal(result.status, 200);
-  assert.deepEqual(result.data, { status: 'success', url: 'https://files.test/original.png', id: '123' });
+  assert.deepEqual(result.data, { status: 'success', url: 'https://files.test/original.png', previewUrl: 'https://files.test/thumbnail.png', id: '123' });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, 'https://api.raindrop.io/rest/v1/raindrop/file');
   assert.equal(calls[0].method, 'PUT');
@@ -142,4 +142,19 @@ test('server route injects upstream transport and environment token', async () =
     } };
   } });
   assert.equal(await exports.POST(req), response);
+});
+
+test('preview URL uses cover, then valid media, then original without changing download URL', async () => {
+  const original = 'https://files.test/original.png';
+  for (const [fields, expected] of [
+    [{ cover: 'https://files.test/cover.png', media: [{ link: 'https://files.test/media.png' }] }, 'https://files.test/cover.png'],
+    [{ cover: '', media: [{ link: 'https://files.test/media.png' }] }, 'https://files.test/media.png'],
+    [{ cover: 'javascript:bad', media: [null, { link: 'https://token:secret@files.test/a.png' }, { link: 'https://files.test/media.png' }] }, 'https://files.test/media.png'],
+    [{ cover: 'data:image/png;base64,bad', media: {} }, original],
+    [{}, original],
+  ]) {
+    const { data } = await harness(() => Response.json({ item: { _id: 123, link: original, ...fields } })).upload();
+    assert.equal(data.url, original);
+    assert.equal(data.previewUrl, expected);
+  }
 });

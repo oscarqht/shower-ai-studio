@@ -3,6 +3,18 @@ export const ATTACHMENT_COLLECTION_ID = '76326590';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
+// Preview images are separate from the original file URL used in the payload.
+export function attachmentPreviewUrl(item: { cover?: unknown; media?: unknown; link?: unknown }): string | undefined {
+  const media = Array.isArray(item.media) ? item.media.map(value => value?.link) : [];
+  for (const candidate of [item.cover, ...media, item.link]) {
+    if (typeof candidate !== 'string' || !candidate.trim()) continue;
+    try {
+      const url = new URL(candidate);
+      if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password) return candidate;
+    } catch { /* Try the next preview source. */ }
+  }
+}
+
 class AttachmentError extends Error {
   constructor(message: string, public status = 502) { super(message); }
 }
@@ -63,7 +75,7 @@ export async function uploadRaindropAttachment(
       url = new URL(item.link);
       if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Invalid link');
     } catch { throw new AttachmentError('Raindrop did not return a public download URL for the attachment.'); }
-    return Response.json({ status: 'success', url: item.link, id: String(item._id) });
+    return Response.json({ status: 'success', url: item.link, previewUrl: attachmentPreviewUrl(item), id: String(item._id) });
   } catch (error) {
     return Response.json({ status: 'error', retrySafe: !uploadStarted || retrySafe,
       message: error instanceof AttachmentError ? error.message : 'Could not upload the image to Raindrop. Check attachments before retrying.' },
