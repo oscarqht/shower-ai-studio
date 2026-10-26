@@ -4,6 +4,18 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { attachmentLibraryRequest, SavedAttachment, uploadAttachment } from '../lib/uploadAttachment';
 
+function AttachmentPreview({ item }: { item: SavedAttachment }) {
+  const [failed, setFailed] = useState(false);
+  const [useOriginal, setUseOriginal] = useState(false);
+  if (failed) return <span className="flex h-24 items-center justify-center p-2 text-xs text-[#8A7E73]">Preview unavailable</span>;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={useOriginal ? item.url : item.previewUrl || item.url} alt={item.name} loading="lazy"
+    referrerPolicy="no-referrer" className="h-24 w-full object-cover" onError={() => {
+      if (!useOriginal && item.previewUrl && item.previewUrl !== item.url) setUseOriginal(true);
+      else setFailed(true);
+    }} />;
+}
+
 export function AttachmentUploader({ token, refreshToken, onChange, onBusyChange }: {
   token: string;
   refreshToken?: () => Promise<string | null>;
@@ -113,8 +125,7 @@ export function AttachmentUploader({ token, refreshToken, onChange, onBusyChange
         const checked = selected.some(value => value.id === item.id);
         return <div key={item.id} className={`overflow-hidden rounded-xl border ${checked ? 'border-[#C4633E] dark:border-[#E07A52]' : 'border-[#E3D8CA] dark:border-[#3D352E]'}`}>
           <label className="block cursor-pointer">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.url} alt={item.name} loading="lazy" className="h-24 w-full object-cover" />
+            <AttachmentPreview key={`${item.id}:${item.previewUrl}:${item.url}`} item={item} />
             <span className="flex items-center gap-2 p-2 text-xs">
               <input type="checkbox" aria-label={`Use attachment ${item.name}`} checked={checked} disabled={busy}
                 onChange={() => setSelected(previous => checked ? previous.filter(value => value.id !== item.id) : [...previous, item])} />

@@ -1,4 +1,4 @@
-import { ATTACHMENT_COLLECTION_ID } from './uploadRaindropAttachment';
+import { ATTACHMENT_COLLECTION_ID, attachmentPreviewUrl } from './uploadRaindropAttachment';
 
 const API = 'https://api.raindrop.io/rest/v1';
 const PAGE_SIZE = 50;
@@ -11,7 +11,7 @@ function tokenFor(req: Request, fallbackToken?: string): string {
   if (!token) throw new AttachmentError('Raindrop API token is missing. Add it in settings.', 400);
   return token;
 }
-function originalImage(item: Item): { id: string; name: string; url: string } | undefined {
+function originalImage(item: Item): { id: string; name: string; url: string; previewUrl?: string } | undefined {
   if (!item || !/^[1-9]\d*$/.test(String(item._id)) || !item.file || typeof item.file !== 'object') return;
   if (item.type !== 'image' && !(typeof item.file.type === 'string' && item.file.type.startsWith('image/'))) return;
   if (typeof item.link !== 'string') return;
@@ -19,7 +19,8 @@ function originalImage(item: Item): { id: string; name: string; url: string } | 
     const url = new URL(item.link);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return;
   } catch { return; }
-  return { id: String(item._id), name: String(item.file.name || item.title || 'Image attachment'), url: item.link };
+  return { id: String(item._id), name: String(item.file.name || item.title || 'Image attachment'), url: item.link,
+    previewUrl: attachmentPreviewUrl(item) };
 }
 async function request(path: string, token: string, transport: typeof fetch, method = 'GET'): Promise<Item> {
   const response = await transport(`${API}${path}`, { method, headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
